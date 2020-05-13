@@ -1,0 +1,86 @@
+---
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: lint
+    image: golangci/golangci-lint:v1.24.0
+    commands:
+      - golangci-lint run -v -D errcheck
+
+  - name: fmt
+    image: golang:1.13-alpine
+    commands:
+      - set -o pipefail
+      - apk add --update --upgrade --no-cache git
+      - go get golang.org/x/tools/cmd/goimports
+      - goimports -d . | (! grep .)
+
+  - name: test
+    image: golang:1.13-alpine
+    commands:
+      - CGO_ENABLED=0 go test -v ./...
+
+  - name: build
+    image: golang:1.13-alpine
+    commands:
+      - CGO_ENABLED=0 go build
+
+  - name: publish_pr
+    image: plugins/docker
+    settings:
+      registry: quay.io
+      repo: quay.io/tinkerbell/pbnj-pr
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      tags:
+        - pr${DRONE_PULL_REQUEST}
+        - pr${DRONE_PULL_REQUEST}-${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
+    when:
+      event: pull_request
+    depends_on:
+      - build
+      - fmt
+      - lint
+      - test
+
+  - name: publish
+    image: plugins/docker
+    settings:
+      registry: quay.io
+      repo: quay.io/tinkerbell/pbnj
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      tags:
+        - ${DRONE_BRANCH/\//-}
+        - ${DRONE_BUILD_NUMBER}-${DRONE_COMMIT_SHA}
+    when:
+      event: push
+    depends_on:
+      - build
+      - fmt
+      - lint
+      - test
+
+  - name: publish_tag
+    image: plugins/docker
+    settings:
+      registry: quay.io
+      repo: quay.io/tinkerbell/pbnj
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      tags: ${DRONE_TAG}
+    when:
+      event: tag
+    depends_on:
+      - build
+      - fmt
+      - lint
+      - test
