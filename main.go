@@ -17,6 +17,7 @@ import (
 )
 
 var (
+	GitRev     = "unknown (use make)"
 	listenAddr = ":9090"
 )
 
@@ -54,7 +55,7 @@ func main() {
 	go cleanup()
 
 	logger = logger.Package("main")
-	if err := api.Serve(listenAddr); err != nil {
+	if err := api.Serve(listenAddr, GitRev); err != nil {
 		logger.Fatalw("error serving api", "error", err)
 	}
 }

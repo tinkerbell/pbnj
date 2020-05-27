@@ -9,4 +9,4 @@ in { pkgs ? import (_pkgs.fetchFromGitHub {
 
 with pkgs;
 
-mkShell { buildInputs = [ go golangci-lint ]; }
+mkShell { buildInputs = [ go golangci-lint openssl ]; }

@@ -207,7 +207,7 @@ func (s *Shell) stderrLine(line []byte) {
 	if len(line) == 0 {
 		return
 	}
-	s.errorEvent("stderr_line", "line", line)
+	s.errorEvent("stderr_line", "line", string(line))
 
 	if err := parseStderrLine(line); err != nil {
 		s.err = multierror.Append(s.err, err)
@@ -225,6 +225,10 @@ func (s *Shell) takeErr() error {
 	}
 	switch len(err.Errors) {
 	case 1:
+		if err.Errors[0] == ErrChannelCipherSuites {
+			// ignore cipher suites error, ipmitool sends this even though it successfully downgrades
+			return nil
+		}
 		return errors.Wrap(err.Errors[0], "shell error")
 	case 0:
 		return nil

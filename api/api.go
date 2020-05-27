@@ -20,8 +20,7 @@ import (
 	ginprometheus "github.com/zsais/go-gin-prometheus"
 )
 
-// GitRev holds the git revision checked out when building
-var GitRev string
+var gitRev string
 
 var (
 	version = func() string {
@@ -45,7 +44,8 @@ func SetupLogging(l log.Logger) {
 }
 
 // Serve serves http api
-func Serve(addr string) error {
+func Serve(addr, rev string) error {
+	gitRev = rev
 	r := gin.New()
 	r.Use(logging, jsonErrors, recovery)
 
@@ -88,13 +88,13 @@ func ping(c *gin.Context) {
 }
 
 func healthcheck(c *gin.Context) {
-	var res struct {
+	c.JSON(http.StatusOK, struct {
 		Git           string `json:"git"`
 		PacketVersion string `json:"packet_version"`
-	}
-	res.Git = GitRev
-	res.PacketVersion = version
-	c.JSON(http.StatusOK, &res)
+	}{
+		Git:           gitRev,
+		PacketVersion: version,
+	})
 }
 
 // logging is a gin middleware that logs http method, path and client id.

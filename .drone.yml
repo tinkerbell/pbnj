@@ -34,7 +34,7 @@ steps:
       - golangci-lint run -v -D errcheck
 
   - name: fmt
-    image: golang:1.13-alpine
+    image: golang:1.13-alpine3.11
     commands:
       - set -o pipefail
       - apk add --update --upgrade --no-cache git
@@ -42,14 +42,15 @@ steps:
       - goimports -d . | (! grep .)
 
   - name: test
-    image: golang:1.13-alpine
+    image: golang:1.13-alpine3.11
     commands:
       - CGO_ENABLED=0 go test -v ./...
 
   - name: build
-    image: golang:1.13-alpine
+    image: golang:1.13-alpine3.11
     commands:
-      - CGO_ENABLED=0 go build
+      - apk add --update git make
+      - make
 
   - name: publish pr
     <<: *publish_tmpl
