@@ -207,7 +207,7 @@ func (s *Shell) stderrLine(line []byte) {
 	if len(line) == 0 {
 		return
 	}
-	s.errorEvent("stderr_line", "line", line)
+	s.errorEvent("stderr_line", "line", string(line))
 
 	if err := parseStderrLine(line); err != nil {
 		s.err = multierror.Append(s.err, err)
