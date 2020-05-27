@@ -9,7 +9,7 @@ apk add --update --upgrade --no-cache --virtual .pbnj-build-deps go git musl-dev
 go get -v -d
 
 # Compile
-go install -v -ldflags "-X github.com/tinkerbell/pbnj/api.GitRev=$(git rev-parse --short HEAD)"
+go install -v -ldflags "-X main.GitRev=$(git rev-parse --short HEAD)"
 
 # Install Runtime Dependencies
 apk add --update --upgrade --no-cache --virtual .pbnj-run-deps ca-certificates ipmitool
