@@ -49,7 +49,8 @@ steps:
   - name: build
     image: golang:1.13-alpine
     commands:
-      - CGO_ENABLED=0 go build
+      - apk add --update git make
+      - make
 
   - name: publish pr
     <<: *publish_tmpl
