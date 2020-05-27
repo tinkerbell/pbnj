@@ -88,13 +88,13 @@ func ping(c *gin.Context) {
 }
 
 func healthcheck(c *gin.Context) {
-	var res struct {
+	c.JSON(http.StatusOK, struct {
 		Git           string `json:"git"`
 		PacketVersion string `json:"packet_version"`
-	}
-	res.Git = GitRev
-	res.PacketVersion = version
-	c.JSON(http.StatusOK, &res)
+	}{
+		Git:           GitRev,
+		PacketVersion: version,
+	})
 }
 
 // logging is a gin middleware that logs http method, path and client id.
