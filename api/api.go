@@ -5,11 +5,11 @@ package api
 
 import (
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/pbnj/api/redfish"
 	"github.com/tinkerbell/pbnj/evlog"
@@ -23,15 +23,9 @@ import (
 var gitRev string
 
 var (
-	version = func() string {
-		v := os.Getenv("PACKET_ENV")
-		if v == "" {
-			v = "UNKNOWN"
-		}
-		return v
-	}()
-	logger log.Logger
-	elog   *evlog.Log
+	packetEnv = env.Get("PACKET_ENV", "UNKNOWN")
+	logger    log.Logger
+	elog      *evlog.Log
 )
 
 func SetupLogging(l log.Logger) {
@@ -89,11 +83,13 @@ func ping(c *gin.Context) {
 
 func healthcheck(c *gin.Context) {
 	c.JSON(http.StatusOK, struct {
-		Git           string `json:"git"`
-		PacketVersion string `json:"packet_version"`
+		Name string `json:"name"`
+		Rev  string `json:"rev"`
+		Env  string `json:"env"`
 	}{
-		Git:           gitRev,
-		PacketVersion: version,
+		Name: "pbnj",
+		Rev:  gitRev,
+		Env:  packetEnv,
 	})
 }
 
