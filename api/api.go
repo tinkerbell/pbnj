@@ -23,7 +23,7 @@ import (
 var gitRev string
 
 var (
-	version = func() string {
+	packetEnv = func() string {
 		v := os.Getenv("PACKET_ENV")
 		if v == "" {
 			v = "UNKNOWN"
@@ -89,11 +89,13 @@ func ping(c *gin.Context) {
 
 func healthcheck(c *gin.Context) {
 	c.JSON(http.StatusOK, struct {
-		Git           string `json:"git"`
-		PacketVersion string `json:"packet_version"`
+		Name string `json:"name"`
+		Rev  string `json:"rev"`
+		Env  string `json:"env"`
 	}{
-		Git:           gitRev,
-		PacketVersion: version,
+		Name: "pbnj",
+		Rev:  gitRev,
+		Env:  packetEnv,
 	})
 }
 
