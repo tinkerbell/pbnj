@@ -5,11 +5,11 @@ package api
 
 import (
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/packethost/pkg/env"
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/pbnj/api/redfish"
 	"github.com/tinkerbell/pbnj/evlog"
@@ -23,15 +23,9 @@ import (
 var gitRev string
 
 var (
-	packetEnv = func() string {
-		v := os.Getenv("PACKET_ENV")
-		if v == "" {
-			v = "UNKNOWN"
-		}
-		return v
-	}()
-	logger log.Logger
-	elog   *evlog.Log
+	packetEnv = env.Get("PACKET_ENV", "UNKNOWN")
+	logger    log.Logger
+	elog      *evlog.Log
 )
 
 func SetupLogging(l log.Logger) {
