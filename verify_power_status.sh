@@ -6,7 +6,7 @@ set -euo pipefail
 
 exec 1>&2
 
-host=http://${HOST:-localhost:9090}
+host=${HOST:-http://localhost:9090}
 access_id=$ACCESS_ID
 access_secret=$ACCESS_SECRET
 content_type=application/json
