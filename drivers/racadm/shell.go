@@ -43,10 +43,13 @@ func (s *Shell) infoEvent(event string, fields ...interface{}) {
 	s.tx.Info(event, fields...)
 }
 
-// iDRAC v4.x seem to require clients sending both keyboard-interactive and password authmethods at minimum, but doesn't
-// even negotiate keyboard-interactive support itself... sigh all BMCs have warts
-func fakeKBInteractiveAuth(string, string, []string, []bool) ([]string, error) {
-	return nil, nil
+func (opts Options) AuthKeyboardInteractive(user, instruction string, questions []string, echos []bool) ([]string, error) {
+	answers := make([]string, len(questions))
+	for i := range answers {
+		answers[i] = opts.Password
+	}
+
+	return answers, nil
 }
 
 // Shell starts a remote shell
@@ -60,7 +63,7 @@ func (opts Options) Shell(ctx context.Context) (*Shell, error) {
 		User: opts.Username,
 		Auth: []ssh.AuthMethod{
 			ssh.Password(opts.Password),
-			ssh.KeyboardInteractive(fakeKBInteractiveAuth),
+			ssh.KeyboardInteractive(opts.AuthKeyboardInteractive),
 		},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 	}
