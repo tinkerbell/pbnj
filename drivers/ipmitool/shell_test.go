@@ -19,7 +19,7 @@ func TestShell(t *testing.T) {
 		t.Skip()
 		panic("unreachable")
 	}
-	s, err := NewOptions(addr, user, pass).Shell(context.Background())
+	s, err := NewOptions(addr, user, pass, -1).Shell(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}

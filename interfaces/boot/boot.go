@@ -49,6 +49,7 @@ type DriverOptions struct {
 	Username string
 	Password string
 	ID       string
+	Cipher   int
 }
 
 // Options contain values relevant for boot actions

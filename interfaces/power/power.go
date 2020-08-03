@@ -58,6 +58,7 @@ type DriverOptions struct {
 	Username string
 	Password string
 	ID       string
+	Cipher   int
 }
 
 // Options contain time values relevant for power actions
