@@ -63,6 +63,7 @@ type DriverOptions struct {
 	Username string
 	Password string
 	ID       string
+	Cipher   int
 }
 
 // NewDriver instantiates a new driver by calling the registered factory function

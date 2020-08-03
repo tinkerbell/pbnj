@@ -14,7 +14,7 @@ import (
 
 func init() {
 	factory := func(ctx context.Context, opts boot.DriverOptions) (boot.Driver, error) {
-		s, err := NewOptions(opts.Address, opts.Username, opts.Password).Shell(ctx)
+		s, err := NewOptions(opts.Address, opts.Username, opts.Password, opts.Cipher).Shell(ctx)
 		if err != nil {
 			return nil, errors.WithMessage(err, "invalid options")
 		}

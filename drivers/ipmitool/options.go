@@ -4,9 +4,12 @@
 package ipmitool
 
 import (
+	"os"
 	"os/exec"
 	"strconv"
 )
+
+var DEFAULT_CIPHER = os.Getenv("IPMITOOL_DEFAULT_CIPHER")
 
 // ExecutablePath path to ipmitool
 const ExecutablePath = "ipmitool"
@@ -18,17 +21,19 @@ type Options struct {
 	Password string
 
 	InterfaceName string
+	Cipher        int
 	Attempts      int
 	RetransSecs   int
 }
 
 // NewOptions returns an Options struct with the values provided set
-func NewOptions(addr, user, pass string) Options {
+func NewOptions(addr, user, pass string, cipher int) Options {
 	return Options{
 		Address:       addr,
 		Username:      user,
 		Password:      pass,
 		InterfaceName: "lanplus",
+		Cipher:        cipher,
 		Attempts:      1, // Give up quickly.
 		RetransSecs:   1, // Wait 1 second between retries.
 	}
@@ -51,6 +56,12 @@ func (o *Options) buildCommand(subcommand ...string) *exec.Cmd {
 
 	if o.InterfaceName != "" {
 		args = append(args, "-I", o.InterfaceName)
+	}
+
+	if o.Cipher > -1 {
+		args = append(args, "-C", strconv.Itoa(o.Cipher))
+	} else if DEFAULT_CIPHER != "" {
+		args = append(args, "-C", DEFAULT_CIPHER)
 	}
 
 	if o.Attempts > 0 {
