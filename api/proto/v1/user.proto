@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+option go_package = "github.com/tinkerbell/pbnj/pkg/api/v1";
+
+package github.com.tinkerbell.pbnj.api.proto.v1;
+
+import "api/proto/v1/common.proto";
+
+service User {
+    rpc CreateUser (CreateUserRequest) returns (CreateUserResponse);
+    rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
+    rpc UpdateUser (UpdateUserRequest) returns (UpdateUserResponse);
+}
+
+message UserCreds {
+    string username = 1;
+    string password = 2;
+}
+
+message CreateUserRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+    UserCreds user_creds = 3;
+}
+
+message CreateUserResponse {
+    string task_id = 1;
+}
+
+message DeleteUserRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+    string username = 3;
+}
+
+message DeleteUserResponse {
+    string task_id = 1;
+}
+
+message UpdateUserRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+    UserCreds user_creds = 3;
+}
+
+message UpdateUserResponse {
+    string task_id = 1;
+}

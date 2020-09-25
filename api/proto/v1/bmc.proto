@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+option go_package = "github.com/tinkerbell/pbnj/pkg/api/v1";
+
+package github.com.tinkerbell.pbnj.api.proto.v1;
+
+import "api/proto/v1/common.proto";
+
+service BMC {
+    rpc NetworkSource (NetworkSourceRequest) returns (NetworkSourceResponse);
+    rpc Reset(ResetRequest) returns (ResetResponse);
+}
+
+message NetworkSourceRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+    enum NetworkSource {
+        DHCP = 0;
+        STATIC = 1;
+    }
+    NetworkSource network_source = 3;
+}
+
+message NetworkSourceResponse {
+    string task_id = 1;
+}
+
+message ResetRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+    enum Kind {
+        COLD = 0;
+        WARM = 1;
+    }
+    Kind kind = 3;
+}
+
+message ResetResponse {
+    string task_id = 1;
+}

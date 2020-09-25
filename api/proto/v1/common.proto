@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+option go_package = "github.com/tinkerbell/pbnj/pkg/api/v1";
+
+package github.com.tinkerbell.pbnj.api.proto.v1;
+
+message Host {
+    string host = 1;
+}
+
+message ExternalAuthn {
+    Host host = 1;
+}
+
+message DirectAuthn {
+    Host host = 1;
+    string username = 2;
+    string password = 3;
+}
+
+message Authn {
+    oneof authn {
+        DirectAuthn directAuthn = 1;
+        ExternalAuthn externalAuthn = 2;
+
+    }
+}
+
+message Vendor {
+    string name = 1;
+}

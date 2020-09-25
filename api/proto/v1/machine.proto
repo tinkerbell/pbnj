@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+option go_package = "github.com/tinkerbell/pbnj/pkg/api/v1";
+
+package github.com.tinkerbell.pbnj.api.proto.v1;
+
+import "api/proto/v1/common.proto";
+
+service Machine {
+    rpc BootDevice (DeviceRequest) returns (DeviceResponse);
+    rpc Power (PowerRequest) returns (PowerResponse);
+}
+
+message DeviceRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+    enum Device {
+        NONE = 0;
+        BIOS = 1;
+        CDROM = 2;
+        DISK = 3;
+        PXE = 4;
+    }
+    Device device = 3;
+    bool persistent = 4;
+    bool efi_boot = 5;
+}
+
+message DeviceResponse {
+    string task_id = 1;
+}
+
+message PowerRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+    enum Action {
+        ON = 0;
+        OFF = 1;
+        HARDOFF = 2;
+        CYCLE = 3;
+        RESET = 4;
+        STATUS = 5;
+    }
+    Action action = 3;
+    int32 soft_timeout = 4;
+    int32 off_duration = 5;
+}
+
+message PowerResponse {
+    string task_id = 1;
+}

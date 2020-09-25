@@ -1,3 +1,4 @@
 pbnj
 *.iml
 .idea*/**
+bin/
