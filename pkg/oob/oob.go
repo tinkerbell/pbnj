@@ -61,7 +61,7 @@ func (c *Conn) Power(ctx context.Context, status chan string, in *v1.PowerReques
 
 	if in.Authn == nil || in.Authn.Authn == nil {
 		msg := "no auth found"
-		errMsg.Code = 16
+		errMsg.Code = v1.Code_value["UNAUTHENTICATED"]
 		errMsg.Message = msg
 		return msg, errMsg
 	}
@@ -74,7 +74,7 @@ func (c *Conn) Power(ctx context.Context, status chan string, in *v1.PowerReques
 	connection, err := discover.ScanAndConnect(host, user, password, discover.WithLogger(l))
 	if err != nil {
 		// TODO set errMsg.Code based on err response
-		errMsg.Code = 2
+		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = err.Error()
 		return result, errMsg
 	}
@@ -91,33 +91,33 @@ func (c *Conn) Power(ctx context.Context, status chan string, in *v1.PowerReques
 			// ok, err := conn.PowerOn()
 			msg := "power ON not implemented"
 			l.V(1).Info(msg)
-			errMsg.Code = 12
+			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg
 		case v1.PowerRequest_OFF.String():
 			// ok, err := conn.PowerOff()
 			msg := "power OFF not implemented"
 			l.V(1).Info(msg)
-			errMsg.Code = 12
+			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg
 		case v1.PowerRequest_HARDOFF.String():
 			msg := "power HARD OFF not implemented"
 			l.V(1).Info(msg)
-			errMsg.Code = 12
+			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg
 		case v1.PowerRequest_CYCLE.String():
 			// ok, err := conn.PowerCycle()
 			msg := "power CYCLE not implemented"
 			l.V(1).Info(msg)
-			errMsg.Code = 12
+			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg
 		case v1.PowerRequest_RESET.String():
 			msg := "power RESET not implemented"
 			l.V(1).Info(msg)
-			errMsg.Code = 12
+			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg
 		case v1.PowerRequest_STATUS.String():
@@ -127,7 +127,7 @@ func (c *Conn) Power(ctx context.Context, status chan string, in *v1.PowerReques
 			if err != nil {
 				// TODO need to set code based on response
 				status <- "error getting power state"
-				errMsg.Code = 2
+				errMsg.Code = v1.Code_value["UNKNOWN"]
 				errMsg.Message = err.Error()
 			}
 			return result, errMsg
@@ -143,33 +143,33 @@ func (c *Conn) Power(ctx context.Context, status chan string, in *v1.PowerReques
 			// ok, err := conn.PowerOn()
 			msg := "power ON not implemented"
 			l.V(1).Info(msg)
-			errMsg.Code = 12
+			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg
 		case v1.PowerRequest_OFF.String():
 			// ok, err := conn.PowerOff()
 			msg := "power OFF not implemented"
 			l.V(1).Info(msg)
-			errMsg.Code = 12
+			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg
 		case v1.PowerRequest_HARDOFF.String():
 			msg := "power HARD OFF not implemented"
 			l.V(1).Info(msg)
-			errMsg.Code = 12
+			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg
 		case v1.PowerRequest_CYCLE.String():
 			// ok, err := conn.PowerCycle()
 			msg := "power CYCLE not implemented"
 			l.V(1).Info(msg)
-			errMsg.Code = 12
+			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg
 		case v1.PowerRequest_RESET.String():
 			msg := "power RESET not implemented"
 			l.V(1).Info(msg)
-			errMsg.Code = 12
+			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg
 		case v1.PowerRequest_STATUS.String():
@@ -186,7 +186,7 @@ func (c *Conn) Power(ctx context.Context, status chan string, in *v1.PowerReques
 		}
 
 	default:
-		errMsg.Code = 12
+		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = "Unknown device"
 		return result, errMsg
 	}

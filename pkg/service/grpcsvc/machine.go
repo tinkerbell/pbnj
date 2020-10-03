@@ -44,7 +44,7 @@ func (m *machineService) device(ctx context.Context, in *v1.DeviceRequest) (*v1.
 
 func (m *machineService) powerAction(ctx context.Context, in *v1.PowerRequest) (*v1.PowerResponse, error) {
 	l := m.log.GetContextLogger(ctx)
-	l.V(0).Info(fmt.Sprintf("power on in request: %v", in))
+	l.V(0).Info("power request")
 	// TODO INPUT VALIDATION
 
 	switch in.GetAuthn().Authn.(type) {

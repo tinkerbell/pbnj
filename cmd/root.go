@@ -20,13 +20,8 @@ var (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "pbnj",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "PBnJ does all your power, boot and jelly goodness for your BMCs",
+	Long:  `PBnJ is a CLI that provides gRPC and Restful HTTP interfaces for interacting with Out-of-Band controllers/BMCs.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return initConfig(cmd)
 	},
@@ -44,12 +39,21 @@ func Execute() {
 func init() {
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.pbnj.yaml)")
 	rootCmd.PersistentFlags().StringVar(&logLevel, "logLevel", "info", "log level (default is info")
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in ENV variables if set.
 func initConfig(cmd *cobra.Command) error {
 	v := viper.New()
+
+	v.SetConfigName("pbnj")
+	v.AddConfigPath(".")
+	if err := v.ReadInConfig(); err != nil {
+		// It's okay if there isn't a config file
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return err
+		}
+	}
+
 	v.SetEnvPrefix(prefix)
 	v.AutomaticEnv()
 	bindFlags(cmd, v)

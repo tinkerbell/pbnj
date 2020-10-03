@@ -68,6 +68,7 @@ func RegisterLogger(opts ...LoggerOption) (logging.Logger, *zap.Logger, error) {
 		defaultOutputPaths   = []string{"stdout"}
 		defaultKeysAndValues = map[string]interface{}{"service": defaultServiceName}
 		zapConfig            = zap.NewProductionConfig()
+		zLevel               = zap.InfoLevel
 	)
 
 	l := &Logger{
@@ -84,10 +85,10 @@ func RegisterLogger(opts ...LoggerOption) (logging.Logger, *zap.Logger, error) {
 
 	switch l.LogLevel {
 	case "debug":
-		zapConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
-	default:
-		zapConfig.Level = zap.NewAtomicLevelAt(zap.InfoLevel)
+		zLevel = zap.DebugLevel
 	}
+
+	zapConfig.Level = zap.NewAtomicLevelAt(zLevel)
 
 	zapConfig.OutputPaths = l.OutputPaths
 	zapConfig.OutputPaths = sliceDedupe(append(zapConfig.OutputPaths, "stdout"))

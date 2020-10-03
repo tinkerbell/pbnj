@@ -1,3 +1,5 @@
+// Package repository provides primitives for
+// putting tasks into a persistence layer.
 package repository
 
 import (
