@@ -43,7 +43,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	// must be min of 3 because we sleep 2 seconds in worker function to allow final status messages to be written
-	time.Sleep(3 * time.Second)
+	time.Sleep(500 * time.Millisecond)
 	record, err := runner.Status(ctx, logger, id)
 	if err != nil {
 		t.Fatal(err)

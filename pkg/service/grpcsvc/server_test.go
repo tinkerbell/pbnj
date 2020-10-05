@@ -36,7 +36,7 @@ func TestRunServer(t *testing.T) {
 		return RunServer(ctx, log, grpcServer, strconv.Itoa(port))
 	})
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(500 * time.Millisecond)
 	cancel()
 	if err := g.Wait(); err != nil {
 		t.Fatal(err)

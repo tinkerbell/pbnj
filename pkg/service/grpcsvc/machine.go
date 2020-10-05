@@ -33,7 +33,7 @@ func (m *machineService) device(ctx context.Context, in *v1.DeviceRequest) (*v1.
 		m.log,
 		"setting boot device",
 		func(s chan string) (string, *oob.Error) {
-			time.Sleep(20 * time.Second)
+			time.Sleep(5 * time.Second)
 			return fmt.Sprintf("set boot device to %v", in.Device.String()), new(oob.Error)
 		})
 

@@ -38,15 +38,19 @@ func (r *Runner) Execute(ctx context.Context, logger logging.Logger, description
 }
 
 // does the work, updates the repo record
-// TODO handle retrys
+// TODO handle retrys, use a timeout
 func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, description string, action func(chan string) (string, *oob.Error)) {
 	l := logger.GetContextLogger(ctx)
 	l.V(0).Info("starting worker", "taskID", id, "description", description)
 	resultChan := make(chan string, 1)
 	errMsgChan := make(chan oob.Error, 1)
 	messagesChan := make(chan string)
+	actionACK := make(chan bool, 1)
+	actionSyn := make(chan bool, 1)
 	defer close(resultChan)
 	defer close(messagesChan)
+	defer close(actionACK)
+	defer close(actionSyn)
 	repo := r.Repository
 	sessionRecord := repository.Record{
 		StatusResponse: &v1.StatusResponse{
@@ -69,25 +73,32 @@ func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, d
 	}
 
 	go func() {
-		for msg := range messagesChan {
-			l.V(0).Info("STATUS MESSAGE", "statusMsg", msg)
-			currStatus, _ := repo.Get(ctx, id)
-			sessionRecord.Messages = append(currStatus.Messages, msg)
-			_ = repo.Update(ctx, id, sessionRecord)
+		for {
+			select {
+			case msg := <-messagesChan:
+				l.V(0).Info("STATUS MESSAGE", "statusMsg", msg)
+				currStatus, _ := repo.Get(ctx, id)
+				sessionRecord.Messages = append(currStatus.Messages, msg)
+				_ = repo.Update(ctx, id, sessionRecord)
+			case <-actionSyn:
+				actionACK <- true
+				return
+			default:
+			}
+			time.Sleep(10 * time.Millisecond)
 		}
 	}()
 
-	go func(rChan chan string, sChan chan string, mChan chan oob.Error) {
+	go func() {
 		result, errMsg := action(messagesChan)
-		rChan <- result
-		mChan <- *errMsg
-	}(resultChan, messagesChan, errMsgChan)
+		resultChan <- result
+		errMsgChan <- *errMsg
+	}()
 
 	sessionRecord.Result = <-resultChan
 	errMsg := <-errMsgChan // nolint
-	// Allow any final status messages to written
-	// TODO better way than this??
-	time.Sleep(2 * time.Second)
+	actionSyn <- true
+	<-actionACK
 	sessionRecord.State = "complete"
 	sessionRecord.Complete = true
 	if errMsg.Message != "" {

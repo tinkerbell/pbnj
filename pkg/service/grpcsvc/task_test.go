@@ -19,7 +19,13 @@ import (
 func TestTaskFound(t *testing.T) {
 	// create a task
 	ctx := context.Background()
-	defaultError := new(oob.Error)
+	defaultError := &oob.Error{
+		Error: &v1.Error{
+			Code:    0,
+			Message: "",
+			Details: nil,
+		},
+	}
 	logger, zapLogger, _ := zaplog.RegisterLogger()
 	ctx = ctxzap.ToContext(ctx, zapLogger)
 	f := freecache.NewStore(freecache.DefaultOptions)
