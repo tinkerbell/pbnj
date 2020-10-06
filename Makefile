@@ -11,7 +11,7 @@ help:
 
 .PHONY: test
 test: ## run tests
-	go test -modfile=go-test.mod -v -covermode=count ./...
+	go test -v -covermode=count ./...
 
 .PHONY: test-ci
 test-ci: ## run tests for ci and codecov
@@ -19,7 +19,7 @@ test-ci: ## run tests for ci and codecov
 
 .PHONY: cover
 cover: ## Run unit tests with coverage report
-	go test -modfile=go-test.mod -coverprofile=cover.out ./...
+	go test -coverprofile=cover.out ./...
 	go tool cover -func=cover.out
 	rm -rf cover.out
 
