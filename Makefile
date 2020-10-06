@@ -17,6 +17,16 @@ test: ## run tests
 test-ci: ## run tests for ci and codecov
 	go test -coverprofile=coverage.txt ./...
 
+.PHONY: goimports-ci
+goimports-ci: ## run goimports for ci
+	#go get golang.org/x/tools/cmd/goimports
+	test -z "$(shell ${GOBIN}/goimports -d -l ./| tee /dev/stderr)"
+
+.PHONY: goimports
+goimports: ## run goimports
+	@echo be sure goimports is installed
+	goimports -w ./
+
 .PHONY: cover
 cover: ## Run unit tests with coverage report
 	go test -coverprofile=cover.out ./...

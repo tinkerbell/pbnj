@@ -19,8 +19,8 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
-      - name: go fmt
-        run: go fmt ./...
+      - name: goimports
+        run: go get golang.org/x/tools/cmd/goimports && goimports
 
       - name: go vet
         run: go vet ./...
