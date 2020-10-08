@@ -1,0 +1,70 @@
+name: For each commit and PR
+on:
+  push:
+  pull_request:
+
+jobs:
+  validation:
+    runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: 0
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.14.6'
+    - name: go fmt
+      run: go get golang.org/x/tools/cmd/goimports && goimports -d . | (! grep .)
+    - name: go vet
+      run: go vet ./...
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v1
+      with:
+        version: v1.30
+        args: -v -D errcheck
+    - name: go test
+      run: go test -v ./...    
+    - name: go test coverage
+      run: go test -coverprofile=coverage.txt ./...
+    - name: upload codecov
+      run: bash <(curl -s https://codecov.io/bash)
+    - name: Build binaries
+      run: go build
+    - name: Upload pbnj binary
+      uses: actions/upload-artifact@v2
+      with:
+        name: pbnj
+        path: ./pbnj
+  docker-images:
+    runs-on: ubuntu-latest
+    needs: [validation]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Download pbnj binary
+      uses: actions/download-artifact@v2
+      with:
+        name: pbnj
+        path: ./pbnj
+    - name: set pbnj permission
+      run: chmod +x  ./pbnj
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+    - name: Login to quay.io
+      uses: docker/login-action@v1
+      with:
+        registry: quay.io
+        username: ${{ secrets.QUAY_USERNAME }}
+        password: ${{ secrets.QUAY_PASSWORD }} 
+    - name: quay.io/tinkerbell/pbnj
+      uses: docker/build-push-action@v2
+      with:
+        context: ./
+        file: ./Dockerfile
+        registry: quay.io
+        cache-from: type=registry,ref=tinkerbell/pbnj:latest
+        push: ${{ startsWith(github.ref, 'refs/heads/master') }}
+        tags: tinkerbell/pbnj:latest
+        tag_with_sha: true
