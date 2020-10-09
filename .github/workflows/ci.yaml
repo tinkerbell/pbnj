@@ -41,6 +41,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [validation]
     steps:
+    - name: Docker Image Tag for Sha
+      id: docker-image-tag
+      run: |
+        echo ::set-output name=tags::quay.io/tinkerbell/pbnj:latest,quay.io/tinkerbell/pbnj:sha-${GITHUB_SHA::8}
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Download pbnj binary
@@ -63,8 +67,6 @@ jobs:
       with:
         context: ./
         file: ./Dockerfile
-        registry: quay.io
-        cache-from: type=registry,ref=tinkerbell/pbnj:latest
+        cache-from: type=registry,ref=quay.io/tinkerbell/pbnj:latest
         push: ${{ startsWith(github.ref, 'refs/heads/master') }}
-        tags: tinkerbell/pbnj:latest
-        tag_with_sha: true
+        tags: ${{ steps.docker-image-tag.outputs.tags }}
