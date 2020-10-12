@@ -1,4 +1,4 @@
-package grpcsvc
+package grpcsvr
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	"github.com/tinkerbell/pbnj/pkg/logging/zaplog"
+	"github.com/tinkerbell/pbnj/cmd/zaplog"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 )

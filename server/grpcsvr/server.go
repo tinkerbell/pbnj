@@ -1,4 +1,4 @@
-package grpcsvc
+package grpcsvr
 
 import (
 	"context"
@@ -12,6 +12,8 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/pkg/task"
+	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
+	"github.com/tinkerbell/pbnj/server/grpcsvr/taskrunner"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -42,10 +44,17 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 	}
 
 	// instantiate a Repository for task persistence
-	repo := &repository.GoKV{Store: defaultServer.Persistence}
+	var repo repository.Actions
+	repo = &persistence.GoKV{
+		Store: defaultServer.Persistence,
+		Ctx:   ctx,
+	}
 
-	taskRunner := task.Runner{
+	var taskRunner task.Task
+	taskRunner = &taskrunner.Runner{
 		Repository: repo,
+		Ctx:        ctx,
+		Log:        log,
 	}
 
 	ms := machineService{

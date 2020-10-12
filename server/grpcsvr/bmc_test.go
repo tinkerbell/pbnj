@@ -1,4 +1,4 @@
-package grpcsvc
+package grpcsvr
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/onsi/gomega"
+	"github.com/tinkerbell/pbnj/cmd/zaplog"
 	v1 "github.com/tinkerbell/pbnj/pkg/api/v1"
-	"github.com/tinkerbell/pbnj/pkg/logging/zaplog"
 )
 
 func TestConfigNetworkSource(t *testing.T) {

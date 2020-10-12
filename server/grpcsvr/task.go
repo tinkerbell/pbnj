@@ -1,4 +1,4 @@
-package grpcsvc
+package grpcsvr
 
 import (
 	"context"
@@ -10,14 +10,14 @@ import (
 
 type taskService struct {
 	log        logging.Logger
-	taskRunner task.Runner
+	taskRunner task.Task
 }
 
 func (t *taskService) Task(ctx context.Context, in *v1.StatusRequest) (*v1.StatusResponse, error) {
 	l := t.log.GetContextLogger(ctx)
 	l.V(0).Info("getting task record")
 
-	record, err := t.taskRunner.Status(ctx, t.log, in.TaskId)
+	record, err := t.taskRunner.Status(in.TaskId)
 	if err != nil {
 		l.V(0).Error(err, "error getting task status")
 		return nil, err

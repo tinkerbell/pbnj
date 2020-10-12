@@ -1,4 +1,4 @@
-package grpcsvc
+package grpcsvr
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 
 type bmcService struct {
 	log        logging.Logger
-	taskRunner task.Runner
+	taskRunner task.Task
 }
 
 func (b *bmcService) networkSource(ctx context.Context, in *v1.NetworkSourceRequest) (*v1.NetworkSourceResponse, error) {

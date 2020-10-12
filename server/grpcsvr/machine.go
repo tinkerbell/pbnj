@@ -1,19 +1,18 @@
-package grpcsvc
+package grpcsvr
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	v1 "github.com/tinkerbell/pbnj/pkg/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/oob"
 	"github.com/tinkerbell/pbnj/pkg/task"
+	"github.com/tinkerbell/pbnj/server/grpcsvr/bmc"
 )
 
 type machineService struct {
 	log        logging.Logger
-	taskRunner task.Runner
+	taskRunner task.Task
 }
 
 func (m *machineService) device(ctx context.Context, in *v1.DeviceRequest) (*v1.DeviceResponse, error) {
@@ -29,12 +28,16 @@ func (m *machineService) device(ctx context.Context, in *v1.DeviceRequest) (*v1.
 	}
 
 	taskID, err := m.taskRunner.Execute(
-		ctx,
-		m.log,
 		"setting boot device",
-		func(s chan string) (string, *oob.Error) {
-			time.Sleep(5 * time.Second)
-			return fmt.Sprintf("set boot device to %v", in.Device.String()), new(oob.Error)
+		func(s chan string) (string, oob.Error) {
+			var mbd oob.Machine
+			mbd = bmc.MachineAction{
+				Log:               m.log,
+				Ctx:               ctx,
+				BootDeviceRequest: in,
+				StatusMessages:    s,
+			}
+			return mbd.BootDevice()
 		})
 
 	return &v1.DeviceResponse{
@@ -54,11 +57,17 @@ func (m *machineService) powerAction(ctx context.Context, in *v1.PowerRequest) (
 		l.V(1).Info("using direct authn")
 	}
 
-	var execFunc = func(s chan string) (string, *oob.Error) {
-		ps := oob.Conn{Log: m.log}
-		return ps.Power(ctx, s, in)
+	var execFunc = func(s chan string) (string, oob.Error) {
+		var mp oob.Machine
+		mp = bmc.MachineAction{
+			Log:            m.log,
+			Ctx:            ctx,
+			PowerRequest:   in,
+			StatusMessages: s,
+		}
+		return mp.Power()
 	}
-	taskID, err := m.taskRunner.Execute(ctx, m.log, "power action", execFunc)
+	taskID, err := m.taskRunner.Execute("power action", execFunc)
 
 	return &v1.PowerResponse{
 		TaskId: taskID,

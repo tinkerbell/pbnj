@@ -1,4 +1,4 @@
-package grpcsvc
+package grpcsvr
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 
 type userService struct {
 	log        logging.Logger
-	taskRunner task.Runner
+	taskRunner task.Task
 }
 
 func (c *userService) createUser(ctx context.Context, in *v1.CreateUserRequest) (*v1.CreateUserResponse, error) {

@@ -10,8 +10,8 @@ import (
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/spf13/cobra"
-	"github.com/tinkerbell/pbnj/pkg/logging/zaplog"
-	"github.com/tinkerbell/pbnj/pkg/service/grpcsvc"
+	"github.com/tinkerbell/pbnj/cmd/zaplog"
+	"github.com/tinkerbell/pbnj/server/grpcsvr"
 
 	"goa.design/goa/grpc/middleware"
 	"google.golang.org/grpc"
@@ -79,7 +79,7 @@ var serverCmd = &cobra.Command{
 		*/
 		// add grpcsvc.WithPersistence(store) to grpc.RunServer
 
-		if err := grpcsvc.RunServer(ctx, logger, grpcServer, "50051"); err != nil {
+		if err := grpcsvr.RunServer(ctx, logger, grpcServer, "50051"); err != nil {
 			logger.Error(err, "error running server")
 			os.Exit(1)
 		}

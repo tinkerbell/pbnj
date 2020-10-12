@@ -1,4 +1,4 @@
-package grpcsvc
+package grpcsvr
 
 import (
 	"context"
@@ -8,10 +8,12 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
+	"github.com/tinkerbell/pbnj/cmd/zaplog"
 	v1 "github.com/tinkerbell/pbnj/pkg/api/v1"
-	"github.com/tinkerbell/pbnj/pkg/logging/zaplog"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/pkg/task"
+	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
+	"github.com/tinkerbell/pbnj/server/grpcsvr/taskrunner"
 )
 
 func TestDevice(t *testing.T) {
@@ -25,7 +27,15 @@ func TestDevice(t *testing.T) {
 			name: "status good; direct auth",
 			req: &v1.DeviceRequest{
 				Authn: &v1.Authn{
-					Authn: nil,
+					Authn: &v1.Authn_DirectAuthn{
+						DirectAuthn: &v1.DirectAuthn{
+							Host: &v1.Host{
+								Host: "",
+							},
+							Username: "",
+							Password: "",
+						},
+					},
 				},
 				Vendor: &v1.Vendor{
 					Name: "",
@@ -71,10 +81,17 @@ func TestDevice(t *testing.T) {
 			ctx = ctxzap.ToContext(ctx, zapLogger)
 			f := freecache.NewStore(freecache.DefaultOptions)
 			s := gokv.Store(f)
-			repo := &repository.GoKV{Store: s}
+			var repo repository.Actions
+			repo = &persistence.GoKV{
+				Store: s,
+				Ctx:   ctx,
+			}
 
-			taskRunner := task.Runner{
+			var taskRunner task.Task
+			taskRunner = &taskrunner.Runner{
 				Repository: repo,
+				Ctx:        ctx,
+				Log:        logger,
 			}
 			machineSvc := machineService{
 				log:        logger,
@@ -106,7 +123,15 @@ func TestPower(t *testing.T) {
 			name: "status good; direct auth",
 			req: &v1.PowerRequest{
 				Authn: &v1.Authn{
-					Authn: nil,
+					Authn: &v1.Authn_DirectAuthn{
+						DirectAuthn: &v1.DirectAuthn{
+							Host: &v1.Host{
+								Host: "10.1.1.1",
+							},
+							Username: "admin",
+							Password: "admin",
+						},
+					},
 				},
 				Vendor: &v1.Vendor{
 					Name: "",
@@ -156,10 +181,17 @@ func TestPower(t *testing.T) {
 			ctx = ctxzap.ToContext(ctx, zapLogger)
 			f := freecache.NewStore(freecache.DefaultOptions)
 			s := gokv.Store(f)
-			repo := &repository.GoKV{Store: s}
+			var repo repository.Actions
+			repo = &persistence.GoKV{
+				Store: s,
+				Ctx:   ctx,
+			}
 
-			taskRunner := task.Runner{
+			var taskRunner task.Task
+			taskRunner = &taskrunner.Runner{
 				Repository: repo,
+				Ctx:        ctx,
+				Log:        logger,
 			}
 			machineSvc := machineService{
 				log:        logger,

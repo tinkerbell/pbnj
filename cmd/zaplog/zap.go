@@ -16,11 +16,11 @@ import (
 // Logger is a wrapper around zap.SugaredLogger
 type Logger struct {
 	logr.Logger
-	LogLevel              string
-	OutputPaths           []string
-	ServiceName           string
-	KeysAndValues         map[string]interface{}
-	EnableErrLogsToStderr bool
+	logLevel              string
+	outputPaths           []string
+	serviceName           string
+	keysAndValues         map[string]interface{}
+	enableErrLogsToStderr bool
 }
 
 // LoggerOption for setting optional values
@@ -28,27 +28,27 @@ type LoggerOption func(*Logger)
 
 // WithLogLevel sets the log level
 func WithLogLevel(level string) LoggerOption {
-	return func(args *Logger) { args.LogLevel = level }
+	return func(args *Logger) { args.logLevel = level }
 }
 
 // WithOutputPaths adds output paths
 func WithOutputPaths(paths []string) LoggerOption {
-	return func(args *Logger) { args.OutputPaths = paths }
+	return func(args *Logger) { args.outputPaths = paths }
 }
 
 // WithServiceName adds a service name a logged field
 func WithServiceName(name string) LoggerOption {
-	return func(args *Logger) { args.ServiceName = name }
+	return func(args *Logger) { args.serviceName = name }
 }
 
 // WithKeysAndValues adds extra key/value fields
 func WithKeysAndValues(kvs map[string]interface{}) LoggerOption {
-	return func(args *Logger) { args.KeysAndValues = kvs }
+	return func(args *Logger) { args.keysAndValues = kvs }
 }
 
 // WithEnableErrLogsToStderr sends .Error logs to stderr
 func WithEnableErrLogsToStderr(enable bool) LoggerOption {
-	return func(args *Logger) { args.EnableErrLogsToStderr = enable }
+	return func(args *Logger) { args.enableErrLogsToStderr = enable }
 }
 
 // GetContextLogger get and return a logger from a ctx
@@ -73,32 +73,32 @@ func RegisterLogger(opts ...LoggerOption) (logging.Logger, *zap.Logger, error) {
 
 	l := &Logger{
 		Logger:        nil,
-		LogLevel:      defaultLogLevel,
-		OutputPaths:   defaultOutputPaths,
-		ServiceName:   defaultServiceName,
-		KeysAndValues: defaultKeysAndValues,
+		logLevel:      defaultLogLevel,
+		outputPaths:   defaultOutputPaths,
+		serviceName:   defaultServiceName,
+		keysAndValues: defaultKeysAndValues,
 	}
 
 	for _, opt := range opts {
 		opt(l)
 	}
 
-	switch l.LogLevel {
+	switch l.logLevel {
 	case "debug":
 		zLevel = zap.DebugLevel
 	}
 
 	zapConfig.Level = zap.NewAtomicLevelAt(zLevel)
 
-	zapConfig.OutputPaths = l.OutputPaths
+	zapConfig.OutputPaths = l.outputPaths
 	zapConfig.OutputPaths = sliceDedupe(append(zapConfig.OutputPaths, "stdout"))
-	zapConfig.InitialFields = l.KeysAndValues
+	zapConfig.InitialFields = l.keysAndValues
 	zapLogger, err := zapConfig.Build()
 	if err != nil {
 		return l, zapLogger, errors.Wrap(err, "failed to build logger config")
 	}
 
-	if l.EnableErrLogsToStderr {
+	if l.enableErrLogsToStderr {
 		errorLogs := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 			return lvl >= zapcore.ErrorLevel
 		})
@@ -115,7 +115,7 @@ func RegisterLogger(opts ...LoggerOption) (logging.Logger, *zap.Logger, error) {
 		splitLogger := zap.WrapCore(func(c zapcore.Core) zapcore.Core {
 			return core
 		})
-		zapLogger = zapLogger.WithOptions(splitLogger).Named(l.ServiceName)
+		zapLogger = zapLogger.WithOptions(splitLogger).Named(l.serviceName)
 
 	}
 

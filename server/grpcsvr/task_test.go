@@ -1,4 +1,4 @@
-package grpcsvc
+package grpcsvr
 
 import (
 	"context"
@@ -9,18 +9,20 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
+	"github.com/tinkerbell/pbnj/cmd/zaplog"
 	v1 "github.com/tinkerbell/pbnj/pkg/api/v1"
-	"github.com/tinkerbell/pbnj/pkg/logging/zaplog"
 	"github.com/tinkerbell/pbnj/pkg/oob"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/pkg/task"
+	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
+	"github.com/tinkerbell/pbnj/server/grpcsvr/taskrunner"
 )
 
 func TestTaskFound(t *testing.T) {
 	// create a task
 	ctx := context.Background()
-	defaultError := &oob.Error{
-		Error: &v1.Error{
+	defaultError := oob.Error{
+		Error: v1.Error{
 			Code:    0,
 			Message: "",
 			Details: nil,
@@ -30,12 +32,16 @@ func TestTaskFound(t *testing.T) {
 	ctx = ctxzap.ToContext(ctx, zapLogger)
 	f := freecache.NewStore(freecache.DefaultOptions)
 	s := gokv.Store(f)
-	repo := &repository.GoKV{Store: s}
+	var repo repository.Actions
+	repo = &persistence.GoKV{Store: s, Ctx: ctx}
 
-	taskRunner := task.Runner{
+	var taskRunner task.Task
+	taskRunner = &taskrunner.Runner{
 		Repository: repo,
+		Ctx:        ctx,
+		Log:        logger,
 	}
-	taskID, err := taskRunner.Execute(ctx, logger, "test", func(s chan string) (string, *oob.Error) {
+	taskID, err := taskRunner.Execute("test", func(s chan string) (string, oob.Error) {
 		return "doing cool stuff", defaultError // nolint
 	})
 	if err != nil {
@@ -86,10 +92,14 @@ func TestRecordNotFound(t *testing.T) {
 			ctx = ctxzap.ToContext(ctx, zapLogger)
 			f := freecache.NewStore(freecache.DefaultOptions)
 			s := gokv.Store(f)
-			repo := &repository.GoKV{Store: s}
+			var repo repository.Actions
+			repo = &persistence.GoKV{Store: s, Ctx: ctx}
 
-			taskRunner := task.Runner{
+			var taskRunner task.Task
+			taskRunner = &taskrunner.Runner{
 				Repository: repo,
+				Ctx:        ctx,
+				Log:        logger,
 			}
 			taskSvc := taskService{
 				log:        logger,
