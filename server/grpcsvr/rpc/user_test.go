@@ -34,29 +34,6 @@ func TestUserCreate(t *testing.T) {
 			message:     "user created",
 			expectedErr: false,
 		},
-		{
-			name: "status good; external auth",
-			req: &v1.CreateUserRequest{
-				Authn: &v1.Authn{
-					Authn: &v1.Authn_ExternalAuthn{
-						ExternalAuthn: &v1.ExternalAuthn{
-							Host: &v1.Host{
-								Host: "10.1.1.1",
-							},
-						},
-					},
-				},
-				Vendor: &v1.Vendor{
-					Name: "",
-				},
-				UserCreds: &v1.UserCreds{
-					Username: "admin",
-					Password: "admin",
-				},
-			},
-			message:     "user created",
-			expectedErr: false,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -107,26 +84,6 @@ func TestDeleteUser(t *testing.T) {
 			message:     "user deleted",
 			expectedErr: false,
 		},
-		{
-			name: "status good; external auth",
-			req: &v1.DeleteUserRequest{
-				Authn: &v1.Authn{
-					Authn: &v1.Authn_ExternalAuthn{
-						ExternalAuthn: &v1.ExternalAuthn{
-							Host: &v1.Host{
-								Host: "10.1.1.1",
-							},
-						},
-					},
-				},
-				Vendor: &v1.Vendor{
-					Name: "",
-				},
-				Username: "admin",
-			},
-			message:     "user deleted",
-			expectedErr: false,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -168,29 +125,6 @@ func TestUpdateUser(t *testing.T) {
 			req: &v1.UpdateUserRequest{
 				Authn: &v1.Authn{
 					Authn: nil,
-				},
-				Vendor: &v1.Vendor{
-					Name: "",
-				},
-				UserCreds: &v1.UserCreds{
-					Username: "admin",
-					Password: "admin",
-				},
-			},
-			message:     "user updated",
-			expectedErr: false,
-		},
-		{
-			name: "status good; external auth",
-			req: &v1.UpdateUserRequest{
-				Authn: &v1.Authn{
-					Authn: &v1.Authn_ExternalAuthn{
-						ExternalAuthn: &v1.ExternalAuthn{
-							Host: &v1.Host{
-								Host: "10.1.1.1",
-							},
-						},
-					},
 				},
 				Vendor: &v1.Vendor{
 					Name: "",

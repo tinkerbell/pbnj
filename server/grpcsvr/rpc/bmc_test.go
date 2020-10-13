@@ -18,30 +18,13 @@ func TestConfigNetworkSource(t *testing.T) {
 		expectedErr bool
 	}{
 		{
-			name: "status good; direct auth",
+			name: "status good",
 			req: &v1.NetworkSourceRequest{
 				Authn: &v1.Authn{
 					Authn: nil,
 				},
 				Vendor: &v1.Vendor{
 					Name: "",
-				},
-				NetworkSource: 0,
-			},
-			message:     "good",
-			expectedErr: false,
-		},
-		{
-			name: "status good; external auth",
-			req: &v1.NetworkSourceRequest{
-				Authn: &v1.Authn{
-					Authn: &v1.Authn_ExternalAuthn{
-						ExternalAuthn: &v1.ExternalAuthn{
-							Host: &v1.Host{
-								Host: "10.1.1.1",
-							},
-						},
-					},
 				},
 				NetworkSource: 0,
 			},

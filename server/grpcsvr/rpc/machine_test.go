@@ -46,27 +46,6 @@ func TestDevice(t *testing.T) {
 			message:     "good",
 			expectedErr: false,
 		},
-		{
-			name: "status good; external auth",
-			req: &v1.DeviceRequest{
-				Authn: &v1.Authn{
-					Authn: &v1.Authn_ExternalAuthn{
-						ExternalAuthn: &v1.ExternalAuthn{
-							Host: &v1.Host{
-								Host: "10.1.1.1",
-							},
-						},
-					},
-				},
-				Vendor: &v1.Vendor{
-					Name: "",
-				},
-				Persistent: false,
-				EfiBoot:    false,
-			},
-			message:     "good",
-			expectedErr: false,
-		},
 	}
 
 	for _, tc := range testCases {
