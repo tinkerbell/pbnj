@@ -11,7 +11,11 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"github.com/philippgille/gokv"
+	"github.com/philippgille/gokv/freecache"
 	"github.com/tinkerbell/pbnj/cmd/zaplog"
+	"github.com/tinkerbell/pbnj/pkg/repository"
+	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 )
@@ -29,11 +33,18 @@ func TestRunServer(t *testing.T) {
 	min := 40041
 	max := 40099
 	port := rand.Intn(max-min+1) + min
+
+	f := freecache.NewStore(freecache.DefaultOptions)
+	s := gokv.Store(f)
+	defer s.Close()
+	var repo repository.Actions
+	repo = &persistence.GoKV{Store: s, Ctx: ctx}
+
 	grpcServer := grpc.NewServer()
 
 	g := new(errgroup.Group)
 	g.Go(func() error {
-		return RunServer(ctx, log, grpcServer, strconv.Itoa(port))
+		return RunServer(ctx, log, grpcServer, strconv.Itoa(port), WithPersistence(repo))
 	})
 
 	time.Sleep(500 * time.Millisecond)

@@ -21,15 +21,15 @@ import (
 
 // Server options
 type Server struct {
-	Persistence gokv.Store
+	repository.Actions
 }
 
 // ServerOption for setting optional values
 type ServerOption func(*Server)
 
 // WithPersistence sets the log level
-func WithPersistence(store gokv.Store) ServerOption {
-	return func(args *Server) { args.Persistence = store }
+func WithPersistence(repo repository.Actions) ServerOption {
+	return func(args *Server) { args.Actions = repo }
 }
 
 // RunServer registers all services and runs the server
@@ -37,23 +37,26 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	defaultServer := &Server{
-		Persistence: gokv.Store(freecache.NewStore(freecache.DefaultOptions)),
-	}
-	for _, opt := range opts {
-		opt(defaultServer)
-	}
+	defaultStore := gokv.Store(freecache.NewStore(freecache.DefaultOptions))
 
 	// instantiate a Repository for task persistence
 	var repo repository.Actions
 	repo = &persistence.GoKV{
-		Store: defaultServer.Persistence,
+		Store: defaultStore,
 		Ctx:   ctx,
+	}
+
+	defaultServer := &Server{
+		Actions: repo,
+	}
+
+	for _, opt := range opts {
+		opt(defaultServer)
 	}
 
 	var taskRunner task.Task
 	taskRunner = &taskrunner.Runner{
-		Repository: repo,
+		Repository: defaultServer.Actions,
 		Ctx:        ctx,
 		Log:        log,
 	}
@@ -111,7 +114,6 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 		for range sigChan {
 			log.V(0).Info("sig received, shutting down PBnJ")
 			grpcServer.GracefulStop()
-			defaultServer.Persistence.Close()
 			<-ctx.Done()
 		}
 	}()
@@ -120,7 +122,6 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 		<-ctx.Done()
 		log.V(0).Info("ctx cancelled, shutting down PBnJ")
 		grpcServer.GracefulStop()
-		defaultServer.Persistence.Close()
 	}()
 
 	log.V(0).Info("starting PBnJ gRPC server")

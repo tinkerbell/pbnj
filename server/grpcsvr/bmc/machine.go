@@ -11,7 +11,7 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/oob"
 )
 
-// MachineAction for making power actions on BMCs
+// MachineAction for making power actions on BMCs, implements oob.Machine interface
 type MachineAction struct {
 	Log               logging.Logger
 	Ctx               context.Context

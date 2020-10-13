@@ -42,14 +42,6 @@ var serverCmd = &cobra.Command{
 		}
 		defer zlog.Sync() // nolint
 
-		/*
-			logger, _, unary, err := packetlog.RegisterPacketLogger("github.com/tinkerbell/pbnj")
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "%v\n", err)
-				os.Exit(1)
-			}
-		*/
-
 		// Make sure that log statements internal to gRPC library are logged using the zapLogger as well.
 		grpc_zap.ReplaceGrpcLoggerV2(zlog)
 
@@ -59,7 +51,6 @@ var serverCmd = &cobra.Command{
 				middleware.UnaryRequestID(middleware.UseXRequestIDMetadataOption(true), middleware.XRequestMetadataLimitOption(512)),
 				zaplog.UnaryLogRequestID(zlog, requestIDKey, requestIDLogKey),
 				grpc_zap.UnaryServerInterceptor(zlog),
-				//unary,
 				grpc_validator.UnaryServerInterceptor(),
 			),
 		)
@@ -76,8 +67,10 @@ var serverCmd = &cobra.Command{
 				logger.V(0).Error(err, "failed to connect to consul")
 				os.Exit(1)
 			}
+			var repo repository.Actions
+			repo = &persistence.GoKV{Store: store, Ctx: ctx}
 		*/
-		// add grpcsvc.WithPersistence(store) to grpc.RunServer
+		// add grpcsvr.WithPersistence(repo) to grpc.RunServer
 
 		if err := grpcsvr.RunServer(ctx, logger, grpcServer, "50051"); err != nil {
 			logger.Error(err, "error running server")

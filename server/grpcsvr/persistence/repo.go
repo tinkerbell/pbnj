@@ -10,7 +10,7 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
-// GoKV store
+// GoKV store, methods implement repository.Actions interface
 type GoKV struct {
 	Ctx   context.Context
 	Store gokv.Store
