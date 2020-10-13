@@ -22,6 +22,8 @@ const (
 	requestIDLogKey = "requestID"
 )
 
+var port string
+
 // serverCmd represents the server command
 var serverCmd = &cobra.Command{
 	Use:   "server",
@@ -80,5 +82,6 @@ var serverCmd = &cobra.Command{
 }
 
 func init() {
+	serverCmd.PersistentFlags().StringVar(&port, "port", "50051", "server port (default is 50051")
 	rootCmd.AddCommand(serverCmd)
 }
