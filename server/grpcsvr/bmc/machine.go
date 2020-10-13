@@ -36,7 +36,7 @@ func (p MachineAction) BootDevice() (string, oob.Error) {
 	l.V(1).Info(msg)
 	errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 	errMsg.Message = msg
-	return result, errMsg
+	return result, errMsg //nolint
 }
 
 // Power functionality for machines
@@ -58,7 +58,7 @@ func (p MachineAction) Power() (string, oob.Error) {
 		msg := "no auth found"
 		errMsg.Code = v1.Code_value["UNAUTHENTICATED"]
 		errMsg.Message = msg
-		return msg, errMsg
+		return msg, errMsg //nolint
 	}
 	user := p.PowerRequest.GetAuthn().GetDirectAuthn().Username
 	password := p.PowerRequest.GetAuthn().GetDirectAuthn().Password
@@ -71,7 +71,7 @@ func (p MachineAction) Power() (string, oob.Error) {
 		// TODO set errMsg.Code based on err response
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = err.Error()
-		return result, errMsg
+		return result, errMsg //nolint
 	}
 	p.StatusMessages <- "connected to bmc"
 
@@ -88,33 +88,33 @@ func (p MachineAction) Power() (string, oob.Error) {
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
-			return result, errMsg
+			return result, errMsg //nolint
 		case v1.PowerRequest_OFF.String():
 			// ok, err := conn.PowerOff()
 			msg := "power OFF not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
-			return result, errMsg
+			return result, errMsg //nolint
 		case v1.PowerRequest_HARDOFF.String():
 			msg := "power HARD OFF not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
-			return result, errMsg
+			return result, errMsg //nolint
 		case v1.PowerRequest_CYCLE.String():
 			// ok, err := conn.PowerCycle()
 			msg := "power CYCLE not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
-			return result, errMsg
+			return result, errMsg //nolint
 		case v1.PowerRequest_RESET.String():
 			msg := "power RESET not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
-			return result, errMsg
+			return result, errMsg //nolint
 		case v1.PowerRequest_STATUS.String():
 			l.V(1).Info("getting power status")
 			p.StatusMessages <- "getting power status"
@@ -125,7 +125,7 @@ func (p MachineAction) Power() (string, oob.Error) {
 				errMsg.Code = v1.Code_value["UNKNOWN"]
 				errMsg.Message = err.Error()
 			}
-			return result, errMsg
+			return result, errMsg //nolint
 		}
 
 	case devices.Cmc:
@@ -140,33 +140,33 @@ func (p MachineAction) Power() (string, oob.Error) {
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
-			return result, errMsg
+			return result, errMsg //nolint
 		case v1.PowerRequest_OFF.String():
 			// ok, err := conn.PowerOff()
 			msg := "power OFF not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
-			return result, errMsg
+			return result, errMsg //nolint
 		case v1.PowerRequest_HARDOFF.String():
 			msg := "power HARD OFF not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
-			return result, errMsg
+			return result, errMsg //nolint
 		case v1.PowerRequest_CYCLE.String():
 			// ok, err := conn.PowerCycle()
 			msg := "power CYCLE not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
-			return result, errMsg
+			return result, errMsg //nolint
 		case v1.PowerRequest_RESET.String():
 			msg := "power RESET not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
-			return result, errMsg
+			return result, errMsg //nolint
 		case v1.PowerRequest_STATUS.String():
 			l.V(0).Info("getting power status")
 			p.StatusMessages <- "getting power status"
@@ -177,15 +177,15 @@ func (p MachineAction) Power() (string, oob.Error) {
 				errMsg.Code = 2
 				errMsg.Message = err.Error()
 			}
-			return result, errMsg
+			return result, errMsg //nolint
 		}
 
 	default:
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = "Unknown device"
-		return result, errMsg
+		return result, errMsg //nolint
 	}
 
-	return result, errMsg
+	return result, errMsg //nolint
 
 }

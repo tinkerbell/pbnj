@@ -14,7 +14,6 @@ import (
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	"github.com/tinkerbell/pbnj/cmd/zaplog"
-	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -37,8 +36,7 @@ func TestRunServer(t *testing.T) {
 	f := freecache.NewStore(freecache.DefaultOptions)
 	s := gokv.Store(f)
 	defer s.Close()
-	var repo repository.Actions
-	repo = &persistence.GoKV{Store: s, Ctx: ctx}
+	repo := &persistence.GoKV{Store: s, Ctx: ctx}
 
 	grpcServer := grpc.NewServer()
 

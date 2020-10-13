@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	v1Client "github.com/tinkerbell/pbnj/client"
 	"github.com/tinkerbell/pbnj/cmd/zaplog"
 	v1 "github.com/tinkerbell/pbnj/pkg/api/v1"
-	v1Client "github.com/tinkerbell/pbnj/client"
 	"google.golang.org/grpc"
 )
 
@@ -44,7 +44,7 @@ var machineCmd = &cobra.Command{
 		client := v1.NewMachineClient(conn)
 		taskClient := v1.NewTaskClient(conn)
 
-		resp, err := v1Client.MachinePower(client, taskClient, &v1.PowerRequest{
+		resp, err := v1Client.MachinePower(ctx, client, taskClient, &v1.PowerRequest{
 			Authn: &v1.Authn{
 				Authn: &v1.Authn_DirectAuthn{
 					DirectAuthn: &v1.DirectAuthn{

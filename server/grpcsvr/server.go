@@ -11,7 +11,6 @@ import (
 	v1 "github.com/tinkerbell/pbnj/pkg/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/repository"
-	"github.com/tinkerbell/pbnj/pkg/task"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/rpc"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/taskrunner"
@@ -40,8 +39,7 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 	defaultStore := gokv.Store(freecache.NewStore(freecache.DefaultOptions))
 
 	// instantiate a Repository for task persistence
-	var repo repository.Actions
-	repo = &persistence.GoKV{
+	repo := &persistence.GoKV{
 		Store: defaultStore,
 		Ctx:   ctx,
 	}
@@ -54,8 +52,7 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 		opt(defaultServer)
 	}
 
-	var taskRunner task.Task
-	taskRunner = &taskrunner.Runner{
+	taskRunner := &taskrunner.Runner{
 		Repository: defaultServer.Actions,
 		Ctx:        ctx,
 		Log:        log,

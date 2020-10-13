@@ -10,8 +10,6 @@ import (
 	"github.com/philippgille/gokv/freecache"
 	"github.com/tinkerbell/pbnj/cmd/zaplog"
 	v1 "github.com/tinkerbell/pbnj/pkg/api/v1"
-	"github.com/tinkerbell/pbnj/pkg/repository"
-	"github.com/tinkerbell/pbnj/pkg/task"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/taskrunner"
 )
@@ -60,14 +58,12 @@ func TestDevice(t *testing.T) {
 			ctx = ctxzap.ToContext(ctx, zapLogger)
 			f := freecache.NewStore(freecache.DefaultOptions)
 			s := gokv.Store(f)
-			var repo repository.Actions
-			repo = &persistence.GoKV{
+			repo := &persistence.GoKV{
 				Store: s,
 				Ctx:   ctx,
 			}
 
-			var taskRunner task.Task
-			taskRunner = &taskrunner.Runner{
+			taskRunner := &taskrunner.Runner{
 				Repository: repo,
 				Ctx:        ctx,
 				Log:        logger,
@@ -160,14 +156,12 @@ func TestPower(t *testing.T) {
 			ctx = ctxzap.ToContext(ctx, zapLogger)
 			f := freecache.NewStore(freecache.DefaultOptions)
 			s := gokv.Store(f)
-			var repo repository.Actions
-			repo = &persistence.GoKV{
+			repo := &persistence.GoKV{
 				Store: s,
 				Ctx:   ctx,
 			}
 
-			var taskRunner task.Task
-			taskRunner = &taskrunner.Runner{
+			taskRunner := &taskrunner.Runner{
 				Repository: repo,
 				Ctx:        ctx,
 				Log:        logger,

@@ -25,8 +25,7 @@ func (m *MachineService) Device(ctx context.Context, in *v1.DeviceRequest) (*v1.
 	taskID, err := m.TaskRunner.Execute(
 		"setting boot device",
 		func(s chan string) (string, oob.Error) {
-			var mbd oob.Machine
-			mbd = bmc.MachineAction{
+			mbd := bmc.MachineAction{
 				Log:               m.Log,
 				Ctx:               ctx,
 				BootDeviceRequest: in,
@@ -47,8 +46,7 @@ func (m *MachineService) PowerAction(ctx context.Context, in *v1.PowerRequest) (
 	// TODO INPUT VALIDATION
 
 	var execFunc = func(s chan string) (string, oob.Error) {
-		var mp oob.Machine
-		mp = bmc.MachineAction{
+		mp := bmc.MachineAction{
 			Log:            m.Log,
 			Ctx:            ctx,
 			PowerRequest:   in,

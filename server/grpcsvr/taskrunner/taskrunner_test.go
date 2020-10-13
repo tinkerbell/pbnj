@@ -11,7 +11,6 @@ import (
 	"github.com/tinkerbell/pbnj/cmd/zaplog"
 	v1 "github.com/tinkerbell/pbnj/pkg/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/oob"
-	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
 )
 
@@ -28,8 +27,7 @@ func TestRoundTrip(t *testing.T) {
 	f := freecache.NewStore(freecache.DefaultOptions)
 	s := gokv.Store(f)
 	defer s.Close()
-	var repo repository.Actions
-	repo = &persistence.GoKV{Store: s, Ctx: ctx}
+	repo := &persistence.GoKV{Store: s, Ctx: ctx}
 	logger, zapLogger, _ := zaplog.RegisterLogger()
 	ctx = ctxzap.ToContext(ctx, zapLogger)
 	runner := Runner{
@@ -39,7 +37,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	id, err := runner.Execute(description, func(s chan string) (string, oob.Error) {
-		return "didnt do anything", defaultError
+		return "didnt do anything", defaultError //nolint
 	})
 	if err != nil {
 		t.Fatal(err)

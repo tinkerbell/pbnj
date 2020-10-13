@@ -8,10 +8,8 @@ import (
 )
 
 // MachinePower executes a power action against the server and retrieves status
-func MachinePower(client v1.MachineClient, taskClient v1.TaskClient, request *v1.PowerRequest) (*v1.StatusResponse, error) {
+func MachinePower(ctx context.Context, client v1.MachineClient, taskClient v1.TaskClient, request *v1.PowerRequest) (*v1.StatusResponse, error) {
 	var statusResp *v1.StatusResponse
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	response, err := client.Power(ctx, request)
 	if err != nil {
 		return nil, err

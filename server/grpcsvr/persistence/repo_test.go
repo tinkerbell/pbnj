@@ -19,8 +19,7 @@ func TestAllMethods(t *testing.T) {
 	f := freecache.NewStore(freecache.DefaultOptions)
 	s := gokv.Store(f)
 	defer s.Close()
-	var repo repository.Actions
-	repo = &GoKV{Store: s, Ctx: ctx}
+	repo := &GoKV{Store: s, Ctx: ctx}
 	record := repository.Record{
 		StatusResponse: &v1.StatusResponse{
 			Id:          id,
@@ -92,8 +91,7 @@ func TestGetRecordNotFound(t *testing.T) {
 	ctx := context.Background()
 	f := freecache.NewStore(freecache.DefaultOptions)
 	s := gokv.Store(f)
-	var repo repository.Actions
-	repo = &GoKV{Store: s, Ctx: ctx}
+	repo := &GoKV{Store: s, Ctx: ctx}
 	_, err := repo.Get(id)
 	if err == nil {
 		t.Fatalf("expecting NON nil error")
@@ -109,8 +107,7 @@ func TestGetRecordError(t *testing.T) {
 	ctx := context.Background()
 	f := freecache.NewStore(freecache.DefaultOptions)
 	s := gokv.Store(f)
-	var repo repository.Actions
-	repo = &GoKV{Store: s, Ctx: ctx}
+	repo := &GoKV{Store: s, Ctx: ctx}
 	_, err := repo.Get(id)
 	if err == nil {
 		t.Fatalf("expecting NON nil error")
@@ -126,8 +123,7 @@ func TestUpdateRecordNotFound(t *testing.T) {
 	ctx := context.Background()
 	f := freecache.NewStore(freecache.DefaultOptions)
 	s := gokv.Store(f)
-	var repo repository.Actions
-	repo = &GoKV{Store: s, Ctx: ctx}
+	repo := &GoKV{Store: s, Ctx: ctx}
 	err := repo.Update(id, repository.Record{})
 	if err == nil {
 		t.Fatalf("expecting NON nil error")
@@ -143,8 +139,7 @@ func TestUpdateRecordError(t *testing.T) {
 	ctx := context.Background()
 	f := freecache.NewStore(freecache.DefaultOptions)
 	s := gokv.Store(f)
-	var repo repository.Actions
-	repo = &GoKV{Store: s, Ctx: ctx}
+	repo := &GoKV{Store: s, Ctx: ctx}
 	err := repo.Update(id, repository.Record{})
 	if err == nil {
 		t.Fatalf("expecting NON nil error")
