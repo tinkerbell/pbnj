@@ -8,7 +8,7 @@ import (
 
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
-	v1 "github.com/tinkerbell/pbnj/pkg/api/v1"
+	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"

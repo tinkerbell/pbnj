@@ -10,6 +10,7 @@ require (
 	github.com/golang/protobuf v1.4.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/onsi/gomega v1.10.2
+	github.com/packethost/pkg/log/logr v0.0.0-20201013193546-e9489d08ff6d
 	github.com/philippgille/gokv v0.6.0
 	github.com/philippgille/gokv/freecache v0.6.0
 	github.com/pkg/errors v0.9.1

@@ -11,7 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/rs/xid"
-	v1 "github.com/tinkerbell/pbnj/pkg/api/v1"
+	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/oob"
 	"github.com/tinkerbell/pbnj/pkg/repository"

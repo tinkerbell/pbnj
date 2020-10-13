@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-option go_package = "github.com/tinkerbell/pbnj/pkg/api/v1";
+option go_package = "github.com/tinkerbell/pbnj/api/v1";
 
-package github.com.tinkerbell.pbnj.api.proto.v1;
+package github.com.tinkerbell.pbnj.api.v1;
 
 import "google/protobuf/any.proto";
 

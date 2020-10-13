@@ -4,7 +4,6 @@ package v1
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -36,7 +35,7 @@ var bMCNetworkSourceStreamDesc = &grpc.StreamDesc{
 
 func (c *bMCClient) NetworkSource(ctx context.Context, in *NetworkSourceRequest, opts ...grpc.CallOption) (*NetworkSourceResponse, error) {
 	out := new(NetworkSourceResponse)
-	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.proto.v1.BMC/NetworkSource", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.BMC/NetworkSource", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +48,7 @@ var bMCResetStreamDesc = &grpc.StreamDesc{
 
 func (c *bMCClient) Reset(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*ResetResponse, error) {
 	out := new(ResetResponse)
-	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.proto.v1.BMC/Reset", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.BMC/Reset", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +74,7 @@ func (s *BMCService) networkSource(_ interface{}, ctx context.Context, dec func(
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     s,
-		FullMethod: "/github.com.tinkerbell.pbnj.api.proto.v1.BMC/NetworkSource",
+		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.BMC/NetworkSource",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return s.NetworkSource(ctx, req.(*NetworkSourceRequest))
@@ -92,7 +91,7 @@ func (s *BMCService) reset(_ interface{}, ctx context.Context, dec func(interfac
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     s,
-		FullMethod: "/github.com.tinkerbell.pbnj.api.proto.v1.BMC/Reset",
+		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.BMC/Reset",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return s.Reset(ctx, req.(*ResetRequest))
@@ -114,7 +113,7 @@ func RegisterBMCService(s grpc.ServiceRegistrar, srv *BMCService) {
 		}
 	}
 	sd := grpc.ServiceDesc{
-		ServiceName: "github.com.tinkerbell.pbnj.api.proto.v1.BMC",
+		ServiceName: "github.com.tinkerbell.pbnj.api.v1.BMC",
 		Methods: []grpc.MethodDesc{
 			{
 				MethodName: "NetworkSource",
@@ -126,7 +125,7 @@ func RegisterBMCService(s grpc.ServiceRegistrar, srv *BMCService) {
 			},
 		},
 		Streams:  []grpc.StreamDesc{},
-		Metadata: "api/proto/v1/bmc.proto",
+		Metadata: "api/v1/bmc.proto",
 	}
 
 	s.RegisterService(&sd, nil)

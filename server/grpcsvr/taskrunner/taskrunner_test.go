@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	packet_logr "github.com/packethost/pkg/log/logr"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
+	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/cmd/zaplog"
-	v1 "github.com/tinkerbell/pbnj/pkg/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/oob"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
 )
@@ -28,7 +29,8 @@ func TestRoundTrip(t *testing.T) {
 	s := gokv.Store(f)
 	defer s.Close()
 	repo := &persistence.GoKV{Store: s, Ctx: ctx}
-	logger, zapLogger, _ := zaplog.RegisterLogger()
+	l, zapLogger, _ := packet_logr.NewPacketLogr()
+	logger := zaplog.RegisterLogger(l)
 	ctx = ctxzap.ToContext(ctx, zapLogger)
 	runner := Runner{
 		Repository: repo,

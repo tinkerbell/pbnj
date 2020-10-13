@@ -4,7 +4,6 @@ package v1
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -36,7 +35,7 @@ var machineBootDeviceStreamDesc = &grpc.StreamDesc{
 
 func (c *machineClient) BootDevice(ctx context.Context, in *DeviceRequest, opts ...grpc.CallOption) (*DeviceResponse, error) {
 	out := new(DeviceResponse)
-	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.proto.v1.Machine/BootDevice", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.Machine/BootDevice", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +48,7 @@ var machinePowerStreamDesc = &grpc.StreamDesc{
 
 func (c *machineClient) Power(ctx context.Context, in *PowerRequest, opts ...grpc.CallOption) (*PowerResponse, error) {
 	out := new(PowerResponse)
-	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.proto.v1.Machine/Power", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.Machine/Power", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +74,7 @@ func (s *MachineService) bootDevice(_ interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     s,
-		FullMethod: "/github.com.tinkerbell.pbnj.api.proto.v1.Machine/BootDevice",
+		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.Machine/BootDevice",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return s.BootDevice(ctx, req.(*DeviceRequest))
@@ -92,7 +91,7 @@ func (s *MachineService) power(_ interface{}, ctx context.Context, dec func(inte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     s,
-		FullMethod: "/github.com.tinkerbell.pbnj.api.proto.v1.Machine/Power",
+		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.Machine/Power",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return s.Power(ctx, req.(*PowerRequest))
@@ -114,7 +113,7 @@ func RegisterMachineService(s grpc.ServiceRegistrar, srv *MachineService) {
 		}
 	}
 	sd := grpc.ServiceDesc{
-		ServiceName: "github.com.tinkerbell.pbnj.api.proto.v1.Machine",
+		ServiceName: "github.com.tinkerbell.pbnj.api.v1.Machine",
 		Methods: []grpc.MethodDesc{
 			{
 				MethodName: "BootDevice",
@@ -126,7 +125,7 @@ func RegisterMachineService(s grpc.ServiceRegistrar, srv *MachineService) {
 			},
 		},
 		Streams:  []grpc.StreamDesc{},
-		Metadata: "api/proto/v1/machine.proto",
+		Metadata: "api/v1/machine.proto",
 	}
 
 	s.RegisterService(&sd, nil)

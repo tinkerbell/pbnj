@@ -9,10 +9,10 @@ import (
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
+	packet_logr "github.com/packethost/pkg/log/logr"
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/pbnj/cmd/zaplog"
 	"github.com/tinkerbell/pbnj/server/grpcsvr"
-
 	"goa.design/goa/grpc/middleware"
 	"google.golang.org/grpc"
 )
@@ -32,9 +32,9 @@ var serverCmd = &cobra.Command{
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		logger, zlog, err := zaplog.RegisterLogger(
-			zaplog.WithServiceName("github.com/tinkerbell/pbnj"),
-			zaplog.WithLogLevel(logLevel),
+		logger, zlog, err := packet_logr.NewPacketLogr(
+			packet_logr.WithServiceName("github.com/tinkerbell/pbnj"),
+			packet_logr.WithLogLevel(logLevel),
 		)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -72,7 +72,7 @@ var serverCmd = &cobra.Command{
 		*/
 		// add grpcsvr.WithPersistence(repo) to grpc.RunServer
 
-		if err := grpcsvr.RunServer(ctx, logger, grpcServer, "50051"); err != nil {
+		if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger), grpcServer, "50051"); err != nil {
 			logger.Error(err, "error running server")
 			os.Exit(1)
 		}

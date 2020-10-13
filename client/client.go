@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	v1 "github.com/tinkerbell/pbnj/pkg/api/v1"
+	v1 "github.com/tinkerbell/pbnj/api/v1"
 )
 
 // MachinePower executes a power action against the server and retrieves status

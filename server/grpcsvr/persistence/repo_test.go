@@ -9,7 +9,7 @@ import (
 	"github.com/go-test/deep"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
-	v1 "github.com/tinkerbell/pbnj/pkg/api/v1"
+	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 

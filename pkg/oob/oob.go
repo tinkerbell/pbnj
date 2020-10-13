@@ -1,7 +1,7 @@
 package oob
 
 import (
-	v1 "github.com/tinkerbell/pbnj/pkg/api/v1"
+	v1 "github.com/tinkerbell/pbnj/api/v1"
 )
 
 // User management methods

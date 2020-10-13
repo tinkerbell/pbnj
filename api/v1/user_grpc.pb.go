@@ -4,7 +4,6 @@ package v1
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -37,7 +36,7 @@ var userCreateUserStreamDesc = &grpc.StreamDesc{
 
 func (c *userClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error) {
 	out := new(CreateUserResponse)
-	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.proto.v1.User/CreateUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.User/CreateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +49,7 @@ var userDeleteUserStreamDesc = &grpc.StreamDesc{
 
 func (c *userClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error) {
 	out := new(DeleteUserResponse)
-	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.proto.v1.User/DeleteUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.User/DeleteUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +62,7 @@ var userUpdateUserStreamDesc = &grpc.StreamDesc{
 
 func (c *userClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error) {
 	out := new(UpdateUserResponse)
-	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.proto.v1.User/UpdateUser", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.User/UpdateUser", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +89,7 @@ func (s *UserService) createUser(_ interface{}, ctx context.Context, dec func(in
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     s,
-		FullMethod: "/github.com.tinkerbell.pbnj.api.proto.v1.User/CreateUser",
+		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.User/CreateUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return s.CreateUser(ctx, req.(*CreateUserRequest))
@@ -107,7 +106,7 @@ func (s *UserService) deleteUser(_ interface{}, ctx context.Context, dec func(in
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     s,
-		FullMethod: "/github.com.tinkerbell.pbnj.api.proto.v1.User/DeleteUser",
+		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.User/DeleteUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return s.DeleteUser(ctx, req.(*DeleteUserRequest))
@@ -124,7 +123,7 @@ func (s *UserService) updateUser(_ interface{}, ctx context.Context, dec func(in
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     s,
-		FullMethod: "/github.com.tinkerbell.pbnj.api.proto.v1.User/UpdateUser",
+		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.User/UpdateUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return s.UpdateUser(ctx, req.(*UpdateUserRequest))
@@ -151,7 +150,7 @@ func RegisterUserService(s grpc.ServiceRegistrar, srv *UserService) {
 		}
 	}
 	sd := grpc.ServiceDesc{
-		ServiceName: "github.com.tinkerbell.pbnj.api.proto.v1.User",
+		ServiceName: "github.com.tinkerbell.pbnj.api.v1.User",
 		Methods: []grpc.MethodDesc{
 			{
 				MethodName: "CreateUser",
@@ -167,7 +166,7 @@ func RegisterUserService(s grpc.ServiceRegistrar, srv *UserService) {
 			},
 		},
 		Streams:  []grpc.StreamDesc{},
-		Metadata: "api/proto/v1/user.proto",
+		Metadata: "api/v1/user.proto",
 	}
 
 	s.RegisterService(&sd, nil)

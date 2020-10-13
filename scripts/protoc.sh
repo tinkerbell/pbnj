@@ -10,8 +10,8 @@ set -e
 
 REPO=github.com/tinkerbell/pbnj
 REPO_BASE=$(dirname ${REPO})
-PROTOS_LOC=api/proto/v1
-OUT_LOC=pkg/api/v1
+PROTOS_LOC=api/v1
+OUT_LOC=api/v1
 
 mkdir -p ${REPO_BASE}
 ln -nsf ${PWD} ${REPO_BASE}

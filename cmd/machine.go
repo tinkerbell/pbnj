@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
+	packet_logr "github.com/packethost/pkg/log/logr"
 	"github.com/spf13/cobra"
+	v1 "github.com/tinkerbell/pbnj/api/v1"
 	v1Client "github.com/tinkerbell/pbnj/client"
-	"github.com/tinkerbell/pbnj/cmd/zaplog"
-	v1 "github.com/tinkerbell/pbnj/pkg/api/v1"
 	"google.golang.org/grpc"
 )
 
@@ -23,9 +23,9 @@ var machineCmd = &cobra.Command{
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		logger, zlog, err := zaplog.RegisterLogger(
-			zaplog.WithServiceName("github.com/tinkerbell/pbnj"),
-			zaplog.WithLogLevel(logLevel),
+		logger, zlog, err := packet_logr.NewPacketLogr(
+			packet_logr.WithServiceName("github.com/tinkerbell/pbnj"),
+			packet_logr.WithLogLevel(logLevel),
 		)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)

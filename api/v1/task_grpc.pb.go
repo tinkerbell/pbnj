@@ -4,7 +4,6 @@ package v1
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -35,7 +34,7 @@ var taskStatusStreamDesc = &grpc.StreamDesc{
 
 func (c *taskClient) Status(ctx context.Context, in *StatusRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
 	out := new(StatusResponse)
-	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.proto.v1.Task/Status", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.Task/Status", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +59,7 @@ func (s *TaskService) status(_ interface{}, ctx context.Context, dec func(interf
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     s,
-		FullMethod: "/github.com.tinkerbell.pbnj.api.proto.v1.Task/Status",
+		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.Task/Status",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return s.Status(ctx, req.(*StatusRequest))
@@ -77,7 +76,7 @@ func RegisterTaskService(s grpc.ServiceRegistrar, srv *TaskService) {
 		}
 	}
 	sd := grpc.ServiceDesc{
-		ServiceName: "github.com.tinkerbell.pbnj.api.proto.v1.Task",
+		ServiceName: "github.com.tinkerbell.pbnj.api.v1.Task",
 		Methods: []grpc.MethodDesc{
 			{
 				MethodName: "Status",
@@ -85,7 +84,7 @@ func RegisterTaskService(s grpc.ServiceRegistrar, srv *TaskService) {
 			},
 		},
 		Streams:  []grpc.StreamDesc{},
-		Metadata: "api/proto/v1/task.proto",
+		Metadata: "api/v1/task.proto",
 	}
 
 	s.RegisterService(&sd, nil)
