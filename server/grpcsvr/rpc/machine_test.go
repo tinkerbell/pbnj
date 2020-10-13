@@ -1,4 +1,4 @@
-package grpcsvr
+package rpc
 
 import (
 	"context"
@@ -93,11 +93,11 @@ func TestDevice(t *testing.T) {
 				Ctx:        ctx,
 				Log:        logger,
 			}
-			machineSvc := machineService{
-				log:        logger,
-				taskRunner: taskRunner,
+			machineSvc := MachineService{
+				Log:        logger,
+				TaskRunner: taskRunner,
 			}
-			response, err := machineSvc.device(ctx, testCase.req)
+			response, err := machineSvc.Device(ctx, testCase.req)
 
 			t.Log("Got : ", response)
 
@@ -193,11 +193,11 @@ func TestPower(t *testing.T) {
 				Ctx:        ctx,
 				Log:        logger,
 			}
-			machineSvc := machineService{
-				log:        logger,
-				taskRunner: taskRunner,
+			machineSvc := MachineService{
+				Log:        logger,
+				TaskRunner: taskRunner,
 			}
-			response, err := machineSvc.powerAction(ctx, testCase.req)
+			response, err := machineSvc.PowerAction(ctx, testCase.req)
 
 			t.Log("Got response: ", response)
 			t.Log("Got err: ", err)

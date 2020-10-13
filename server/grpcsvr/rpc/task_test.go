@@ -1,4 +1,4 @@
-package grpcsvr
+package rpc
 
 import (
 	"context"
@@ -49,9 +49,9 @@ func TestTaskFound(t *testing.T) {
 	}
 	taskReq := &v1.StatusRequest{TaskId: taskID}
 
-	taskSvc := taskService{
-		log:        logger,
-		taskRunner: taskRunner,
+	taskSvc := TaskService{
+		Log:        logger,
+		TaskRunner: taskRunner,
 	}
 
 	time.Sleep(10 * time.Millisecond)
@@ -101,9 +101,9 @@ func TestRecordNotFound(t *testing.T) {
 				Ctx:        ctx,
 				Log:        logger,
 			}
-			taskSvc := taskService{
-				log:        logger,
-				taskRunner: taskRunner,
+			taskSvc := TaskService{
+				Log:        logger,
+				TaskRunner: taskRunner,
 			}
 			response, err := taskSvc.Task(ctx, testCase.req)
 

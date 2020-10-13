@@ -1,4 +1,4 @@
-package grpcsvr
+package rpc
 
 import (
 	"context"
@@ -8,16 +8,18 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/task"
 )
 
-type taskService struct {
-	log        logging.Logger
-	taskRunner task.Task
+// TaskService for retrieving task details
+type TaskService struct {
+	Log        logging.Logger
+	TaskRunner task.Task
 }
 
-func (t *taskService) Task(ctx context.Context, in *v1.StatusRequest) (*v1.StatusResponse, error) {
-	l := t.log.GetContextLogger(ctx)
+// Task returns a task record
+func (t *TaskService) Task(ctx context.Context, in *v1.StatusRequest) (*v1.StatusResponse, error) {
+	l := t.Log.GetContextLogger(ctx)
 	l.V(0).Info("getting task record")
 
-	record, err := t.taskRunner.Status(in.TaskId)
+	record, err := t.TaskRunner.Status(in.TaskId)
 	if err != nil {
 		l.V(0).Error(err, "error getting task status")
 		return nil, err

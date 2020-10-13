@@ -1,4 +1,4 @@
-package grpcsvr
+package rpc
 
 import (
 	"context"
@@ -69,10 +69,10 @@ func TestUserCreate(t *testing.T) {
 
 			logger, zapLogger, _ := zaplog.RegisterLogger()
 			ctx = ctxzap.ToContext(ctx, zapLogger)
-			userSvc := userService{
-				log: logger,
+			userSvc := UserService{
+				Log: logger,
 			}
-			response, err := userSvc.createUser(ctx, testCase.req)
+			response, err := userSvc.CreateUser(ctx, testCase.req)
 
 			t.Log("Got : ", response)
 
@@ -139,10 +139,10 @@ func TestDeleteUser(t *testing.T) {
 
 			logger, zapLogger, _ := zaplog.RegisterLogger()
 			ctx = ctxzap.ToContext(ctx, zapLogger)
-			userSvc := userService{
-				log: logger,
+			userSvc := UserService{
+				Log: logger,
 			}
-			response, err := userSvc.deleteUser(ctx, testCase.req)
+			response, err := userSvc.DeleteUser(ctx, testCase.req)
 
 			t.Log("Got : ", response)
 
@@ -215,10 +215,10 @@ func TestUpdateUser(t *testing.T) {
 
 			logger, zapLogger, _ := zaplog.RegisterLogger()
 			ctx = ctxzap.ToContext(ctx, zapLogger)
-			userSvc := userService{
-				log: logger,
+			userSvc := UserService{
+				Log: logger,
 			}
-			response, err := userSvc.updateUser(ctx, testCase.req)
+			response, err := userSvc.UpdateUser(ctx, testCase.req)
 
 			t.Log("Got : ", response)
 

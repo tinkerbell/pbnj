@@ -13,6 +13,7 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/pkg/task"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
+	"github.com/tinkerbell/pbnj/server/grpcsvr/rpc"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/taskrunner"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -57,43 +58,43 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 		Log:        log,
 	}
 
-	ms := machineService{
-		log:        log,
-		taskRunner: taskRunner,
+	ms := rpc.MachineService{
+		Log:        log,
+		TaskRunner: taskRunner,
 	}
 	m := v1.MachineService{
-		BootDevice: ms.device,
-		Power:      ms.powerAction,
+		BootDevice: ms.Device,
+		Power:      ms.PowerAction,
 	}
 	v1.RegisterMachineService(grpcServer, &m)
 
-	bs := bmcService{
-		log:        log,
-		taskRunner: taskRunner,
+	bs := rpc.BmcService{
+		Log:        log,
+		TaskRunner: taskRunner,
 	}
 	b := v1.BMCService{
-		NetworkSource: bs.networkSource,
-		Reset:         bs.resetAction,
+		NetworkSource: bs.NetworkSource,
+		Reset:         bs.ResetAction,
 	}
 	v1.RegisterBMCService(grpcServer, &b)
 
-	ts := taskService{
-		log:        log,
-		taskRunner: taskRunner,
+	ts := rpc.TaskService{
+		Log:        log,
+		TaskRunner: taskRunner,
 	}
 	t := v1.TaskService{
 		Status: ts.Task,
 	}
 	v1.RegisterTaskService(grpcServer, &t)
 
-	us := userService{
-		log:        log,
-		taskRunner: taskRunner,
+	us := rpc.UserService{
+		Log:        log,
+		TaskRunner: taskRunner,
 	}
 	u := v1.UserService{
-		CreateUser: us.createUser,
-		DeleteUser: us.deleteUser,
-		UpdateUser: us.updateUser,
+		CreateUser: us.CreateUser,
+		DeleteUser: us.DeleteUser,
+		UpdateUser: us.UpdateUser,
 	}
 	v1.RegisterUserService(grpcServer, &u)
 	reflection.Register(grpcServer)

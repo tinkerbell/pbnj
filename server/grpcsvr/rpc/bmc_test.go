@@ -1,4 +1,4 @@
-package grpcsvr
+package rpc
 
 import (
 	"context"
@@ -60,10 +60,10 @@ func TestConfigNetworkSource(t *testing.T) {
 
 			logger, zapLogger, _ := zaplog.RegisterLogger()
 			ctx = ctxzap.ToContext(ctx, zapLogger)
-			bmcSvc := bmcService{
-				log: logger,
+			bmcSvc := BmcService{
+				Log: logger,
 			}
-			response, err := bmcSvc.networkSource(ctx, testCase.req)
+			response, err := bmcSvc.NetworkSource(ctx, testCase.req)
 
 			t.Log("Got : ", response)
 

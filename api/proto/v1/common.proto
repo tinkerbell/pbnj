@@ -21,7 +21,7 @@ message DirectAuthn {
 message Authn {
     oneof authn {
         DirectAuthn directAuthn = 1;
-        ExternalAuthn externalAuthn = 2;
+        //ExternalAuthn externalAuthn = 2;
 
     }
 }
