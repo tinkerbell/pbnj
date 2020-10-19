@@ -1,3 +1,6 @@
+server:
+  url: localhost
+  port: 50051
 resources:
 - ip: 10.10.10.10 # BMC IP
   username: admin # BMC username

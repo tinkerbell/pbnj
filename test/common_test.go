@@ -6,9 +6,11 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path"
 	"runtime"
+	"strconv"
 	"testing"
 	"time"
 
@@ -17,10 +19,28 @@ import (
 )
 
 var (
-	cfgData Data
-	port    = "40041"
-	cfg     = flag.String("config", "resources.yaml", "resources yaml file to read")
+	cfgData = ConfigFile{
+		Server: Server{
+			URL:  defaultURL,
+			Port: defaultPort,
+		},
+	}
+	defaultPort = randomInt(40000, 50000)
+	defaultURL  = "localhost"
+	cfg         = flag.String("config", "resources.yaml", "resources yaml file to read")
 )
+
+// ConfigFile is the config file
+type ConfigFile struct {
+	Server Server `yaml:"server"`
+	Data   `yaml:",inline"`
+}
+
+// Server is the connection details
+type Server struct {
+	URL  string `yaml:"url"`
+	Port string `yaml:"port"`
+}
 
 // Data of BMC resources
 type Data struct {
@@ -44,46 +64,54 @@ type Resource struct {
 
 func TestMain(m *testing.M) {
 	// get the resources data
-	cfgData = Config()
-	// start the server
-	go func() {
-		serverCmd := cmd.NewRootCmd()
-		serverCmd.SetArgs([]string{"server", "--port", port})
-		serverCmd.Execute() // nolint
-	}()
+	cfgData.Config(*cfg)
+
+	if cfgData.Server.Port == defaultPort {
+		// start the local internal server
+		go func() {
+			serverCmd := cmd.NewRootCmd()
+			serverCmd.SetArgs([]string{"server", "--port", defaultPort})
+			serverCmd.Execute() // nolint
+		}()
+	}
+
 	time.Sleep(1 * time.Second)
 	os.Exit(m.Run())
 }
 
 // Config for the resources file
-func Config() Data {
+func (c *ConfigFile) Config(name string) {
 	flag.Parse()
-	cfgData, err := parseConfig(*cfg)
+	err := c.parseConfig(name)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
-	return cfgData
 }
 
 // parseConfig reads and validates a config
-func parseConfig(name string) (Data, error) {
-	c := Data{}
+func (c *ConfigFile) parseConfig(name string) error {
 	// Relative to runtime directory
 	_, b, _, _ := runtime.Caller(0)
 	d1 := path.Join(path.Dir(b))
 	config, err := ioutil.ReadFile(path.Join(d1, name))
 	if err != nil {
-		return c, err
+		return err
 	}
 	err = yaml.Unmarshal(config, &c)
 	if err != nil {
-		return c, err
+		return err
 	}
 
-	return c, validateConfig(c)
+	return c.validateConfig()
 }
 
-func validateConfig(c Data) error {
+func (c *ConfigFile) validateConfig() error {
 	return nil
+}
+
+// Returns an int >= min, < max
+func randomInt(min, max int) string {
+	rand.Seed(time.Now().UnixNano())
+	return strconv.Itoa(rand.Intn(max-min+1) + min)
 }

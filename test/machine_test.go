@@ -95,7 +95,7 @@ type dataObject map[string]testResource
 
 // TestPower actions against BMCs
 func TestPower(t *testing.T) {
-	resources := createTestData(cfgData)
+	resources := createTestData(cfgData.Data)
 	for rname, rs := range resources {
 		rs := rs
 		rname := rname
@@ -106,7 +106,7 @@ func TestPower(t *testing.T) {
 				name := name
 				t.Run(name, func(t *testing.T) {
 					// do the work
-					got, err := runClient(rs, tc.Action)
+					got, err := runClient(rs, tc.Action, cfgData.Server)
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -122,14 +122,14 @@ func TestPower(t *testing.T) {
 	}
 }
 
-func runClient(in testResource, action v1.PowerRequest_Action) (*v1.StatusResponse, error) {
+func runClient(in testResource, action v1.PowerRequest_Action, s Server) (*v1.StatusResponse, error) {
 	var opts []grpc.DialOption
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	opts = append(opts, grpc.WithInsecure())
-	conn, err := grpc.Dial("localhost:"+port, opts...)
+	conn, err := grpc.Dial(s.URL+":"+s.Port, opts...)
 	if err != nil {
 		return nil, err
 	}
