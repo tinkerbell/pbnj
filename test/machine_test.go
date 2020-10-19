@@ -106,7 +106,7 @@ func TestPower(t *testing.T) {
 				name := name
 				t.Run(name, func(t *testing.T) {
 					// do the work
-					got, err := runClient(rs, tc.Action, cfgData.Server)
+					got, err := runMachineClient(rs, tc.Action, cfgData.Server)
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -122,7 +122,7 @@ func TestPower(t *testing.T) {
 	}
 }
 
-func runClient(in testResource, action v1.PowerRequest_Action, s Server) (*v1.StatusResponse, error) {
+func runMachineClient(in testResource, action v1.PowerRequest_Action, s Server) (*v1.StatusResponse, error) {
 	var opts []grpc.DialOption
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
