@@ -3,7 +3,6 @@
 
 package main
 
-
 import (
 	"flag"
 	"os"
@@ -30,6 +29,7 @@ func init() {
 	flag.StringVar(&listenAddr, "listen-addr", listenAddr, "IP and port to listen on for HTTP")
 }
 
+# cleanup does test cleanup CBK
 func cleanup() {
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
