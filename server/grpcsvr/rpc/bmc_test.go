@@ -6,7 +6,7 @@ import (
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/onsi/gomega"
-	packet_logr "github.com/packethost/pkg/log/logr"
+	"github.com/packethost/pkg/log/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/cmd/zaplog"
 )
@@ -42,7 +42,7 @@ func TestConfigNetworkSource(t *testing.T) {
 
 			ctx := context.Background()
 
-			l, zapLogger, _ := packet_logr.NewPacketLogr()
+			l, zapLogger, _ := logr.NewPacketLogr()
 			logger := zaplog.RegisterLogger(l)
 			ctx = ctxzap.ToContext(ctx, zapLogger)
 			bmcSvc := BmcService{

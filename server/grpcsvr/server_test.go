@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	packet_logr "github.com/packethost/pkg/log/logr"
+	"github.com/packethost/pkg/log/logr"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	"github.com/tinkerbell/pbnj/cmd/zaplog"
@@ -23,7 +23,7 @@ import (
 func TestRunServer(t *testing.T) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 9*time.Second)
-	l, zapLogger, err := packet_logr.NewPacketLogr()
+	l, zapLogger, err := logr.NewPacketLogr()
 	log := zaplog.RegisterLogger(l)
 	ctx = ctxzap.ToContext(ctx, zapLogger)
 	if err != nil {
@@ -58,7 +58,7 @@ func TestRunServerSignals(t *testing.T) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
-	l, zapLogger, err := packet_logr.NewPacketLogr()
+	l, zapLogger, err := logr.NewPacketLogr()
 	log := zaplog.RegisterLogger(l)
 	ctx = ctxzap.ToContext(ctx, zapLogger)
 	if err != nil {
@@ -100,7 +100,7 @@ func TestRunServerPortInUse(t *testing.T) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	l, zapLogger, err := packet_logr.NewPacketLogr()
+	l, zapLogger, err := logr.NewPacketLogr()
 	log := zaplog.RegisterLogger(l)
 	ctx = ctxzap.ToContext(ctx, zapLogger)
 	if err != nil {

@@ -9,7 +9,7 @@ import (
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
-	packet_logr "github.com/packethost/pkg/log/logr"
+	"github.com/packethost/pkg/log/logr"
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/pbnj/cmd/zaplog"
 	"github.com/tinkerbell/pbnj/server/grpcsvr"
@@ -32,9 +32,9 @@ var serverCmd = &cobra.Command{
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		logger, zlog, err := packet_logr.NewPacketLogr(
-			packet_logr.WithServiceName("github.com/tinkerbell/pbnj"),
-			packet_logr.WithLogLevel(logLevel),
+		logger, zlog, err := logr.NewPacketLogr(
+			logr.WithServiceName("github.com/tinkerbell/pbnj"),
+			logr.WithLogLevel(logLevel),
 		)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
