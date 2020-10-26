@@ -21,11 +21,9 @@ func TestTaskFound(t *testing.T) {
 	// create a task
 	ctx := context.Background()
 	defaultError := oob.Error{
-		Error: v1.Error{
-			Code:    0,
-			Message: "",
-			Details: nil,
-		},
+		Code:    0,
+		Message: "",
+		Details: nil,
 	}
 	l, zapLogger, _ := logr.NewPacketLogr()
 	logger := zaplog.RegisterLogger(l)

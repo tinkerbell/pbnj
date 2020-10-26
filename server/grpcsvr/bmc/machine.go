@@ -24,11 +24,9 @@ type MachineAction struct {
 func (p MachineAction) BootDevice() (string, oob.Error) {
 	var result string
 	errMsg := oob.Error{
-		Error: v1.Error{
-			Code:    0,
-			Message: "",
-			Details: nil,
-		},
+		Code:    0,
+		Message: "",
+		Details: nil,
 	}
 	l := p.Log.GetContextLogger(p.Ctx)
 	l.V(0).Info("not implemented")
@@ -46,11 +44,9 @@ func (p MachineAction) Power() (string, oob.Error) {
 	// TODO handle nil values
 	var result string
 	errMsg := oob.Error{
-		Error: v1.Error{
-			Code:    0,
-			Message: "",
-			Details: nil,
-		},
+		Code:    0,
+		Message: "",
+		Details: nil,
 	}
 
 	l.V(0).Info(fmt.Sprintf("%+v", p.PowerRequest))

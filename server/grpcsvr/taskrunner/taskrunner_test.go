@@ -9,7 +9,6 @@ import (
 	"github.com/packethost/pkg/log/logr"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
-	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/cmd/zaplog"
 	"github.com/tinkerbell/pbnj/pkg/oob"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
@@ -18,11 +17,9 @@ import (
 func TestRoundTrip(t *testing.T) {
 	description := "test task"
 	defaultError := oob.Error{
-		Error: v1.Error{
-			Code:    0,
-			Message: "",
-			Details: nil,
-		},
+		Code:    0,
+		Message: "",
+		Details: nil,
 	}
 	ctx := context.Background()
 	f := freecache.NewStore(freecache.DefaultOptions)

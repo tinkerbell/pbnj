@@ -1,8 +1,6 @@
 package oob
 
-import (
-	v1 "github.com/tinkerbell/pbnj/api/v1"
-)
+import "github.com/golang/protobuf/ptypes/any"
 
 // User management methods
 type User interface {
@@ -25,5 +23,11 @@ type BMC interface {
 
 // Error for all bmc actions
 type Error struct {
-	v1.Error
+	Code int32 `protobuf:"varint,1,opt,name=code,proto3" json:"code,omitempty"`
+	// A developer-facing human-readable error message in English. It should
+	// both explain the error and offer an actionable resolution to it.
+	Message string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	// Additional error information that the client code can use to handle
+	// the error, such as retry delay or a help link.
+	Details []*any.Any `protobuf:"bytes,3,rep,name=details,proto3" json:"details,omitempty"`
 }
