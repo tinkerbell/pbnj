@@ -1,4 +1,4 @@
-package bmc
+package oob
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/packethost/pkg/log/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
-	"github.com/tinkerbell/pbnj/cmd/zaplog"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
@@ -26,21 +25,17 @@ func TestParseAuth(t *testing.T) {
 	}
 	ctx := context.Background()
 	l, zapLogger, _ := logr.NewPacketLogr()
-	logger := zaplog.RegisterLogger(l)
 	ctx = ctxzap.ToContext(ctx, zapLogger)
 	sm := make(chan string)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			m := MachineAction{
-				PowerRequest: &v1.PowerRequest{
-					Authn: tc.input,
-				},
-				StatusMessages: sm,
-				Log:            logger,
+			a := Accessory{
+				Log:            l,
 				Ctx:            ctx,
+				StatusMessages: sm,
 			}
 
-			host, username, passwd, errMsg := m.parseAuth(m.PowerRequest.Authn)
+			host, username, passwd, errMsg := a.ParseAuth(tc.input)
 			diff := cmp.Diff(tc.want, errMsg)
 			if diff != "" {
 				t.Log(fmt.Sprintf("%+v", errMsg))
@@ -76,23 +71,22 @@ func TestSendStatusMessage(t *testing.T) {
 
 	ctx := context.Background()
 	l, zapLogger, _ := logr.NewPacketLogr()
-	logger := zaplog.RegisterLogger(l)
 	ctx = ctxzap.ToContext(ctx, zapLogger)
 	sm := make(chan string)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			var msgs []string
 			done := make(chan bool, 1)
-			m := MachineAction{
-				StatusMessages: sm,
-				Log:            logger,
+			a := Accessory{
+				Log:            l,
 				Ctx:            ctx,
+				StatusMessages: sm,
 			}
 
 			if tc.runChanReceiver {
 				go func() {
 					for {
-						msgs = append(msgs, <-m.StatusMessages)
+						msgs = append(msgs, <-a.StatusMessages)
 						select {
 						case <-done:
 							return
@@ -101,8 +95,8 @@ func TestSendStatusMessage(t *testing.T) {
 						}
 					}
 				}()
-				m.sendStatusMessage(tc.want[0])
-				m.sendStatusMessage(tc.want[1])
+				a.SendStatusMessage(tc.want[0])
+				a.SendStatusMessage(tc.want[1])
 				time.Sleep(10 * time.Millisecond)
 				done <- true
 			}

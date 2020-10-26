@@ -1,8 +1,10 @@
-package bmc
+package machine
 
 import (
+	"context"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/stmcginnis/gofish"
 	"github.com/stmcginnis/gofish/redfish"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
@@ -10,14 +12,14 @@ import (
 )
 
 type redfishBMC struct {
-	mAction  MachineAction
+	log      logr.Logger
 	conn     *gofish.APIClient
 	user     string
 	password string
 	host     string
 }
 
-func (r *redfishBMC) connection() repository.Error {
+func (r *redfishBMC) Connect(ctx context.Context) repository.Error {
 	var errMsg repository.Error
 
 	config := gofish.ClientConfig{
@@ -37,7 +39,7 @@ func (r *redfishBMC) connection() repository.Error {
 	return errMsg
 }
 
-func (r *redfishBMC) close() {
+func (r *redfishBMC) Close() {
 	r.conn.Logout()
 }
 
@@ -100,7 +102,6 @@ func (r *redfishBMC) status() (result string, errMsg repository.Error) {
 }
 
 func (r *redfishBMC) reset() (result string, errMsg repository.Error) {
-	l := r.mAction.Log.GetContextLogger(r.mAction.Ctx)
 	service := r.conn.Service
 	ss, err := service.Systems()
 	if err != nil {
@@ -111,7 +112,7 @@ func (r *redfishBMC) reset() (result string, errMsg repository.Error) {
 	for _, system := range ss {
 		err = system.Reset(redfish.PowerCycleResetType)
 		if err != nil {
-			l.V(1).Info("warning", "msg", err.Error())
+			r.log.V(1).Info("warning", "msg", err.Error())
 			r.off()
 			for wait := 1; wait < 10; wait++ {
 				status, _ := r.status()
@@ -150,7 +151,6 @@ func (r *redfishBMC) hardoff() (result string, errMsg repository.Error) {
 }
 
 func (r *redfishBMC) cycle() (result string, errMsg repository.Error) {
-	l := r.mAction.Log.GetContextLogger(r.mAction.Ctx)
 	service := r.conn.Service
 	ss, err := service.Systems()
 	if err != nil {
@@ -161,7 +161,7 @@ func (r *redfishBMC) cycle() (result string, errMsg repository.Error) {
 	for _, system := range ss {
 		err = system.Reset(redfish.GracefulRestartResetType)
 		if err != nil {
-			l.V(1).Info("warning", "msg", err.Error())
+			r.log.V(1).Info("warning", "msg", err.Error())
 			r.off()
 			for wait := 1; wait < 10; wait++ {
 				status, _ := r.status()

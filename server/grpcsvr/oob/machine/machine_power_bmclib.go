@@ -1,24 +1,26 @@
-package bmc
+package machine
 
 import (
+	"context"
+
 	"github.com/bmc-toolbox/bmclib/devices"
 	"github.com/bmc-toolbox/bmclib/discover"
+	"github.com/go-logr/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
 type bmclibBMC struct {
-	mAction  MachineAction
+	log      logr.Logger
 	conn     devices.Bmc
 	user     string
 	password string
 	host     string
 }
 
-func (b *bmclibBMC) connection() repository.Error {
+func (b *bmclibBMC) Connect(ctx context.Context) repository.Error {
 	var errMsg repository.Error
-	l := b.mAction.Log.GetContextLogger(b.mAction.Ctx)
-	connection, err := discover.ScanAndConnect(b.host, b.user, b.password, discover.WithLogger(l))
+	connection, err := discover.ScanAndConnect(b.host, b.user, b.password, discover.WithLogger(b.log))
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = err.Error()
@@ -35,7 +37,7 @@ func (b *bmclibBMC) connection() repository.Error {
 	return errMsg //nolint
 }
 
-func (b *bmclibBMC) close() {
+func (b *bmclibBMC) Close() {
 	b.conn.Close()
 }
 

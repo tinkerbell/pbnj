@@ -3,7 +3,7 @@ module github.com/tinkerbell/pbnj
 go 1.15
 
 require (
-	github.com/bmc-toolbox/bmclib v0.4.0
+	github.com/bmc-toolbox/bmclib v0.4.2
 	github.com/gebn/bmc v0.0.0-20200904230046-a5643220ab2a
 	github.com/go-logr/logr v0.2.1
 	github.com/go-logr/zapr v0.2.0
@@ -21,6 +21,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/stmcginnis/gofish v0.5.0
+	github.com/vmware/goipmi v0.0.0-20181114221114-2333cd82d702
 	go.uber.org/zap v1.16.0
 	goa.design/goa v2.2.4+incompatible
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
