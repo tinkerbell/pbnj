@@ -74,3 +74,11 @@ endif
 .PHONY: pbs
 pbs: ## generate go stubs from protocol buffers
 	scripts/protoc.sh
+
+.PHONY: image
+image: ## make the Container Image
+	docker build -t pbnj:local . 
+
+.PHONY: run-image
+run-image: ## run PBnJ container image
+	docker run -it --rm -e PNBJ_LOGLEVEL=debug -p 9090:9090 pbnj:local
