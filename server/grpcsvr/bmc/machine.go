@@ -2,13 +2,12 @@ package bmc
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/bmc-toolbox/bmclib/devices"
 	"github.com/bmc-toolbox/bmclib/discover"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
-	"github.com/tinkerbell/pbnj/pkg/oob"
+	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
 // MachineAction for making power actions on BMCs, implements oob.Machine interface
@@ -21,14 +20,12 @@ type MachineAction struct {
 }
 
 // BootDevice functionality for machines
-func (p MachineAction) BootDevice() (string, oob.Error) {
+func (p MachineAction) BootDevice() (string, repository.Error) {
 	var result string
-	errMsg := oob.Error{
-		Error: v1.Error{
-			Code:    0,
-			Message: "",
-			Details: nil,
-		},
+	errMsg := repository.Error{
+		Code:    0,
+		Message: "",
+		Details: nil,
 	}
 	l := p.Log.GetContextLogger(p.Ctx)
 	l.V(0).Info("not implemented")
@@ -40,20 +37,17 @@ func (p MachineAction) BootDevice() (string, oob.Error) {
 }
 
 // Power functionality for machines
-func (p MachineAction) Power() (string, oob.Error) {
+func (p MachineAction) Power() (string, repository.Error) {
 	l := p.Log.GetContextLogger(p.Ctx)
 	l.V(0).Info("power state")
 	// TODO handle nil values
 	var result string
-	errMsg := oob.Error{
-		Error: v1.Error{
-			Code:    0,
-			Message: "",
-			Details: nil,
-		},
+	errMsg := repository.Error{
+		Code:    0,
+		Message: "",
+		Details: nil,
 	}
 
-	l.V(0).Info(fmt.Sprintf("%+v", p.PowerRequest))
 	if p.PowerRequest.Authn == nil || p.PowerRequest.Authn.Authn == nil {
 		msg := "no auth found"
 		errMsg.Code = v1.Code_value["UNAUTHENTICATED"]
@@ -81,41 +75,41 @@ func (p MachineAction) Power() (string, oob.Error) {
 		conn := connection.(devices.Bmc)
 		defer conn.Close()
 
-		switch p.PowerRequest.GetAction().String() {
-		case v1.PowerRequest_ON.String():
+		switch p.PowerRequest.GetAction() {
+		case v1.PowerRequest_ON:
 			// ok, err := conn.PowerOn()
 			msg := "power ON not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg //nolint
-		case v1.PowerRequest_OFF.String():
+		case v1.PowerRequest_OFF:
 			// ok, err := conn.PowerOff()
 			msg := "power OFF not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg //nolint
-		case v1.PowerRequest_HARDOFF.String():
+		case v1.PowerRequest_HARDOFF:
 			msg := "power HARD OFF not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg //nolint
-		case v1.PowerRequest_CYCLE.String():
+		case v1.PowerRequest_CYCLE:
 			// ok, err := conn.PowerCycle()
 			msg := "power CYCLE not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg //nolint
-		case v1.PowerRequest_RESET.String():
+		case v1.PowerRequest_RESET:
 			msg := "power RESET not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg //nolint
-		case v1.PowerRequest_STATUS.String():
+		case v1.PowerRequest_STATUS:
 			l.V(1).Info("getting power status")
 			p.StatusMessages <- "getting power status"
 			result, err := conn.PowerState()
@@ -133,41 +127,41 @@ func (p MachineAction) Power() (string, oob.Error) {
 		l.V(0).Info("not implemented")
 		conn := connection.(devices.Cmc)
 
-		switch p.PowerRequest.GetAction().String() {
-		case v1.PowerRequest_ON.String():
+		switch p.PowerRequest.GetAction() {
+		case v1.PowerRequest_ON:
 			// ok, err := conn.PowerOn()
 			msg := "power ON not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg //nolint
-		case v1.PowerRequest_OFF.String():
+		case v1.PowerRequest_OFF:
 			// ok, err := conn.PowerOff()
 			msg := "power OFF not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg //nolint
-		case v1.PowerRequest_HARDOFF.String():
+		case v1.PowerRequest_HARDOFF:
 			msg := "power HARD OFF not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg //nolint
-		case v1.PowerRequest_CYCLE.String():
+		case v1.PowerRequest_CYCLE:
 			// ok, err := conn.PowerCycle()
 			msg := "power CYCLE not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg //nolint
-		case v1.PowerRequest_RESET.String():
+		case v1.PowerRequest_RESET:
 			msg := "power RESET not implemented"
 			l.V(1).Info(msg)
 			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 			errMsg.Message = msg
 			return result, errMsg //nolint
-		case v1.PowerRequest_STATUS.String():
+		case v1.PowerRequest_STATUS:
 			l.V(0).Info("getting power status")
 			p.StatusMessages <- "getting power status"
 			result, err := conn.Status()

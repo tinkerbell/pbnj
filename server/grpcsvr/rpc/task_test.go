@@ -12,7 +12,7 @@ import (
 	"github.com/philippgille/gokv/freecache"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/cmd/zaplog"
-	"github.com/tinkerbell/pbnj/pkg/oob"
+	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/taskrunner"
 )
@@ -20,12 +20,10 @@ import (
 func TestTaskFound(t *testing.T) {
 	// create a task
 	ctx := context.Background()
-	defaultError := oob.Error{
-		Error: v1.Error{
-			Code:    0,
-			Message: "",
-			Details: nil,
-		},
+	defaultError := repository.Error{
+		Code:    0,
+		Message: "",
+		Details: nil,
 	}
 	l, zapLogger, _ := logr.NewPacketLogr()
 	logger := zaplog.RegisterLogger(l)
@@ -39,7 +37,7 @@ func TestTaskFound(t *testing.T) {
 		Ctx:        ctx,
 		Log:        logger,
 	}
-	taskID, err := taskRunner.Execute("test", func(s chan string) (string, oob.Error) {
+	taskID, err := taskRunner.Execute("test", func(s chan string) (string, repository.Error) {
 		return "doing cool stuff", defaultError // nolint
 	})
 	if err != nil {

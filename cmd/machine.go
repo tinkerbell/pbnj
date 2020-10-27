@@ -32,7 +32,6 @@ var machineCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		defer zlog.Sync() // nolint
-		//logger.V(0).Info("machine actions")
 
 		opts = append(opts, grpc.WithInsecure())
 		conn, err := grpc.Dial("localhost:"+port, opts...)

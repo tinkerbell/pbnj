@@ -1,29 +1,22 @@
 package oob
 
-import (
-	v1 "github.com/tinkerbell/pbnj/api/v1"
-)
+import "github.com/tinkerbell/pbnj/pkg/repository"
 
 // User management methods
 type User interface {
-	Create() (result string, err *Error)
-	Update() (result string, err *Error)
-	Delete() (result string, err *Error)
+	Create() (result string, err repository.Error)
+	Update() (result string, err repository.Error)
+	Delete() (result string, err repository.Error)
 }
 
 // Machine management methods
 type Machine interface {
-	BootDevice() (result string, err Error)
-	Power() (result string, err Error)
+	BootDevice() (result string, err repository.Error)
+	Power() (result string, err repository.Error)
 }
 
 // BMC management methods
 type BMC interface {
-	Reset() (result string, err Error)
-	NetworkSource() (result string, err Error)
-}
-
-// Error for all bmc actions
-type Error struct {
-	v1.Error
+	Reset() (result string, err repository.Error)
+	NetworkSource() (result string, err repository.Error)
 }

@@ -57,24 +57,7 @@ var serverCmd = &cobra.Command{
 			),
 		)
 
-		// reference for using another persistence layer
-		/*
-			opts := consul.Options{
-				Scheme:  "http",
-				Address: "localhost:8500",
-				Codec:   encoding.JSON,
-			}
-			store, err := consul.NewClient(opts)
-			if err != nil {
-				logger.V(0).Error(err, "failed to connect to consul")
-				os.Exit(1)
-			}
-			var repo repository.Actions
-			repo = &persistence.GoKV{Store: store, Ctx: ctx}
-		*/
-		// add grpcsvr.WithPersistence(repo) to grpc.RunServer
-
-		if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger), grpcServer, "50051"); err != nil {
+		if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger), grpcServer, port); err != nil {
 			logger.Error(err, "error running server")
 			os.Exit(1)
 		}

@@ -8,6 +8,7 @@ require (
 	github.com/go-logr/zapr v0.2.0
 	github.com/go-test/deep v1.0.4
 	github.com/golang/protobuf v1.4.2
+	github.com/google/go-cmp v0.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/onsi/gomega v1.10.2
 	github.com/packethost/pkg/log/logr v0.0.0-20201013193546-e9489d08ff6d
@@ -23,4 +24,5 @@ require (
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	google.golang.org/grpc v1.32.0
 	google.golang.org/protobuf v1.25.0
+	gopkg.in/yaml.v2 v2.3.0
 )

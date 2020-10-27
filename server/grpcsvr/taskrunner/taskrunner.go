@@ -11,9 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/rs/xid"
-	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
-	"github.com/tinkerbell/pbnj/pkg/oob"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
@@ -25,7 +23,7 @@ type Runner struct {
 }
 
 // Execute a task, update repository with status
-func (r *Runner) Execute(description string, action func(chan string) (string, oob.Error)) (id string, err error) {
+func (r *Runner) Execute(description string, action func(chan string) (string, repository.Error)) (id string, err error) {
 	rawID := xid.New()
 	id = rawID.String()
 	l := r.Log.GetContextLogger(r.Ctx)
@@ -36,11 +34,11 @@ func (r *Runner) Execute(description string, action func(chan string) (string, o
 
 // does the work, updates the repo record
 // TODO handle retrys, use a timeout
-func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, description string, action func(chan string) (string, oob.Error)) {
+func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, description string, action func(chan string) (string, repository.Error)) {
 	l := logger.GetContextLogger(ctx)
 	l.V(0).Info("starting worker", "taskID", id, "description", description)
 	resultChan := make(chan string, 1)
-	errMsgChan := make(chan oob.Error, 1)
+	errMsgChan := make(chan repository.Error, 1)
 	messagesChan := make(chan string)
 	actionACK := make(chan bool, 1)
 	actionSyn := make(chan bool, 1)
@@ -50,16 +48,14 @@ func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, d
 	defer close(actionSyn)
 	repo := r.Repository
 	sessionRecord := repository.Record{
-		StatusResponse: &v1.StatusResponse{
-			Id:          id,
-			Description: description,
-			State:       "running",
-			Messages:    []string{},
-			Error: &v1.Error{
-				Code:    0,
-				Message: "",
-				Details: nil,
-			},
+		Id:          id,
+		Description: description,
+		State:       "running",
+		Messages:    []string{},
+		Error: &repository.Error{
+			Code:    0,
+			Message: "",
+			Details: nil,
 		}}
 
 	err := repo.Create(id, sessionRecord)
