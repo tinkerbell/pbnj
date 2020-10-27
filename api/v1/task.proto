@@ -4,8 +4,6 @@ option go_package = "github.com/tinkerbell/pbnj/api/v1";
 
 package github.com.tinkerbell.pbnj.api.v1;
 
-import "google/protobuf/any.proto";
-
 service Task {
     rpc Status(StatusRequest) returns (StatusResponse);
 }
@@ -35,5 +33,5 @@ message Error {
 
     // Additional error information that the client code can use to handle
     // the error, such as retry delay or a help link.
-    repeated google.protobuf.Any details = 3;
+    repeated string details = 3;
 }
