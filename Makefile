@@ -17,6 +17,10 @@ test: ## run tests
 test-ci: ## run tests for ci and codecov
 	go test -coverprofile=coverage.txt ./...
 
+.PHONY: test-functional
+test-functional: ## run functional tests
+	go test -v ./test/... --tags=functional -config 'resources.yaml'
+
 .PHONY: goimports-ci
 goimports-ci: ## run goimports for ci
 	go get golang.org/x/tools/cmd/goimports

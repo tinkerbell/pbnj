@@ -1,0 +1,26 @@
+server:
+  url: localhost
+  port: 50051
+resources:
+- ip: 10.10.10.10 # BMC IP
+  username: admin # BMC username
+  password: admin # BMC password
+  vendor: HP # BMC vendor
+  useCases: # use cases for each RPC test
+    power: # should correspond to an RPC name
+    - happyTests # should correspond to the name of a structure that holds test inputs and expected outputs; see table driven tests pattern
+      sadTests # as many of this as needed can be added
+    device:
+    - happyTests
+      sadTests
+- ip: 10.5.5.5
+  username: ADMIN
+  password: ADMIN
+  vendor: supermicrox10
+  useCases: 
+    power: 
+    - happyTests
+      sadTests
+    device:
+    - happyTests
+      sadTests

@@ -4,3 +4,4 @@ pbnj
 bin/
 pid
 temp.in
+test/resources.yaml

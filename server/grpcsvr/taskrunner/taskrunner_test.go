@@ -9,20 +9,17 @@ import (
 	"github.com/packethost/pkg/log/logr"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
-	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/cmd/zaplog"
-	"github.com/tinkerbell/pbnj/pkg/oob"
+	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
 )
 
 func TestRoundTrip(t *testing.T) {
 	description := "test task"
-	defaultError := oob.Error{
-		Error: v1.Error{
-			Code:    0,
-			Message: "",
-			Details: nil,
-		},
+	defaultError := repository.Error{
+		Code:    0,
+		Message: "",
+		Details: nil,
 	}
 	ctx := context.Background()
 	f := freecache.NewStore(freecache.DefaultOptions)
@@ -38,7 +35,7 @@ func TestRoundTrip(t *testing.T) {
 		Log:        logger,
 	}
 
-	id, err := runner.Execute(description, func(s chan string) (string, oob.Error) {
+	id, err := runner.Execute(description, func(s chan string) (string, repository.Error) {
 		return "didnt do anything", defaultError //nolint
 	})
 	if err != nil {
@@ -54,7 +51,7 @@ func TestRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if record.StatusResponse.Complete != true {
+	if record.Complete != true {
 		t.Fatalf("expected task to be complete, got: %+v", record)
 	}
 }

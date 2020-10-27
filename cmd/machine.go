@@ -32,10 +32,9 @@ var machineCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		defer zlog.Sync() // nolint
-		logger.V(0).Info("machine actions")
 
 		opts = append(opts, grpc.WithInsecure())
-		conn, err := grpc.Dial("localhost:50051", opts...)
+		conn, err := grpc.Dial("localhost:"+port, opts...)
 		if err != nil {
 			logger.V(0).Error(err, "fail to dial server")
 			os.Exit(1)
@@ -72,12 +71,6 @@ var machineCmd = &cobra.Command{
 }
 
 func init() {
+	machineCmd.PersistentFlags().StringVar(&port, "port", "50051", "server port (default is 50051")
 	clientCmd.AddCommand(machineCmd)
 }
-
-/*
-func structToSlice(s v1.StatusResponse) []interface{} {
-	var keysAndValues []interface{}
-	keysAndValues = append(keysAndValues, "id")
-}
-*/

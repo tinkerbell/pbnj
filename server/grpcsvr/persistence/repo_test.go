@@ -9,7 +9,6 @@ import (
 	"github.com/go-test/deep"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
-	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
@@ -21,32 +20,29 @@ func TestAllMethods(t *testing.T) {
 	defer s.Close()
 	repo := &GoKV{Store: s, Ctx: ctx}
 	record := repository.Record{
-		StatusResponse: &v1.StatusResponse{
-			Id:          id,
-			Description: "test record",
-			Error:       nil,
-			State:       "running",
-			Result:      "",
-			Complete:    false,
-		}}
+		Id:          id,
+		Description: "test record",
+		Error:       nil,
+		State:       "running",
+		Result:      "",
+		Complete:    false,
+	}
 	expected := repository.Record{
-		StatusResponse: &v1.StatusResponse{
-			Id:          id,
-			Description: "test record",
-			Error:       nil,
-			State:       "running",
-			Result:      "",
-			Complete:    false,
-		}}
+		Id:          id,
+		Description: "test record",
+		Error:       nil,
+		State:       "running",
+		Result:      "",
+		Complete:    false,
+	}
 	expectedUpdated := repository.Record{
-		StatusResponse: &v1.StatusResponse{
-			Id:          id,
-			Description: "test record",
-			Error:       nil,
-			State:       "complete",
-			Result:      "did a good thing",
-			Complete:    true,
-		}}
+		Id:          id,
+		Description: "test record",
+		Error:       nil,
+		State:       "complete",
+		Result:      "did a good thing",
+		Complete:    true,
+	}
 	err := repo.Create(id, record)
 	if err != nil {
 		t.Fatal(err)

@@ -5,7 +5,7 @@ import (
 
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
-	"github.com/tinkerbell/pbnj/pkg/oob"
+	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/pkg/task"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/bmc"
 )
@@ -24,7 +24,7 @@ func (m *MachineService) Device(ctx context.Context, in *v1.DeviceRequest) (*v1.
 
 	taskID, err := m.TaskRunner.Execute(
 		"setting boot device",
-		func(s chan string) (string, oob.Error) {
+		func(s chan string) (string, repository.Error) {
 			mbd := bmc.MachineAction{
 				Log:               m.Log,
 				Ctx:               ctx,
@@ -45,7 +45,7 @@ func (m *MachineService) PowerAction(ctx context.Context, in *v1.PowerRequest) (
 	l.V(0).Info("power request")
 	// TODO INPUT VALIDATION
 
-	var execFunc = func(s chan string) (string, oob.Error) {
+	var execFunc = func(s chan string) (string, repository.Error) {
 		mp := bmc.MachineAction{
 			Log:            m.Log,
 			Ctx:            ctx,
