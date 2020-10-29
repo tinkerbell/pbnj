@@ -5,6 +5,7 @@ package bmc
 
 import (
 	"context"
+
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/pbnj/log"
 )

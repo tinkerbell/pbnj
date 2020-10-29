@@ -13,7 +13,8 @@ require (
 	github.com/ugorji/go v0.0.0-20170215201144-c88ee250d022 // indirect
 	github.com/zsais/go-gin-prometheus v0.1.0
 	go.uber.org/zap v1.10.0
-	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/tools v0.0.0-20201029195906-061905c3e8a6 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v8 v8.18.1 // indirect
 )

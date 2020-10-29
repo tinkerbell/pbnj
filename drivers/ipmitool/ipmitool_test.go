@@ -2,8 +2,9 @@ package ipmitool
 
 import (
 	"fmt"
-	"github.com/tinkerbell/pbnj/interfaces/bmc"
 	"testing"
+
+	"github.com/tinkerbell/pbnj/interfaces/bmc"
 )
 
 func TestPassThruCommand(t *testing.T) {

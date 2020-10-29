@@ -5,9 +5,10 @@ package racadm
 
 import (
 	"fmt"
-	"github.com/tinkerbell/pbnj/interfaces/bmc"
 	"os"
 	"testing"
+
+	"github.com/tinkerbell/pbnj/interfaces/bmc"
 )
 
 var (
