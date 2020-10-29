@@ -12,9 +12,7 @@ import (
 
 // bmcAction is the handler for the POST /bmc endpoint.
 func bmcAction(c *gin.Context) {
-	var req struct {
-		Action bmc.Action `json:"action" binding:"required"`
-	}
+	var req bmc.BmcRequest
 	if c.BindJSON(&req) != nil {
 		return
 	}
@@ -25,7 +23,7 @@ func bmcAction(c *gin.Context) {
 	}
 	defer func() { _ = driver.Close() }()
 
-	if err := driver.BMC(req.Action); err != nil {
+	if err := driver.BMC(req); err != nil {
 		c.Error(err)
 		internalServerError(c)
 		return

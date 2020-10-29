@@ -5,6 +5,7 @@ package racadm
 
 import (
 	"fmt"
+	"github.com/tinkerbell/pbnj/interfaces/bmc"
 	"os"
 	"testing"
 )
@@ -22,4 +23,30 @@ func TestMain(m *testing.M) {
 	}
 
 	os.Exit(m.Run())
+}
+
+func TestPassThruCommand(t *testing.T) {
+	for value, req := range reqs {
+		s := Shell{}
+		test, err := s.ComposeBmcCommand(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if test != value {
+			t.Fatal(fmt.Sprintf("got: %s; expected: %s", test, value))
+		}
+	}
+}
+
+var reqs = map[string]bmc.BmcRequest{
+	"racadm config -g cfgIpmiLan -o cfgIpmiLanAlertEnable 1": {
+		Action:  bmc.PassThruCommand,
+		Command: "config -g cfgIpmiLan -o cfgIpmiLanAlertEnable 1",
+	},
+	"racreset hard": {
+		Action: bmc.ColdReset,
+	},
+	"racreset soft": {
+		Action: bmc.WarmReset,
+	},
 }

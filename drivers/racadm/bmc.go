@@ -5,7 +5,6 @@ package racadm
 
 import (
 	"context"
-
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/pbnj/interfaces/bmc"
 )
@@ -22,19 +21,34 @@ func init() {
 }
 
 var bmcActions = map[bmc.Action]string{
-	bmc.NoAction:  "",
-	bmc.ColdReset: "hard",
-	bmc.WarmReset: "soft",
+	bmc.NoAction:        "",
+	bmc.ColdReset:       "hard",
+	bmc.WarmReset:       "soft",
+	bmc.PassThruCommand: "",
 }
 
 // BMC runs actions on the BMC
-func (s *Shell) BMC(action bmc.Action) error {
-	arg, ok := bmcActions[action]
-	if !ok {
-		return errors.Errorf("bmc action %q not supported by racadm driver", action)
+func (s *Shell) BMC(req bmc.BmcRequest) error {
+	command, err := s.ComposeBmcCommand(req)
+	if err != nil {
+		return err
 	}
-	if arg == "" {
+	if command == "" {
 		return nil
 	}
-	return s.Run("racreset" + " " + arg)
+	return s.Run(command)
+}
+
+func (s *Shell) ComposeBmcCommand(req bmc.BmcRequest) (string, error) {
+	arg, ok := bmcActions[req.Action]
+	if !ok {
+		return "", errors.Errorf("bmc action %q not supported by racadm driver", req.Action)
+	}
+	if arg == "" {
+		return "", nil
+	}
+	if req.Action == bmc.PassThruCommand {
+		return "racadm" + " " + req.Command, nil
+	}
+	return "racreset" + " " + arg, nil
 }

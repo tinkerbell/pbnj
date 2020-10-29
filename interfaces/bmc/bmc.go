@@ -5,7 +5,6 @@ package bmc
 
 import (
 	"context"
-
 	"github.com/pkg/errors"
 	"github.com/tinkerbell/pbnj/log"
 )
@@ -18,6 +17,11 @@ var (
 // Action is used to denote the available power actions
 type Action string
 
+type BmcRequest struct {
+	Action  Action `json:"action" binding:"required"`
+	Command string `json:"command"`
+}
+
 const (
 	// NoAction is a NOP
 	NoAction = Action("")
@@ -25,6 +29,8 @@ const (
 	ColdReset = Action("reset_cold")
 	// WarmReset does a warm reset
 	WarmReset = Action("reset_warm")
+	// Passes command through to the BMC driver
+	PassThruCommand = Action("command")
 )
 
 func SetupLogging(l log.Logger) {
@@ -33,6 +39,7 @@ func SetupLogging(l log.Logger) {
 
 // ActionsBySlug is a reverse mapping of Action types
 var ActionsBySlug = map[string]Action{
+	"command":    PassThruCommand,
 	"reset_cold": ColdReset,
 	"reset_warm": WarmReset,
 }
@@ -48,7 +55,7 @@ func (a *Action) UnmarshalText(text []byte) error {
 
 // Driver is the interface to control BMCs
 type Driver interface {
-	BMC(action Action) error
+	BMC(request BmcRequest) error
 	SetIPSource(source IPSource) error
 
 	Close() error
@@ -78,7 +85,7 @@ func NewDriver(ctx context.Context, name string, opts DriverOptions) (Driver, er
 // RegisterDriver is called by implementations in order to register their factory function for each device they can control
 func RegisterDriver(factory DriverFactory, driver string) {
 	if _, ok := factories[driver]; ok {
-		logger.Panicf("power driver %q already registered!", driver)
+		logger.Panicf("bmc driver %q already registered!", driver)
 	}
 	factories[driver] = factory
 }
