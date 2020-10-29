@@ -10,25 +10,59 @@ This means that support is best effort (at best!) and we strongly encourage you 
 ## Paths
 
 ```
-[GIN-debug] GET    /devices/:ip/power        --> github.com/tinkerbell/pbnj/api.powerStatus (5 handlers)
-[GIN-debug] POST   /devices/:ip/power        --> github.com/tinkerbell/pbnj/api.powerAction (5 handlers)
-[GIN-debug] PATCH  /devices/:ip/boot         --> github.com/tinkerbell/pbnj/api.updateBootOptions (5 handlers)
-[GIN-debug] POST   /devices/:ip/bmc          --> github.com/tinkerbell/pbnj/api.bmcAction (5 handlers)
-[GIN-debug] PATCH  /devices/:ip/ipmi-lan     --> github.com/tinkerbell/pbnj/api.updateLANConfig (5 handlers)
-[GIN-debug] GET    /tasks/:id                --> github.com/tinkerbell/pbnj/api.taskStatus (5 handlers)
-[GIN-debug] GET    /                         --> github.com/tinkerbell/pbnj/api.ping (5 handlers)
-[GIN-debug] GET    /healthcheck              --> github.com/tinkerbell/pbnj/api.healthcheck (4 handlers)
-[GIN-debug] Listening and serving HTTP on :9090
+GET    /devices/:ip/power        --> api.powerStatus (5 handlers)
+POST   /devices/:ip/power        --> api.powerAction (5 handlers)
+PATCH  /devices/:ip/boot         --> api.updateBootOptions (5 handlers)
+POST   /devices/:ip/bmc          --> api.bmcAction (5 handlers)
+PATCH  /devices/:ip/ipmi-lan     --> api.updateLANConfig (5 handlers)
+GET    /tasks/:id                --> api.taskStatus (5 handlers)
+GET    /                         --> api.ping (5 handlers)
+GET    /healthcheck              --> api.healthcheck (4 handlers)
+GET    /redfish/*                --> api.redfish.Proxy (1 handler)
+POST   /redfish/*                --> api.redfish.Proxy (1 handler)
+Listening and serving HTTP on :9090
 ```
 
-## Build
 
+## Build & Run
 
 Docker Build
 ```
 docker build -f Dockerfile.dev  .
 docker run -it -p 127.0.0.1:9090:9090 <container id>
 ```
+
+## Examples
+
+Setup:
+``bash
+// setup the environment variables for the BMC you wish to control:
+IP=ip-address
+IPMI_USER=username
+IPMI_PASS=password
+```
+
+Power Status:
+```bash
+curl \
+  -H "X-IMPI-Username: ${IPMI_USER}" \
+  -H "X-IMPI-Password: ${IPMI_PASS}" \
+  "http://localhost:9090/devices/${IP}/power"
+
+```
+
+Passthru Command:
+```bash
+curl \
+  -H "X-IMPI-Username: ${IPMI_USER}" \
+  -H "X-IMPI-Password: ${IPMI_PASS}" \
+  -d '{
+  "action": "command",
+  "command": "lan set 1 ipaddr 192.168.1.1"
+}' \
+  "http://localhost:9090/devices/${IP}/bmc"
+```
+
 
 Local
 ```
