@@ -2,9 +2,9 @@ package bmc
 
 import (
 	"context"
+	"fmt"
+	"time"
 
-	"github.com/bmc-toolbox/bmclib/devices"
-	"github.com/bmc-toolbox/bmclib/discover"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/repository"
@@ -19,167 +19,141 @@ type MachineAction struct {
 	StatusMessages    chan string
 }
 
+type power interface {
+	connection() repository.Error
+	close()
+	on() (string, repository.Error)
+	off() (string, repository.Error)
+	status() (string, repository.Error)
+	reset() (string, repository.Error)
+	hardoff() (string, repository.Error)
+	cycle() (string, repository.Error)
+}
+
 // BootDevice functionality for machines
-func (p MachineAction) BootDevice() (string, repository.Error) {
-	var result string
-	errMsg := repository.Error{
-		Code:    0,
-		Message: "",
-		Details: nil,
-	}
-	l := p.Log.GetContextLogger(p.Ctx)
-	l.V(0).Info("not implemented")
-	msg := "power OFF not implemented"
-	l.V(1).Info(msg)
+func (m MachineAction) BootDevice() (result string, errMsg repository.Error) {
+	l := m.Log.GetContextLogger(m.Ctx)
+	msg := "setting Boot Device not implemented yet"
+	l.V(0).Info(msg)
 	errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
 	errMsg.Message = msg
 	return result, errMsg //nolint
 }
 
+type powerConnection struct {
+	name      string
+	connected bool
+	pwr       power
+	err       repository.Error
+}
+
 // Power functionality for machines
-func (p MachineAction) Power() (string, repository.Error) {
-	l := p.Log.GetContextLogger(p.Ctx)
-	l.V(0).Info("power state")
-	// TODO handle nil values
-	var result string
-	errMsg := repository.Error{
-		Code:    0,
-		Message: "",
-		Details: nil,
+func (m MachineAction) Power() (result string, errMsg repository.Error) {
+	l := m.Log.GetContextLogger(m.Ctx)
+	host, user, password, errMsg := m.parseAuth(m.PowerRequest.Authn)
+	if errMsg.Message != "" {
+		return result, errMsg
 	}
 
-	if p.PowerRequest.Authn == nil || p.PowerRequest.Authn.Authn == nil {
-		msg := "no auth found"
-		errMsg.Code = v1.Code_value["UNAUTHENTICATED"]
-		errMsg.Message = msg
-		return msg, errMsg //nolint
+	base := "power " + m.PowerRequest.GetAction().String()
+	msg := "working on " + base
+	m.sendStatusMessage(msg)
+
+	// the order here is the order in which these connections/operations will be tried
+	connections := []powerConnection{
+		{name: "bmclib", pwr: &bmclibBMC{mAction: m, user: user, password: password, host: host}},
+		{name: "ipmi", pwr: &ipmiBMC{mAction: m, user: user, password: password, host: host}},
+		{name: "redfish", pwr: &redfishBMC{mAction: m, user: user, password: password, host: host}},
 	}
-	user := p.PowerRequest.GetAuthn().GetDirectAuthn().Username
-	password := p.PowerRequest.GetAuthn().GetDirectAuthn().Password
-	host := p.PowerRequest.GetAuthn().GetDirectAuthn().GetHost().Host
 
-	p.StatusMessages <- "trying to connect to bmc"
-
-	connection, err := discover.ScanAndConnect(host, user, password, discover.WithLogger(l))
-	if err != nil {
-		// TODO set errMsg.Code based on err response
+	var connected bool
+	m.sendStatusMessage("connecting to BMC")
+	for index := range connections {
+		connections[index].err = connections[index].pwr.connection()
+		if connections[index].err.Message == "" {
+			connections[index].connected = true
+			defer connections[index].pwr.close()
+			connected = true
+		}
+	}
+	l.V(1).Info("connections", "connections", fmt.Sprintf("%+v", connections))
+	if !connected {
+		m.sendStatusMessage("connecting to BMC failed")
+		var combinedErrs []string
+		for _, connection := range connections {
+			combinedErrs = append(combinedErrs, connection.err.Message)
+		}
+		msg := "could not connect"
 		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = err.Error()
-		return result, errMsg //nolint
+		errMsg.Message = msg
+		errMsg.Details = append(errMsg.Details, combinedErrs...)
+		l.V(0).Info(msg, "error", combinedErrs)
+		return result, errMsg
 	}
-	p.StatusMessages <- "connected to bmc"
+	m.sendStatusMessage("connected to BMC")
 
-	switch connection := connection.(type) {
-
-	case devices.Bmc:
-		conn := connection.(devices.Bmc)
-		defer conn.Close()
-
-		switch p.PowerRequest.GetAction() {
-		case v1.PowerRequest_ON:
-			// ok, err := conn.PowerOn()
-			msg := "power ON not implemented"
-			l.V(1).Info(msg)
-			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
-			errMsg.Message = msg
-			return result, errMsg //nolint
-		case v1.PowerRequest_OFF:
-			// ok, err := conn.PowerOff()
-			msg := "power OFF not implemented"
-			l.V(1).Info(msg)
-			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
-			errMsg.Message = msg
-			return result, errMsg //nolint
-		case v1.PowerRequest_HARDOFF:
-			msg := "power HARD OFF not implemented"
-			l.V(1).Info(msg)
-			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
-			errMsg.Message = msg
-			return result, errMsg //nolint
-		case v1.PowerRequest_CYCLE:
-			// ok, err := conn.PowerCycle()
-			msg := "power CYCLE not implemented"
-			l.V(1).Info(msg)
-			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
-			errMsg.Message = msg
-			return result, errMsg //nolint
-		case v1.PowerRequest_RESET:
-			msg := "power RESET not implemented"
-			l.V(1).Info(msg)
-			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
-			errMsg.Message = msg
-			return result, errMsg //nolint
-		case v1.PowerRequest_STATUS:
-			l.V(1).Info("getting power status")
-			p.StatusMessages <- "getting power status"
-			result, err := conn.PowerState()
-			if err != nil {
-				// TODO need to set code based on response
-				p.StatusMessages <- "error getting power state"
-				errMsg.Code = v1.Code_value["UNKNOWN"]
-				errMsg.Message = err.Error()
+	for _, connection := range connections {
+		if connection.connected {
+			l.V(1).Info("trying", "name", connection.name)
+			result, errMsg = doAction(m.PowerRequest.GetAction(), connection.pwr)
+			if errMsg.Message == "" {
+				l.V(1).Info("action implemented by", "implementer", connection.name)
+				break
 			}
-			return result, errMsg //nolint
 		}
+	}
 
-	case devices.Cmc:
-		l.V(1).Info("type cmc detected")
-		l.V(0).Info("not implemented")
-		conn := connection.(devices.Cmc)
+	if errMsg.Message != "" {
+		m.sendStatusMessage("error with " + base + ": " + errMsg.Message)
+		l.V(0).Info("error with "+base, "error", errMsg.Message)
+	}
+	m.sendStatusMessage(base + " complete")
+	return result, errMsg //nolint
+}
 
-		switch p.PowerRequest.GetAction() {
-		case v1.PowerRequest_ON:
-			// ok, err := conn.PowerOn()
-			msg := "power ON not implemented"
-			l.V(1).Info(msg)
-			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
-			errMsg.Message = msg
-			return result, errMsg //nolint
-		case v1.PowerRequest_OFF:
-			// ok, err := conn.PowerOff()
-			msg := "power OFF not implemented"
-			l.V(1).Info(msg)
-			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
-			errMsg.Message = msg
-			return result, errMsg //nolint
-		case v1.PowerRequest_HARDOFF:
-			msg := "power HARD OFF not implemented"
-			l.V(1).Info(msg)
-			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
-			errMsg.Message = msg
-			return result, errMsg //nolint
-		case v1.PowerRequest_CYCLE:
-			// ok, err := conn.PowerCycle()
-			msg := "power CYCLE not implemented"
-			l.V(1).Info(msg)
-			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
-			errMsg.Message = msg
-			return result, errMsg //nolint
-		case v1.PowerRequest_RESET:
-			msg := "power RESET not implemented"
-			l.V(1).Info(msg)
-			errMsg.Code = v1.Code_value["UNIMPLEMENTED"]
-			errMsg.Message = msg
-			return result, errMsg //nolint
-		case v1.PowerRequest_STATUS:
-			l.V(0).Info("getting power status")
-			p.StatusMessages <- "getting power status"
-			result, err := conn.Status()
-			if err != nil {
-				// TODO need to set code based on response
-				p.StatusMessages <- "error getting power state"
-				errMsg.Code = 2
-				errMsg.Message = err.Error()
-			}
-			return result, errMsg //nolint
-		}
-
+func doAction(action v1.PowerRequest_Action, pwr power) (result string, errMsg repository.Error) {
+	switch action {
+	case v1.PowerRequest_ON:
+		result, errMsg = pwr.on()
+	case v1.PowerRequest_OFF:
+		result, errMsg = pwr.off()
+	case v1.PowerRequest_STATUS:
+		result, errMsg = pwr.status()
+	case v1.PowerRequest_RESET:
+		result, errMsg = pwr.reset()
+	case v1.PowerRequest_HARDOFF:
+		result, errMsg = pwr.hardoff()
+	case v1.PowerRequest_CYCLE:
+		result, errMsg = pwr.cycle()
 	default:
 		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = "Unknown device"
-		return result, errMsg //nolint
+		errMsg.Message = "unknown power action"
+	}
+	return result, errMsg
+}
+
+func (m MachineAction) sendStatusMessage(msg string) {
+	select {
+	case m.StatusMessages <- msg:
+		return
+	case <-time.After(2 * time.Second):
+		l := m.Log.GetContextLogger(m.Ctx)
+		l.V(0).Info("timed out waiting for status message receiver", "statusMsg", msg)
+	}
+}
+
+func (m MachineAction) parseAuth(auth *v1.Authn) (host string, username string, passwd string, errMsg repository.Error) {
+	if auth == nil || auth.Authn == nil || auth.GetDirectAuthn() == nil {
+		msg := "no auth found"
+		m.sendStatusMessage(msg)
+		errMsg.Code = v1.Code_value["UNAUTHENTICATED"]
+		errMsg.Message = msg
+		return
 	}
 
-	return result, errMsg //nolint
+	username = auth.GetDirectAuthn().GetUsername()
+	passwd = auth.GetDirectAuthn().GetPassword()
+	host = auth.GetDirectAuthn().GetHost().GetHost()
 
+	return host, username, passwd, errMsg
 }
