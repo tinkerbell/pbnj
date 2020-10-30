@@ -54,7 +54,7 @@ func (m *MachineService) PowerAction(ctx context.Context, in *v1.PowerRequest) (
 		}
 		return mp.Power()
 	}
-	taskID, err := m.TaskRunner.Execute("power action", execFunc)
+	taskID, err := m.TaskRunner.Execute("power action: "+in.GetAction().String(), execFunc)
 
 	return &v1.PowerResponse{
 		TaskId: taskID,

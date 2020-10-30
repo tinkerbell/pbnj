@@ -5,7 +5,9 @@ package test
 import (
 	"context"
 	"fmt"
+	"sort"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
@@ -18,26 +20,86 @@ var (
 	lookup = map[string]map[string]expected{
 		"happyTests":           happyTests,
 		"notIdentifiableTests": notIdentifiableTests,
-		"happyTestsOneOff":     happyTestsOneOff,
 	}
 	happyTests = map[string]expected{
-		"power status": {
+		"1 power off": {
+			Action: v1.PowerRequest_OFF,
+			Want: &v1.StatusResponse{
+				Id:          "12345",
+				Description: "power action: OFF",
+				Error:       &v1.Error{},
+				State:       "complete",
+				Result:      "off",
+				Complete:    true,
+				Messages:    []string{"working on power OFF", "connecting to BMC", "connected to BMC", "power OFF complete"},
+			},
+			WaitTime: 15 * time.Second,
+		},
+		"2 power status": {
 			Action: v1.PowerRequest_STATUS,
 			Want: &v1.StatusResponse{
 				Id:          "12345",
-				Description: "power action",
+				Description: "power action: STATUS",
+				Error:       &v1.Error{},
+				State:       "complete",
+				Result:      "off",
+				Complete:    true,
+				Messages:    []string{"working on power STATUS", "connecting to BMC", "connected to BMC", "power STATUS complete"},
+			},
+		},
+		"3 power on": {
+			Action: v1.PowerRequest_ON,
+			Want: &v1.StatusResponse{
+				Id:          "12345",
+				Description: "power action: ON",
 				Error:       &v1.Error{},
 				State:       "complete",
 				Result:      "on",
 				Complete:    true,
-				Messages:    []string{"trying to connect to bmc", "connected to bmc", "getting power status"},
+				Messages:    []string{"working on power ON", "connecting to BMC", "connected to BMC", "power ON complete"},
+			},
+			WaitTime: 180 * time.Second,
+		},
+		"4 power status": {
+			Action: v1.PowerRequest_STATUS,
+			Want: &v1.StatusResponse{
+				Id:          "12345",
+				Description: "power action: STATUS",
+				Error:       &v1.Error{},
+				State:       "complete",
+				Result:      "on",
+				Complete:    true,
+				Messages:    []string{"working on power STATUS", "connecting to BMC", "connected to BMC", "power STATUS complete"},
 			},
 		},
-		"power on":      {Action: v1.PowerRequest_ON, Want: notImplementedWant("ON")},
-		"power off":     {Action: v1.PowerRequest_OFF, Want: notImplementedWant("OFF")},
-		"power hardoff": {Action: v1.PowerRequest_HARDOFF, Want: notImplementedWant("HARD OFF")},
-		"power cycle":   {Action: v1.PowerRequest_CYCLE, Want: notImplementedWant("CYCLE")},
-		"power reset":   {Action: v1.PowerRequest_RESET, Want: notImplementedWant("RESET")},
+		"5 power cycle": {
+			Action: v1.PowerRequest_CYCLE,
+			Want: &v1.StatusResponse{
+				Id:          "12345",
+				Description: "power action: CYCLE",
+				Error:       &v1.Error{},
+				State:       "complete",
+				Result:      "cycle",
+				Complete:    true,
+				Messages:    []string{"working on power CYCLE", "connecting to BMC", "connected to BMC", "power CYCLE complete"},
+			},
+			WaitTime: 60 * time.Second,
+		},
+		"6 power status": {
+			Action: v1.PowerRequest_STATUS,
+			Want: &v1.StatusResponse{
+				Id:          "12345",
+				Description: "power action: STATUS",
+				Error:       &v1.Error{},
+				State:       "complete",
+				Result:      "on",
+				Complete:    true,
+				Messages:    []string{"working on power STATUS", "connecting to BMC", "connected to BMC", "power STATUS complete"},
+			},
+		},
+
+		//"power hardoff": {Action: v1.PowerRequest_HARDOFF, Want: notImplementedWant("HARD OFF")},
+		//"power reset":   {Action: v1.PowerRequest_RESET, Want: notImplementedWant("RESET")},
 	}
 	notIdentifiableTests = map[string]expected{
 		"power status":  {Action: v1.PowerRequest_STATUS, Want: notIdentifiableWant},
@@ -58,29 +120,14 @@ var (
 		State:    "complete",
 		Result:   "action failed",
 		Complete: true,
-		Messages: []string{"trying to connect to bmc"},
+		Messages: []string{"connecting to BMC", "connecting to BMC failed"},
 	}
-	happyTestsOneOff = updateSingleTest("power status", happyTests, expected{
-		Action: v1.PowerRequest_STATUS,
-		Want: &v1.StatusResponse{
-			Id:          "12345",
-			Description: "power action",
-			Error: &v1.Error{
-				Code:    2,
-				Message: "XML syntax error on line 10: element <META> closed by </head>",
-				Details: nil,
-			},
-			State:    "complete",
-			Result:   "action failed",
-			Complete: true,
-			Messages: []string{"trying to connect to bmc", "connected to bmc", "getting power status", "error getting power state"},
-		},
-	})
 )
 
 type expected struct {
-	Action v1.PowerRequest_Action
-	Want   *v1.StatusResponse
+	Action   v1.PowerRequest_Action
+	Want     *v1.StatusResponse
+	WaitTime time.Duration
 }
 
 type testResource struct {
@@ -96,27 +143,38 @@ type dataObject map[string]testResource
 // TestPower actions against BMCs
 func TestPower(t *testing.T) {
 	resources := createTestData(cfgData.Data)
+
 	for rname, rs := range resources {
 		rs := rs
-		rname := rname
+		rname := rname + "_" + rs.Vendor
 		t.Run(rname, func(t *testing.T) {
 			t.Parallel()
-			for name, tc := range rs.Tests {
-				tc := tc
-				name := name
+			tests := rs.Tests
+			testsKeys := sortedResources(tests)
+			for _, key := range testsKeys {
+				key := key
+				var failed bool
+				tc := tests[key]
+				name := key
 				t.Run(name, func(t *testing.T) {
 					// do the work
+
 					got, err := runMachineClient(rs, tc.Action, cfgData.Server)
 					if err != nil {
 						t.Fatal(err)
 					}
 
 					got.Id = "12345"
+					//tc.Want.Description += ": " + tc.Action.String()
 					diff := cmp.Diff(tc.Want, got, protocmp.Transform())
 					if diff != "" {
+						failed = true
 						t.Fatalf(diff)
 					}
 				})
+				if !failed {
+					time.Sleep(tc.WaitTime)
+				}
 			}
 		})
 	}
@@ -199,7 +257,7 @@ func notImplementedWant(fn string) *v1.StatusResponse {
 		State:    "complete",
 		Result:   "action failed",
 		Complete: true,
-		Messages: []string{"trying to connect to bmc", "connected to bmc"},
+		Messages: []string{"connecting to BMC", "connected to BMC"},
 	}
 }
 
@@ -210,4 +268,15 @@ func updateSingleTest(key string, existing map[string]expected, val expected) ma
 	}
 	newExisting[key] = val
 	return newExisting
+}
+
+func sortedResources(m map[string]expected) []string {
+	keys := make([]string, len(m))
+	i := 0
+	for k := range m {
+		keys[i] = k
+		i++
+	}
+	sort.Strings(keys)
+	return keys
 }
