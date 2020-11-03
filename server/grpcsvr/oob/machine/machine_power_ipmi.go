@@ -12,7 +12,6 @@ import (
 
 type ipmiBMC struct {
 	log       logr.Logger
-	ctx       context.Context
 	transport bmc.SessionlessTransport
 	conn      bmc.Session
 	user      string
@@ -22,7 +21,7 @@ type ipmiBMC struct {
 
 func (b *ipmiBMC) Connect(ctx context.Context) repository.Error {
 	var errMsg repository.Error
-	machine, err := bmc.Dial(b.ctx, b.host)
+	machine, err := bmc.Dial(ctx, b.host)
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = err.Error()
@@ -30,7 +29,7 @@ func (b *ipmiBMC) Connect(ctx context.Context) repository.Error {
 	}
 	b.transport = machine
 
-	sess, err := machine.NewSession(b.ctx, &bmc.SessionOpts{
+	sess, err := machine.NewSession(ctx, &bmc.SessionOpts{
 		Username:          b.user,
 		Password:          []byte(b.password),
 		MaxPrivilegeLevel: ipmi.PrivilegeLevelOperator,
@@ -44,13 +43,13 @@ func (b *ipmiBMC) Connect(ctx context.Context) repository.Error {
 	return errMsg
 }
 
-func (b *ipmiBMC) Close() {
+func (b *ipmiBMC) Close(ctx context.Context) {
 	b.transport.Close()
-	b.conn.Close(b.ctx)
+	b.conn.Close(ctx)
 }
 
-func (b *ipmiBMC) on() (result string, errMsg repository.Error) {
-	err := b.conn.ChassisControl(b.ctx, ipmi.ChassisControlPowerOn)
+func (b *ipmiBMC) on(ctx context.Context) (result string, errMsg repository.Error) {
+	err := b.conn.ChassisControl(ctx, ipmi.ChassisControlPowerOn)
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = err.Error()
@@ -59,8 +58,8 @@ func (b *ipmiBMC) on() (result string, errMsg repository.Error) {
 	return "on", errMsg
 }
 
-func (b *ipmiBMC) off() (result string, errMsg repository.Error) {
-	err := b.conn.ChassisControl(b.ctx, ipmi.ChassisControlSoftPowerOff)
+func (b *ipmiBMC) off(ctx context.Context) (result string, errMsg repository.Error) {
+	err := b.conn.ChassisControl(ctx, ipmi.ChassisControlSoftPowerOff)
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = err.Error()
@@ -69,9 +68,9 @@ func (b *ipmiBMC) off() (result string, errMsg repository.Error) {
 	return "off", errMsg
 }
 
-func (b *ipmiBMC) status() (result string, errMsg repository.Error) {
+func (b *ipmiBMC) status(ctx context.Context) (result string, errMsg repository.Error) {
 	result = "off"
-	status, err := b.conn.GetChassisStatus(b.ctx)
+	status, err := b.conn.GetChassisStatus(ctx)
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = err.Error()
@@ -83,8 +82,8 @@ func (b *ipmiBMC) status() (result string, errMsg repository.Error) {
 	return result, errMsg
 }
 
-func (b *ipmiBMC) reset() (result string, errMsg repository.Error) {
-	err := b.conn.ChassisControl(b.ctx, ipmi.ChassisControlHardReset)
+func (b *ipmiBMC) reset(ctx context.Context) (result string, errMsg repository.Error) {
+	err := b.conn.ChassisControl(ctx, ipmi.ChassisControlHardReset)
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = err.Error()
@@ -93,8 +92,8 @@ func (b *ipmiBMC) reset() (result string, errMsg repository.Error) {
 	return "reset", errMsg
 }
 
-func (b *ipmiBMC) hardoff() (result string, errMsg repository.Error) {
-	err := b.conn.ChassisControl(b.ctx, ipmi.ChassisControlPowerOff)
+func (b *ipmiBMC) hardoff(ctx context.Context) (result string, errMsg repository.Error) {
+	err := b.conn.ChassisControl(ctx, ipmi.ChassisControlPowerOff)
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = err.Error()
@@ -103,8 +102,8 @@ func (b *ipmiBMC) hardoff() (result string, errMsg repository.Error) {
 	return "hardoff", errMsg
 }
 
-func (b *ipmiBMC) cycle() (result string, errMsg repository.Error) {
-	err := b.conn.ChassisControl(b.ctx, ipmi.ChassisControlPowerCycle)
+func (b *ipmiBMC) cycle(ctx context.Context) (result string, errMsg repository.Error) {
+	err := b.conn.ChassisControl(ctx, ipmi.ChassisControlPowerCycle)
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = err.Error()

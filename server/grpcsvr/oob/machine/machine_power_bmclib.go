@@ -37,11 +37,11 @@ func (b *bmclibBMC) Connect(ctx context.Context) repository.Error {
 	return errMsg //nolint
 }
 
-func (b *bmclibBMC) Close() {
+func (b *bmclibBMC) Close(ctx context.Context) {
 	b.conn.Close()
 }
 
-func (b *bmclibBMC) on() (result string, errMsg repository.Error) {
+func (b *bmclibBMC) on(ctx context.Context) (result string, errMsg repository.Error) {
 	ok, err := b.conn.PowerOn()
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
@@ -56,7 +56,7 @@ func (b *bmclibBMC) on() (result string, errMsg repository.Error) {
 	return "on", errMsg
 }
 
-func (b *bmclibBMC) off() (result string, errMsg repository.Error) {
+func (b *bmclibBMC) off(ctx context.Context) (result string, errMsg repository.Error) {
 	ok, err := b.conn.PowerOff()
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
@@ -71,7 +71,7 @@ func (b *bmclibBMC) off() (result string, errMsg repository.Error) {
 	return "off", errMsg
 }
 
-func (b *bmclibBMC) status() (result string, errMsg repository.Error) {
+func (b *bmclibBMC) status(ctx context.Context) (result string, errMsg repository.Error) {
 	result, err := b.conn.PowerState()
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
@@ -81,7 +81,7 @@ func (b *bmclibBMC) status() (result string, errMsg repository.Error) {
 	return result, errMsg
 }
 
-func (b *bmclibBMC) reset() (result string, errMsg repository.Error) {
+func (b *bmclibBMC) reset(ctx context.Context) (result string, errMsg repository.Error) {
 	ok, err := b.conn.PowerCycle()
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
@@ -96,7 +96,7 @@ func (b *bmclibBMC) reset() (result string, errMsg repository.Error) {
 	return "reset", errMsg
 }
 
-func (b *bmclibBMC) hardoff() (result string, errMsg repository.Error) {
+func (b *bmclibBMC) hardoff(ctx context.Context) (result string, errMsg repository.Error) {
 	ok, err := b.conn.PowerOff()
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
@@ -111,7 +111,7 @@ func (b *bmclibBMC) hardoff() (result string, errMsg repository.Error) {
 	return "hardoff", errMsg
 }
 
-func (b *bmclibBMC) cycle() (result string, errMsg repository.Error) {
+func (b *bmclibBMC) cycle(ctx context.Context) (result string, errMsg repository.Error) {
 	ok, err := b.conn.PowerCycle()
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]

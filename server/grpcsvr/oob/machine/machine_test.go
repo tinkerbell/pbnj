@@ -3,17 +3,25 @@ package machine
 import (
 	"context"
 	"fmt"
+	"net"
 	"testing"
-	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/packethost/pkg/log/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/repository"
+	goipmi "github.com/vmware/goipmi"
 )
 
 func TestBootDevice(t *testing.T) {
+	sim := goipmi.NewSimulator(net.UDPAddr{})
+	err := sim.Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+	port := sim.LocalAddr().Port
+	defer sim.Stop()
 	testCases := []struct {
 		name        string
 		req         *v1.DeviceRequest
@@ -27,24 +35,20 @@ func TestBootDevice(t *testing.T) {
 					Authn: &v1.Authn_DirectAuthn{
 						DirectAuthn: &v1.DirectAuthn{
 							Host: &v1.Host{
-								Host: "127.0.0.1",
+								Host: fmt.Sprintf("127.0.0.1:%v", port),
 							},
 							Username: "admin",
 							Password: "admin",
 						},
 					},
 				},
-				Vendor: &v1.Vendor{
-					Name: "none",
-				},
-				Persistent: false,
-				EfiBoot:    false,
+				Device: v1.DeviceRequest_BIOS,
 			},
 			message: "good",
 			expectedErr: repository.Error{
-				Code:    2,
-				Message: "could not connect",
-				Details: []string{"context deadline exceeded"},
+				Code:    0,
+				Message: "",
+				Details: nil,
 			},
 		},
 	}
@@ -52,17 +56,12 @@ func TestBootDevice(t *testing.T) {
 	for _, tc := range testCases {
 		testCase := tc
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
-
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
-			defer cancel()
+			ctx := context.Background()
 
 			l, zapLogger, _ := logr.NewPacketLogr()
 			ctx = ctxzap.ToContext(ctx, zapLogger)
-
 			ma, err := NewMachine(
 				WithDeviceRequest(tc.req),
-				WithContext(ctx),
 				WithLogger(l),
 				WithStatusMessage(make(chan string)),
 			)
@@ -144,7 +143,6 @@ func TestPower(t *testing.T) {
 	for _, tc := range testCases {
 		testCase := tc
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
 			g := gomega.NewGomegaWithT(t)
 
 			ctx := context.Background()

@@ -23,21 +23,18 @@ func TestIPMIBootDeviceConnect(t *testing.T) {
 	expectedErr := repository.Error{
 		Code:    0,
 		Message: "",
-		Details: []string{},
+		Details: nil,
 	}
 
-	/*
-		sim := goipmi.NewSimulator(net.UDPAddr{})
-		err := sim.Run()
-		if err != nil {
-			t.Fatal(err)
-		}
-		port := sim.LocalAddr().Port
-		defer sim.Stop()
-	*/
+	sim := goipmi.NewSimulator(net.UDPAddr{})
+	err := sim.Run()
+	if err != nil {
+		t.Fatal(err)
+	}
+	port := sim.LocalAddr().Port
+	defer sim.Stop()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
-	defer cancel()
+	ctx := context.Background()
 
 	l, zapLogger, _ := logr.NewPacketLogr()
 	ctx = ctxzap.ToContext(ctx, zapLogger)
@@ -46,11 +43,10 @@ func TestIPMIBootDeviceConnect(t *testing.T) {
 		user:     "admin",
 		password: "admin",
 		host:     "127.0.0.1",
-		//port:     strconv.Itoa(port),
+		port:     strconv.Itoa(port),
 		mAction: Action{
 			Accessory: bmc.Accessory{
 				Log:            l,
-				Ctx:            ctx,
 				StatusMessages: make(chan string),
 			},
 		},
@@ -113,14 +109,14 @@ func TestSetBootDevice(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			expectedResult := "boot device set: " + strings.ToLower(tc.device.String())
 
-			ctx := context.Background()
+			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+			defer cancel()
 			l, zapLogger, _ := logr.NewPacketLogr()
 			ctx = ctxzap.ToContext(ctx, zapLogger)
 			b := ipmiBootDevice{
 				mAction: Action{
 					Accessory: oob.Accessory{
 						Log:            l,
-						Ctx:            ctx,
 						StatusMessages: make(chan string),
 					},
 					BootDeviceRequest: &v1.DeviceRequest{Device: tc.device},
@@ -135,8 +131,8 @@ func TestSetBootDevice(t *testing.T) {
 			if errMsg.Message != "" {
 				t.Fatal(errMsg)
 			}
-			defer b.Close()
-			result, errMsg := b.setBootDevice()
+			defer b.Close(ctx)
+			result, errMsg := b.setBootDevice(ctx)
 			if errMsg.Message != "" {
 				if tc.err != nil {
 					diff := cmp.Diff(*tc.err, errMsg)
@@ -154,27 +150,4 @@ func TestSetBootDevice(t *testing.T) {
 		})
 	}
 
-}
-
-func TestWork(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Nanosecond)
-	defer cancel()
-	l, zapLogger, _ := logr.NewPacketLogr()
-	ctx = ctxzap.ToContext(ctx, zapLogger)
-	ibd := ipmiBootDevice{
-		mAction: Action{
-			Accessory: bmc.Accessory{
-				Log:            l,
-				Ctx:            ctx,
-				StatusMessages: make(chan string),
-			},
-		},
-		user:     "root",
-		password: "calvin",
-		host:     "10.250.29.57",
-		port:     "623",
-	}
-
-	fmt.Println(ibd.Connect(ctx))
-	t.Fail()
 }

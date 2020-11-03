@@ -1,13 +1,11 @@
 package oob
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/packethost/pkg/log/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/repository"
@@ -23,15 +21,12 @@ func TestParseAuth(t *testing.T) {
 		"nil Direct Auth": {input: &v1.Authn{Authn: &v1.Authn_DirectAuthn{DirectAuthn: nil}}, want: repository.Error{Code: v1.Code_value["UNAUTHENTICATED"], Message: "no auth found", Details: nil}},
 		"nil auth":        {input: nil, want: repository.Error{Code: v1.Code_value["UNAUTHENTICATED"], Message: "no auth found", Details: nil}},
 	}
-	ctx := context.Background()
-	l, zapLogger, _ := logr.NewPacketLogr()
-	ctx = ctxzap.ToContext(ctx, zapLogger)
+	l, _, _ := logr.NewPacketLogr()
 	sm := make(chan string)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			a := Accessory{
 				Log:            l,
-				Ctx:            ctx,
 				StatusMessages: sm,
 			}
 
@@ -69,9 +64,7 @@ func TestSendStatusMessage(t *testing.T) {
 		"without chan receiver": {runChanReceiver: false, want: nil},
 	}
 
-	ctx := context.Background()
-	l, zapLogger, _ := logr.NewPacketLogr()
-	ctx = ctxzap.ToContext(ctx, zapLogger)
+	l, _, _ := logr.NewPacketLogr()
 	sm := make(chan string)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -79,7 +72,6 @@ func TestSendStatusMessage(t *testing.T) {
 			done := make(chan bool, 1)
 			a := Accessory{
 				Log:            l,
-				Ctx:            ctx,
 				StatusMessages: sm,
 			}
 

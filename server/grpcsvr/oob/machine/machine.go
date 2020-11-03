@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/go-logr/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
@@ -35,12 +34,12 @@ type bootDeviceConnection struct {
 // like ipmi, racadm, redfish, etc
 type power interface {
 	bmc.Connection
-	on() (string, repository.Error)
-	off() (string, repository.Error)
-	status() (string, repository.Error)
-	reset() (string, repository.Error)
-	hardoff() (string, repository.Error)
-	cycle() (string, repository.Error)
+	on(context.Context) (string, repository.Error)
+	off(context.Context) (string, repository.Error)
+	status(context.Context) (string, repository.Error)
+	reset(context.Context) (string, repository.Error)
+	hardoff(context.Context) (string, repository.Error)
+	cycle(context.Context) (string, repository.Error)
 }
 
 // the boot interface allows us to abstract these functions
@@ -48,19 +47,11 @@ type power interface {
 // like ipmi, racadm, redfish, etc
 type boot interface {
 	bmc.Connection
-	setBootDevice() (string, repository.Error)
+	setBootDevice(context.Context) (string, repository.Error)
 }
 
 // Option to add to an Actions
 type Option func(a *Action) error
-
-// WithContext adds a context to an Action struct
-func WithContext(c context.Context) Option {
-	return func(a *Action) error {
-		a.Ctx = c
-		return nil
-	}
-}
 
 // WithLogger adds a logr to an Action struct
 func WithLogger(l logr.Logger) Option {
@@ -109,8 +100,6 @@ func NewMachine(opts ...Option) (oob.Machine, error) {
 
 // BootDevice functionality for machines
 func (m Action) BootDevice(ctx context.Context) (result string, errMsg repository.Error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
 	host, user, password, errMsg := m.ParseAuth(m.BootDeviceRequest.Authn)
 	if errMsg.Message != "" {
 		return result, errMsg
@@ -130,7 +119,7 @@ func (m Action) BootDevice(ctx context.Context) (result string, errMsg repositor
 		connections[index].Err = connections[index].Connect(ctx)
 		if connections[index].Err.Message == "" {
 			connections[index].Connected = true
-			defer connections[index].Close()
+			defer connections[index].Close(ctx)
 			connected = true
 		}
 	}
@@ -153,7 +142,7 @@ func (m Action) BootDevice(ctx context.Context) (result string, errMsg repositor
 	for index := range connections {
 		if connections[index].Connected {
 			m.Log.V(0).Info("trying", "name", connections[index].Name)
-			result, errMsg = connections[index].setBootDevice()
+			result, errMsg = connections[index].setBootDevice(ctx)
 			if errMsg.Message == "" {
 				m.Log.V(0).Info("action implemented by", "implementer", connections[index].Name)
 				break
@@ -183,7 +172,7 @@ func (m Action) Power(ctx context.Context) (result string, errMsg repository.Err
 	// the order here is the order in which these connections/operations will be tried
 	connections := []powerConnection{
 		{ConnectionDetails: bmc.ConnectionDetails{Name: "bmclib"}, pwr: &bmclibBMC{user: user, password: password, host: host, log: m.Log}},
-		{ConnectionDetails: bmc.ConnectionDetails{Name: "ipmi"}, pwr: &ipmiBMC{user: user, password: password, host: host, ctx: m.Ctx, log: m.Log}},
+		{ConnectionDetails: bmc.ConnectionDetails{Name: "ipmi"}, pwr: &ipmiBMC{user: user, password: password, host: host, log: m.Log}},
 		{ConnectionDetails: bmc.ConnectionDetails{Name: "redfish"}, pwr: &redfishBMC{user: user, password: password, host: host, log: m.Log}},
 	}
 
@@ -193,7 +182,7 @@ func (m Action) Power(ctx context.Context) (result string, errMsg repository.Err
 		connections[index].Err = connections[index].pwr.Connect(ctx)
 		if connections[index].Err.Message == "" {
 			connections[index].Connected = true
-			defer connections[index].pwr.Close()
+			defer connections[index].pwr.Close(ctx)
 			connected = true
 		}
 	}
@@ -216,7 +205,7 @@ func (m Action) Power(ctx context.Context) (result string, errMsg repository.Err
 	for _, connection := range connections {
 		if connection.Connected {
 			m.Log.V(1).Info("trying", "name", connection.Name)
-			result, errMsg = doAction(m.PowerRequest.GetAction(), connection.pwr)
+			result, errMsg = doAction(ctx, m.PowerRequest.GetAction(), connection.pwr)
 			if errMsg.Message == "" {
 				m.Log.V(1).Info("action implemented by", "implementer", connection.Name)
 				break
@@ -232,20 +221,20 @@ func (m Action) Power(ctx context.Context) (result string, errMsg repository.Err
 	return strings.ToLower(result), errMsg //nolint
 }
 
-func doAction(action v1.PowerRequest_Action, pwr power) (result string, errMsg repository.Error) {
+func doAction(ctx context.Context, action v1.PowerRequest_Action, pwr power) (result string, errMsg repository.Error) {
 	switch action {
 	case v1.PowerRequest_ON:
-		result, errMsg = pwr.on()
+		result, errMsg = pwr.on(ctx)
 	case v1.PowerRequest_OFF:
-		result, errMsg = pwr.off()
+		result, errMsg = pwr.off(ctx)
 	case v1.PowerRequest_STATUS:
-		result, errMsg = pwr.status()
+		result, errMsg = pwr.status(ctx)
 	case v1.PowerRequest_RESET:
-		result, errMsg = pwr.reset()
+		result, errMsg = pwr.reset(ctx)
 	case v1.PowerRequest_HARDOFF:
-		result, errMsg = pwr.hardoff()
+		result, errMsg = pwr.hardoff(ctx)
 	case v1.PowerRequest_CYCLE:
-		result, errMsg = pwr.cycle()
+		result, errMsg = pwr.cycle(ctx)
 	default:
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = "unknown power action"

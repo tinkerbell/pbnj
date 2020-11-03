@@ -2,12 +2,18 @@ package machine
 
 import (
 	"context"
+	"net"
 	"strconv"
-	"time"
+	"strings"
 
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	goipmi "github.com/vmware/goipmi"
+)
+
+const (
+	lan     = "lan"
+	lanplus = "lanplus"
 )
 
 type ipmiBootDevice struct {
@@ -20,67 +26,60 @@ type ipmiBootDevice struct {
 	iface    string
 }
 
+// Connect to BMC using ipmitool
 func (b *ipmiBootDevice) Connect(ctx context.Context) repository.Error {
-	result := make(chan repository.Error, 1)
 	var errMsg repository.Error
 
-	go func() {
-		var port int
-		port, err := strconv.Atoi(b.port)
-		if err != nil {
-			port = 623
+	if strings.Contains(b.host, ":") {
+		host, port, err := net.SplitHostPort(b.host)
+		if err == nil {
+			b.host = host
+			b.port = port
 		}
-		var iface string
-		if b.iface == "" {
-			iface = "lanplus"
-		} else {
-			iface = b.iface
-		}
-		c := &goipmi.Connection{
-			Hostname:  b.host,
-			Username:  b.user,
-			Password:  b.password,
-			Port:      port,
-			Interface: iface,
-		}
-
-		client, err := goipmi.NewClient(c)
-		if err != nil {
-			errMsg.Code = v1.Code_value["UNKNOWN"]
-			errMsg.Message = err.Error()
-			result <- errMsg
-			return
-		}
-		err = client.Open()
-		if err != nil {
-			errMsg.Code = v1.Code_value["UNKNOWN"]
-			errMsg.Message = err.Error()
-			result <- errMsg
-			return
-		}
-		b.conn = client
-		result <- errMsg
-		return
-	}()
-
-	// I can't figure out why this is needed, some kind of race condition possibly.
-	// without it, the ctx.Done case will always trigger
-	time.Sleep(100 * time.Millisecond)
-
-	select {
-	case <-ctx.Done():
-		errMsg.Message = ctx.Err().Error()
-		return errMsg
-	case r := <-result:
-		return r
 	}
+	var port int
+	port, err := strconv.Atoi(b.port)
+	if err != nil {
+		port = 623
+	}
+	var iface string
+	if b.iface == "" {
+		iface = lanplus
+		b.iface = lanplus
+	} else {
+		iface = b.iface
+	}
+	c := &goipmi.Connection{
+		Hostname:  b.host,
+		Username:  b.user,
+		Password:  b.password,
+		Port:      port,
+		Interface: iface,
+	}
+
+	client, err := goipmi.NewClient(c)
+	if err != nil {
+		errMsg.Code = v1.Code_value["UNKNOWN"]
+		errMsg.Message = err.Error()
+		return errMsg
+	}
+	err = client.Open()
+	if err != nil {
+		errMsg.Code = v1.Code_value["UNKNOWN"]
+		errMsg.Message = err.Error()
+		return errMsg
+	}
+	b.conn = client
+	return errMsg
 }
 
-func (b *ipmiBootDevice) Close() {
+// Close the connection to a BMC
+func (b *ipmiBootDevice) Close(ctx context.Context) {
 	b.conn.Close()
 }
 
-func (b *ipmiBootDevice) setBootDevice() (result string, errMsg repository.Error) {
+// setBootDevice will try to set boot device using ipmitool interface lan and lanplus
+func (b *ipmiBootDevice) setBootDevice(ctx context.Context) (result string, errMsg repository.Error) {
 	var dev goipmi.BootDevice
 	switch b.mAction.BootDeviceRequest.Device {
 	case v1.DeviceRequest_NONE:
@@ -100,9 +99,26 @@ func (b *ipmiBootDevice) setBootDevice() (result string, errMsg repository.Error
 	}
 	err := b.conn.SetBootDevice(dev)
 	if err != nil {
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = err.Error()
-		return "", errMsg
+		var iface string
+		if b.iface == lan {
+			iface = lanplus
+		} else if b.iface == lanplus {
+			iface = lan
+		}
+		b.iface = iface
+		errMsg = b.Connect(ctx)
+		if errMsg.Message != "" {
+			errMsg.Code = v1.Code_value["UNKNOWN"]
+			errMsg.Message = err.Error()
+			return "", errMsg
+		}
+		err := b.conn.SetBootDevice(dev)
+		if err != nil {
+			errMsg.Code = v1.Code_value["UNKNOWN"]
+			errMsg.Message = err.Error()
+			return "", errMsg
+		}
 	}
+
 	return "boot device set: " + dev.String(), errMsg
 }

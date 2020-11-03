@@ -19,13 +19,12 @@ type ConnectionDetails struct {
 // Connection methods open/close
 type Connection interface {
 	Connect(context.Context) repository.Error
-	Close()
+	Close(context.Context)
 }
 
 // Accessory for all BMC actions
 type Accessory struct {
 	Log            logr.Logger
-	Ctx            context.Context
 	StatusMessages chan string
 }
 
