@@ -1,6 +1,10 @@
 package oob
 
-import "github.com/tinkerbell/pbnj/pkg/repository"
+import (
+	"context"
+
+	"github.com/tinkerbell/pbnj/pkg/repository"
+)
 
 // User management methods
 type User interface {
@@ -11,8 +15,8 @@ type User interface {
 
 // Machine management methods
 type Machine interface {
-	BootDevice() (result string, err repository.Error)
-	Power() (result string, err repository.Error)
+	BootDevice(context.Context) (result string, err repository.Error)
+	Power(context.Context) (result string, err repository.Error)
 }
 
 // BMC management methods

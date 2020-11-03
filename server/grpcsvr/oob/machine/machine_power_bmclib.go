@@ -1,24 +1,26 @@
-package bmc
+package machine
 
 import (
+	"context"
+
 	"github.com/bmc-toolbox/bmclib/devices"
 	"github.com/bmc-toolbox/bmclib/discover"
+	"github.com/go-logr/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
 type bmclibBMC struct {
-	mAction  MachineAction
+	log      logr.Logger
 	conn     devices.Bmc
 	user     string
 	password string
 	host     string
 }
 
-func (b *bmclibBMC) connection() repository.Error {
+func (b *bmclibBMC) Connect(ctx context.Context) repository.Error {
 	var errMsg repository.Error
-	l := b.mAction.Log.GetContextLogger(b.mAction.Ctx)
-	connection, err := discover.ScanAndConnect(b.host, b.user, b.password, discover.WithLogger(l))
+	connection, err := discover.ScanAndConnect(b.host, b.user, b.password, discover.WithLogger(b.log))
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = err.Error()
@@ -35,11 +37,11 @@ func (b *bmclibBMC) connection() repository.Error {
 	return errMsg //nolint
 }
 
-func (b *bmclibBMC) close() {
+func (b *bmclibBMC) Close(ctx context.Context) {
 	b.conn.Close()
 }
 
-func (b *bmclibBMC) on() (result string, errMsg repository.Error) {
+func (b *bmclibBMC) on(ctx context.Context) (result string, errMsg repository.Error) {
 	ok, err := b.conn.PowerOn()
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
@@ -54,7 +56,7 @@ func (b *bmclibBMC) on() (result string, errMsg repository.Error) {
 	return "on", errMsg
 }
 
-func (b *bmclibBMC) off() (result string, errMsg repository.Error) {
+func (b *bmclibBMC) off(ctx context.Context) (result string, errMsg repository.Error) {
 	ok, err := b.conn.PowerOff()
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
@@ -69,7 +71,7 @@ func (b *bmclibBMC) off() (result string, errMsg repository.Error) {
 	return "off", errMsg
 }
 
-func (b *bmclibBMC) status() (result string, errMsg repository.Error) {
+func (b *bmclibBMC) status(ctx context.Context) (result string, errMsg repository.Error) {
 	result, err := b.conn.PowerState()
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
@@ -79,7 +81,7 @@ func (b *bmclibBMC) status() (result string, errMsg repository.Error) {
 	return result, errMsg
 }
 
-func (b *bmclibBMC) reset() (result string, errMsg repository.Error) {
+func (b *bmclibBMC) reset(ctx context.Context) (result string, errMsg repository.Error) {
 	ok, err := b.conn.PowerCycle()
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
@@ -94,7 +96,7 @@ func (b *bmclibBMC) reset() (result string, errMsg repository.Error) {
 	return "reset", errMsg
 }
 
-func (b *bmclibBMC) hardoff() (result string, errMsg repository.Error) {
+func (b *bmclibBMC) hardoff(ctx context.Context) (result string, errMsg repository.Error) {
 	ok, err := b.conn.PowerOff()
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
@@ -109,7 +111,7 @@ func (b *bmclibBMC) hardoff() (result string, errMsg repository.Error) {
 	return "hardoff", errMsg
 }
 
-func (b *bmclibBMC) cycle() (result string, errMsg repository.Error) {
+func (b *bmclibBMC) cycle(ctx context.Context) (result string, errMsg repository.Error) {
 	ok, err := b.conn.PowerCycle()
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]

@@ -7,7 +7,7 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/pkg/task"
-	"github.com/tinkerbell/pbnj/server/grpcsvr/bmc"
+	"github.com/tinkerbell/pbnj/server/grpcsvr/oob/machine"
 )
 
 // MachineService for doing power and device actions
@@ -25,13 +25,15 @@ func (m *MachineService) Device(ctx context.Context, in *v1.DeviceRequest) (*v1.
 	taskID, err := m.TaskRunner.Execute(
 		"setting boot device",
 		func(s chan string) (string, repository.Error) {
-			mbd := bmc.MachineAction{
-				Log:               m.Log,
-				Ctx:               ctx,
-				BootDeviceRequest: in,
-				StatusMessages:    s,
+			mbd, err := machine.NewMachine(
+				machine.WithDeviceRequest(in),
+				machine.WithLogger(l),
+				machine.WithStatusMessage(s),
+			)
+			if err != nil {
+				return "", repository.Error{Message: err.Error()}
 			}
-			return mbd.BootDevice()
+			return mbd.BootDevice(ctx)
 		})
 
 	return &v1.DeviceResponse{
@@ -46,13 +48,15 @@ func (m *MachineService) PowerAction(ctx context.Context, in *v1.PowerRequest) (
 	// TODO INPUT VALIDATION
 
 	var execFunc = func(s chan string) (string, repository.Error) {
-		mp := bmc.MachineAction{
-			Log:            m.Log,
-			Ctx:            ctx,
-			PowerRequest:   in,
-			StatusMessages: s,
+		mp, err := machine.NewMachine(
+			machine.WithPowerRequest(in),
+			machine.WithLogger(l),
+			machine.WithStatusMessage(s),
+		)
+		if err != nil {
+			return "", repository.Error{Message: err.Error()}
 		}
-		return mp.Power()
+		return mp.Power(ctx)
 	}
 	taskID, err := m.TaskRunner.Execute("power action: "+in.GetAction().String(), execFunc)
 

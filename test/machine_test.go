@@ -17,13 +17,24 @@ import (
 )
 
 var (
-	lookup = map[string]map[string]expected{
+	PowerRequest_ON      = v1.PowerRequest_ON
+	PowerRequest_OFF     = v1.PowerRequest_OFF
+	PowerRequest_STATUS  = v1.PowerRequest_STATUS
+	PowerRequest_CYCLE   = v1.PowerRequest_CYCLE
+	PowerRequest_RESET   = v1.PowerRequest_RESET
+	PowerRequest_HARDOFF = v1.PowerRequest_HARDOFF
+	DeviceRequest_NONE   = v1.DeviceRequest_NONE
+	DeviceRequest_BIOS   = v1.DeviceRequest_BIOS
+	DeviceRequest_DISK   = v1.DeviceRequest_DISK
+	DeviceRequest_CDROM  = v1.DeviceRequest_CDROM
+	DeviceRequest_PXE    = v1.DeviceRequest_PXE
+	lookup               = map[string]map[string]expected{
 		"happyTests":           happyTests,
 		"notIdentifiableTests": notIdentifiableTests,
 	}
 	happyTests = map[string]expected{
-		"1 power off": {
-			Action: v1.PowerRequest_OFF,
+		/*"1 power off": {
+			ActionPower: &PowerRequest_OFF,
 			Want: &v1.StatusResponse{
 				Id:          "12345",
 				Description: "power action: OFF",
@@ -36,7 +47,7 @@ var (
 			WaitTime: 15 * time.Second,
 		},
 		"2 power status": {
-			Action: v1.PowerRequest_STATUS,
+			ActionPower: &PowerRequest_STATUS,
 			Want: &v1.StatusResponse{
 				Id:          "12345",
 				Description: "power action: STATUS",
@@ -46,9 +57,9 @@ var (
 				Complete:    true,
 				Messages:    []string{"working on power STATUS", "connecting to BMC", "connected to BMC", "power STATUS complete"},
 			},
-		},
+		},*/
 		"3 power on": {
-			Action: v1.PowerRequest_ON,
+			ActionPower: &PowerRequest_ON,
 			Want: &v1.StatusResponse{
 				Id:          "12345",
 				Description: "power action: ON",
@@ -61,7 +72,7 @@ var (
 			WaitTime: 180 * time.Second,
 		},
 		"4 power status": {
-			Action: v1.PowerRequest_STATUS,
+			ActionPower: &PowerRequest_STATUS,
 			Want: &v1.StatusResponse{
 				Id:          "12345",
 				Description: "power action: STATUS",
@@ -71,9 +82,10 @@ var (
 				Complete:    true,
 				Messages:    []string{"working on power STATUS", "connecting to BMC", "connected to BMC", "power STATUS complete"},
 			},
+			WaitTime: 1 * time.Second,
 		},
-		"5 power cycle": {
-			Action: v1.PowerRequest_CYCLE,
+		/*"5 power cycle": {
+			ActionPower: &PowerRequest_CYCLE,
 			Want: &v1.StatusResponse{
 				Id:          "12345",
 				Description: "power action: CYCLE",
@@ -86,7 +98,62 @@ var (
 			WaitTime: 60 * time.Second,
 		},
 		"6 power status": {
-			Action: v1.PowerRequest_STATUS,
+			ActionPower: &PowerRequest_STATUS,
+			Want: &v1.StatusResponse{
+				Id:          "12345",
+				Description: "power action: STATUS",
+				Error:       &v1.Error{},
+				State:       "complete",
+				Result:      "on",
+				Complete:    true,
+				Messages:    []string{"working on power STATUS", "connecting to BMC", "connected to BMC", "power STATUS complete"},
+			},
+		},*/
+
+		//"power hardoff": {Action: &PowerRequest_HARDOFF, Want: notImplementedWant("HARD OFF")},
+		//"power reset":   {Action: &PowerRequest_RESET, Want: notImplementedWant("RESET")},
+	}
+	deviceHappyTests = map[string]expected{
+		"1 set device pxe": {
+			ActionBootDev: &DeviceRequest_PXE,
+			Want: &v1.StatusResponse{
+				Id:          "12345",
+				Description: "power action: OFF",
+				Error:       &v1.Error{},
+				State:       "complete",
+				Result:      "off",
+				Complete:    true,
+				Messages:    []string{"working on power OFF", "connecting to BMC", "connected to BMC", "power OFF complete"},
+			},
+			WaitTime: 1 * time.Second,
+		},
+		"2 power status": {
+			ActionPower: &PowerRequest_STATUS,
+			Want: &v1.StatusResponse{
+				Id:          "12345",
+				Description: "power action: STATUS",
+				Error:       &v1.Error{},
+				State:       "complete",
+				Result:      "off",
+				Complete:    true,
+				Messages:    []string{"working on power STATUS", "connecting to BMC", "connected to BMC", "power STATUS complete"},
+			},
+		},
+		"3 power on": {
+			ActionPower: &PowerRequest_ON,
+			Want: &v1.StatusResponse{
+				Id:          "12345",
+				Description: "power action: ON",
+				Error:       &v1.Error{},
+				State:       "complete",
+				Result:      "on",
+				Complete:    true,
+				Messages:    []string{"working on power ON", "connecting to BMC", "connected to BMC", "power ON complete"},
+			},
+			WaitTime: 180 * time.Second,
+		},
+		"4 power status": {
+			ActionPower: &PowerRequest_STATUS,
 			Want: &v1.StatusResponse{
 				Id:          "12345",
 				Description: "power action: STATUS",
@@ -97,17 +164,39 @@ var (
 				Messages:    []string{"working on power STATUS", "connecting to BMC", "connected to BMC", "power STATUS complete"},
 			},
 		},
-
-		//"power hardoff": {Action: v1.PowerRequest_HARDOFF, Want: notImplementedWant("HARD OFF")},
-		//"power reset":   {Action: v1.PowerRequest_RESET, Want: notImplementedWant("RESET")},
+		"5 power cycle": {
+			ActionPower: &PowerRequest_CYCLE,
+			Want: &v1.StatusResponse{
+				Id:          "12345",
+				Description: "power action: CYCLE",
+				Error:       &v1.Error{},
+				State:       "complete",
+				Result:      "cycle",
+				Complete:    true,
+				Messages:    []string{"working on power CYCLE", "connecting to BMC", "connected to BMC", "power CYCLE complete"},
+			},
+			WaitTime: 60 * time.Second,
+		},
+		"6 power status": {
+			ActionPower: &PowerRequest_STATUS,
+			Want: &v1.StatusResponse{
+				Id:          "12345",
+				Description: "power action: STATUS",
+				Error:       &v1.Error{},
+				State:       "complete",
+				Result:      "on",
+				Complete:    true,
+				Messages:    []string{"working on power STATUS", "connecting to BMC", "connected to BMC", "power STATUS complete"},
+			},
+		},
 	}
 	notIdentifiableTests = map[string]expected{
-		"power status":  {Action: v1.PowerRequest_STATUS, Want: notIdentifiableWant},
-		"power on":      {Action: v1.PowerRequest_ON, Want: notIdentifiableWant},
-		"power off":     {Action: v1.PowerRequest_OFF, Want: notIdentifiableWant},
-		"power hardoff": {Action: v1.PowerRequest_HARDOFF, Want: notIdentifiableWant},
-		"power cycle":   {Action: v1.PowerRequest_CYCLE, Want: notIdentifiableWant},
-		"power reset":   {Action: v1.PowerRequest_RESET, Want: notIdentifiableWant},
+		"power status":  {ActionPower: &PowerRequest_STATUS, Want: notIdentifiableWant},
+		"power on":      {ActionPower: &PowerRequest_ON, Want: notIdentifiableWant},
+		"power off":     {ActionPower: &PowerRequest_OFF, Want: notIdentifiableWant},
+		"power hardoff": {ActionPower: &PowerRequest_HARDOFF, Want: notIdentifiableWant},
+		"power cycle":   {ActionPower: &PowerRequest_CYCLE, Want: notIdentifiableWant},
+		"power reset":   {ActionPower: &PowerRequest_RESET, Want: notIdentifiableWant},
 	}
 	notIdentifiableWant = &v1.StatusResponse{
 		Id:          "12345",
@@ -125,9 +214,14 @@ var (
 )
 
 type expected struct {
-	Action   v1.PowerRequest_Action
-	Want     *v1.StatusResponse
-	WaitTime time.Duration
+	ActionPower   *v1.PowerRequest_Action
+	ActionBootDev *v1.DeviceRequest_Device
+	Want          *v1.StatusResponse
+	WaitTime      time.Duration
+}
+type machineActions struct {
+	Device v1.DeviceRequest_Device
+	Power  v1.PowerRequest_Action
 }
 
 type testResource struct {
@@ -143,7 +237,6 @@ type dataObject map[string]testResource
 // TestPower actions against BMCs
 func TestPower(t *testing.T) {
 	resources := createTestData(cfgData.Data)
-
 	for rname, rs := range resources {
 		rs := rs
 		rname := rname + "_" + rs.Vendor
@@ -158,14 +251,21 @@ func TestPower(t *testing.T) {
 				name := key
 				t.Run(name, func(t *testing.T) {
 					// do the work
-
-					got, err := runMachineClient(rs, tc.Action, cfgData.Server)
-					if err != nil {
-						t.Fatal(err)
+					var got *v1.StatusResponse
+					var err error
+					if tc.ActionPower != nil {
+						got, err = runMachinePowerClient(rs, *tc.ActionPower, cfgData.Server)
+						if err != nil {
+							t.Fatal(err)
+						}
+					} else {
+						got, err = runMachineBootDevClient(rs, *tc.ActionBootDev, cfgData.Server)
+						if err != nil {
+							t.Fatal(err)
+						}
 					}
 
 					got.Id = "12345"
-					//tc.Want.Description += ": " + tc.Action.String()
 					diff := cmp.Diff(tc.Want, got, protocmp.Transform())
 					if diff != "" {
 						failed = true
@@ -174,13 +274,15 @@ func TestPower(t *testing.T) {
 				})
 				if !failed {
 					time.Sleep(tc.WaitTime)
+				} else {
+					break
 				}
 			}
 		})
 	}
 }
 
-func runMachineClient(in testResource, action v1.PowerRequest_Action, s Server) (*v1.StatusResponse, error) {
+func runMachinePowerClient(in testResource, action v1.PowerRequest_Action, s Server) (*v1.StatusResponse, error) {
 	var opts []grpc.DialOption
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
@@ -211,6 +313,45 @@ func runMachineClient(in testResource, action v1.PowerRequest_Action, s Server) 
 			Name: in.Vendor,
 		},
 		Action: action,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func runMachineBootDevClient(in testResource, action v1.DeviceRequest_Device, s Server) (*v1.StatusResponse, error) {
+	var opts []grpc.DialOption
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	opts = append(opts, grpc.WithInsecure())
+	conn, err := grpc.Dial(s.URL+":"+s.Port, opts...)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	client := v1.NewMachineClient(conn)
+	taskClient := v1.NewTaskClient(conn)
+
+	resp, err := v1Client.MachineBootDev(ctx, client, taskClient, &v1.DeviceRequest{
+		Authn: &v1.Authn{
+			Authn: &v1.Authn_DirectAuthn{
+				DirectAuthn: &v1.DirectAuthn{
+					Host: &v1.Host{
+						Host: in.Host,
+					},
+					Username: in.Username,
+					Password: in.Password,
+				},
+			},
+		},
+		Vendor: &v1.Vendor{
+			Name: in.Vendor,
+		},
+		Device: action,
 	})
 	if err != nil {
 		return nil, err

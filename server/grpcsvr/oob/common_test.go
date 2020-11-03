@@ -1,16 +1,13 @@
-package bmc
+package oob
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/packethost/pkg/log/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
-	"github.com/tinkerbell/pbnj/cmd/zaplog"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
@@ -24,23 +21,16 @@ func TestParseAuth(t *testing.T) {
 		"nil Direct Auth": {input: &v1.Authn{Authn: &v1.Authn_DirectAuthn{DirectAuthn: nil}}, want: repository.Error{Code: v1.Code_value["UNAUTHENTICATED"], Message: "no auth found", Details: nil}},
 		"nil auth":        {input: nil, want: repository.Error{Code: v1.Code_value["UNAUTHENTICATED"], Message: "no auth found", Details: nil}},
 	}
-	ctx := context.Background()
-	l, zapLogger, _ := logr.NewPacketLogr()
-	logger := zaplog.RegisterLogger(l)
-	ctx = ctxzap.ToContext(ctx, zapLogger)
+	l, _, _ := logr.NewPacketLogr()
 	sm := make(chan string)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			m := MachineAction{
-				PowerRequest: &v1.PowerRequest{
-					Authn: tc.input,
-				},
+			a := Accessory{
+				Log:            l,
 				StatusMessages: sm,
-				Log:            logger,
-				Ctx:            ctx,
 			}
 
-			host, username, passwd, errMsg := m.parseAuth(m.PowerRequest.Authn)
+			host, username, passwd, errMsg := a.ParseAuth(tc.input)
 			diff := cmp.Diff(tc.want, errMsg)
 			if diff != "" {
 				t.Log(fmt.Sprintf("%+v", errMsg))
@@ -74,25 +64,21 @@ func TestSendStatusMessage(t *testing.T) {
 		"without chan receiver": {runChanReceiver: false, want: nil},
 	}
 
-	ctx := context.Background()
-	l, zapLogger, _ := logr.NewPacketLogr()
-	logger := zaplog.RegisterLogger(l)
-	ctx = ctxzap.ToContext(ctx, zapLogger)
+	l, _, _ := logr.NewPacketLogr()
 	sm := make(chan string)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			var msgs []string
 			done := make(chan bool, 1)
-			m := MachineAction{
+			a := Accessory{
+				Log:            l,
 				StatusMessages: sm,
-				Log:            logger,
-				Ctx:            ctx,
 			}
 
 			if tc.runChanReceiver {
 				go func() {
 					for {
-						msgs = append(msgs, <-m.StatusMessages)
+						msgs = append(msgs, <-a.StatusMessages)
 						select {
 						case <-done:
 							return
@@ -101,8 +87,8 @@ func TestSendStatusMessage(t *testing.T) {
 						}
 					}
 				}()
-				m.sendStatusMessage(tc.want[0])
-				m.sendStatusMessage(tc.want[1])
+				a.SendStatusMessage(tc.want[0])
+				a.SendStatusMessage(tc.want[1])
 				time.Sleep(10 * time.Millisecond)
 				done <- true
 			}
