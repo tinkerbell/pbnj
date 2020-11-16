@@ -14,10 +14,11 @@ import (
 type MachineService struct {
 	Log        logging.Logger
 	TaskRunner task.Task
+	v1.UnimplementedMachineServer
 }
 
-// Device sets the next boot device of a machine
-func (m *MachineService) Device(ctx context.Context, in *v1.DeviceRequest) (*v1.DeviceResponse, error) {
+// BootDevice sets the next boot device of a machine
+func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (*v1.DeviceResponse, error) {
 	// TODO figure out how not to have to do this, but still keep the logging abstraction clean?
 	l := m.Log.GetContextLogger(ctx)
 	l.V(0).Info("setting boot device", "device", in.Device.String())
@@ -41,8 +42,8 @@ func (m *MachineService) Device(ctx context.Context, in *v1.DeviceRequest) (*v1.
 	}, err
 }
 
-// PowerAction does a power action against a BMC
-func (m *MachineService) PowerAction(ctx context.Context, in *v1.PowerRequest) (*v1.PowerResponse, error) {
+// Power does a power action against a BMC
+func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.PowerResponse, error) {
 	l := m.Log.GetContextLogger(ctx)
 	l.V(0).Info("power request")
 	// TODO INPUT VALIDATION

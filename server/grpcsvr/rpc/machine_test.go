@@ -74,7 +74,7 @@ func TestDevice(t *testing.T) {
 				Log:        logger,
 				TaskRunner: taskRunner,
 			}
-			response, err := machineSvc.Device(ctx, testCase.req)
+			response, err := machineSvc.BootDevice(ctx, testCase.req)
 
 			t.Log("Got : ", response)
 
@@ -173,7 +173,7 @@ func TestPower(t *testing.T) {
 				Log:        logger,
 				TaskRunner: taskRunner,
 			}
-			response, err := machineSvc.PowerAction(ctx, testCase.req)
+			response, err := machineSvc.Power(ctx, testCase.req)
 
 			t.Log("Got response: ", response)
 			t.Log("Got err: ", err)

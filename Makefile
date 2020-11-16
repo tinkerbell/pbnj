@@ -5,6 +5,7 @@ BINARY:=pbnj
 OSFLAG:= $(shell go env GOHOSTOS)
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 BUILD_ARGS:=GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags '-s -w -extldflags "-static"'
+PROTOBUF_BUILDER_IMG:=pbnj-protobuf-builder
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[32m%-30s\033[0m %s\n", $$1, $$2}'
@@ -72,8 +73,20 @@ else
 endif
 
 .PHONY: pbs
-pbs: ## generate go stubs from protocol buffers
+pbs: ## locally generate go stubs from protocol buffers
 	scripts/protoc.sh
+
+.PHONY: pbs-install-deps
+pbs: ## locally install dependencies in order to generate go stubs from protocol buffers
+	scripts/protoc.sh deps
+
+.PHONY: pbs-docker
+pbs-docker: pbs-docker-image ## generate go stubs from protocol buffers in a container
+	docker run -it --rm -v ${PWD}:/code -w /code ${PROTOBUF_BUILDER_IMG} scripts/protoc.sh
+
+.PHONY: pbs-docker-image
+pbs-docker-image: ## generate container image for building protocol buffers 
+	docker build -t ${PROTOBUF_BUILDER_IMG} -f scripts/Dockerfile.pbbuilder .
 
 .PHONY: image
 image: ## make the Container Image
