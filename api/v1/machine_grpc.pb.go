@@ -30,10 +30,6 @@ func NewMachineClient(cc grpc.ClientConnInterface) MachineClient {
 	return &machineClient{cc}
 }
 
-var machineBootDeviceStreamDesc = &grpc.StreamDesc{
-	StreamName: "BootDevice",
-}
-
 func (c *machineClient) BootDevice(ctx context.Context, in *DeviceRequest, opts ...grpc.CallOption) (*DeviceResponse, error) {
 	out := new(DeviceResponse)
 	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.Machine/BootDevice", in, out, opts...)
@@ -41,10 +37,6 @@ func (c *machineClient) BootDevice(ctx context.Context, in *DeviceRequest, opts 
 		return nil, err
 	}
 	return out, nil
-}
-
-var machinePowerStreamDesc = &grpc.StreamDesc{
-	StreamName: "Power",
 }
 
 func (c *machineClient) Power(ctx context.Context, in *PowerRequest, opts ...grpc.CallOption) (*PowerResponse, error) {
@@ -56,78 +48,87 @@ func (c *machineClient) Power(ctx context.Context, in *PowerRequest, opts ...grp
 	return out, nil
 }
 
-// MachineService is the service API for Machine service.
-// Fields should be assigned to their respective handler implementations only before
-// RegisterMachineService is called.  Any unassigned fields will result in the
-// handler for that method returning an Unimplemented error.
-type MachineService struct {
-	BootDevice func(context.Context, *DeviceRequest) (*DeviceResponse, error)
-	Power      func(context.Context, *PowerRequest) (*PowerResponse, error)
+// MachineServer is the server API for Machine service.
+// All implementations must embed UnimplementedMachineServer
+// for forward compatibility
+type MachineServer interface {
+	BootDevice(context.Context, *DeviceRequest) (*DeviceResponse, error)
+	Power(context.Context, *PowerRequest) (*PowerResponse, error)
+	mustEmbedUnimplementedMachineServer()
 }
 
-func (s *MachineService) bootDevice(_ interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+// UnimplementedMachineServer must be embedded to have forward compatible implementations.
+type UnimplementedMachineServer struct {
+}
+
+func (UnimplementedMachineServer) BootDevice(context.Context, *DeviceRequest) (*DeviceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BootDevice not implemented")
+}
+func (UnimplementedMachineServer) Power(context.Context, *PowerRequest) (*PowerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Power not implemented")
+}
+func (UnimplementedMachineServer) mustEmbedUnimplementedMachineServer() {}
+
+// UnsafeMachineServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MachineServer will
+// result in compilation errors.
+type UnsafeMachineServer interface {
+	mustEmbedUnimplementedMachineServer()
+}
+
+func RegisterMachineServer(s grpc.ServiceRegistrar, srv MachineServer) {
+	s.RegisterService(&_Machine_serviceDesc, srv)
+}
+
+func _Machine_BootDevice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeviceRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return s.BootDevice(ctx, in)
+		return srv.(MachineServer).BootDevice(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
-		Server:     s,
+		Server:     srv,
 		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.Machine/BootDevice",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return s.BootDevice(ctx, req.(*DeviceRequest))
+		return srv.(MachineServer).BootDevice(ctx, req.(*DeviceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
-func (s *MachineService) power(_ interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+
+func _Machine_Power_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PowerRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return s.Power(ctx, in)
+		return srv.(MachineServer).Power(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
-		Server:     s,
+		Server:     srv,
 		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.Machine/Power",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return s.Power(ctx, req.(*PowerRequest))
+		return srv.(MachineServer).Power(ctx, req.(*PowerRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// RegisterMachineService registers a service implementation with a gRPC server.
-func RegisterMachineService(s grpc.ServiceRegistrar, srv *MachineService) {
-	srvCopy := *srv
-	if srvCopy.BootDevice == nil {
-		srvCopy.BootDevice = func(context.Context, *DeviceRequest) (*DeviceResponse, error) {
-			return nil, status.Errorf(codes.Unimplemented, "method BootDevice not implemented")
-		}
-	}
-	if srvCopy.Power == nil {
-		srvCopy.Power = func(context.Context, *PowerRequest) (*PowerResponse, error) {
-			return nil, status.Errorf(codes.Unimplemented, "method Power not implemented")
-		}
-	}
-	sd := grpc.ServiceDesc{
-		ServiceName: "github.com.tinkerbell.pbnj.api.v1.Machine",
-		Methods: []grpc.MethodDesc{
-			{
-				MethodName: "BootDevice",
-				Handler:    srvCopy.bootDevice,
-			},
-			{
-				MethodName: "Power",
-				Handler:    srvCopy.power,
-			},
+var _Machine_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "github.com.tinkerbell.pbnj.api.v1.Machine",
+	HandlerType: (*MachineServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "BootDevice",
+			Handler:    _Machine_BootDevice_Handler,
 		},
-		Streams:  []grpc.StreamDesc{},
-		Metadata: "api/v1/machine.proto",
-	}
-
-	s.RegisterService(&sd, nil)
+		{
+			MethodName: "Power",
+			Handler:    _Machine_Power_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/v1/machine.proto",
 }

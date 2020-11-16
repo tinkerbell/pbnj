@@ -62,41 +62,25 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 		Log:        log,
 		TaskRunner: taskRunner,
 	}
-	m := v1.MachineService{
-		BootDevice: ms.Device,
-		Power:      ms.PowerAction,
-	}
-	v1.RegisterMachineService(grpcServer, &m)
+	v1.RegisterMachineServer(grpcServer, &ms)
 
 	bs := rpc.BmcService{
 		Log:        log,
 		TaskRunner: taskRunner,
 	}
-	b := v1.BMCService{
-		NetworkSource: bs.NetworkSource,
-		Reset:         bs.ResetAction,
-	}
-	v1.RegisterBMCService(grpcServer, &b)
+	v1.RegisterBMCServer(grpcServer, &bs)
 
 	ts := rpc.TaskService{
 		Log:        log,
 		TaskRunner: taskRunner,
 	}
-	t := v1.TaskService{
-		Status: ts.Task,
-	}
-	v1.RegisterTaskService(grpcServer, &t)
+	v1.RegisterTaskServer(grpcServer, &ts)
 
 	us := rpc.UserService{
 		Log:        log,
 		TaskRunner: taskRunner,
 	}
-	u := v1.UserService{
-		CreateUser: us.CreateUser,
-		DeleteUser: us.DeleteUser,
-		UpdateUser: us.UpdateUser,
-	}
-	v1.RegisterUserService(grpcServer, &u)
+	v1.RegisterUserServer(grpcServer, &us)
 	reflection.Register(grpcServer)
 
 	listen, err := net.Listen("tcp", ":"+port)

@@ -30,10 +30,6 @@ func NewBMCClient(cc grpc.ClientConnInterface) BMCClient {
 	return &bMCClient{cc}
 }
 
-var bMCNetworkSourceStreamDesc = &grpc.StreamDesc{
-	StreamName: "NetworkSource",
-}
-
 func (c *bMCClient) NetworkSource(ctx context.Context, in *NetworkSourceRequest, opts ...grpc.CallOption) (*NetworkSourceResponse, error) {
 	out := new(NetworkSourceResponse)
 	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.BMC/NetworkSource", in, out, opts...)
@@ -41,10 +37,6 @@ func (c *bMCClient) NetworkSource(ctx context.Context, in *NetworkSourceRequest,
 		return nil, err
 	}
 	return out, nil
-}
-
-var bMCResetStreamDesc = &grpc.StreamDesc{
-	StreamName: "Reset",
 }
 
 func (c *bMCClient) Reset(ctx context.Context, in *ResetRequest, opts ...grpc.CallOption) (*ResetResponse, error) {
@@ -56,78 +48,87 @@ func (c *bMCClient) Reset(ctx context.Context, in *ResetRequest, opts ...grpc.Ca
 	return out, nil
 }
 
-// BMCService is the service API for BMC service.
-// Fields should be assigned to their respective handler implementations only before
-// RegisterBMCService is called.  Any unassigned fields will result in the
-// handler for that method returning an Unimplemented error.
-type BMCService struct {
-	NetworkSource func(context.Context, *NetworkSourceRequest) (*NetworkSourceResponse, error)
-	Reset         func(context.Context, *ResetRequest) (*ResetResponse, error)
+// BMCServer is the server API for BMC service.
+// All implementations must embed UnimplementedBMCServer
+// for forward compatibility
+type BMCServer interface {
+	NetworkSource(context.Context, *NetworkSourceRequest) (*NetworkSourceResponse, error)
+	Reset(context.Context, *ResetRequest) (*ResetResponse, error)
+	mustEmbedUnimplementedBMCServer()
 }
 
-func (s *BMCService) networkSource(_ interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+// UnimplementedBMCServer must be embedded to have forward compatible implementations.
+type UnimplementedBMCServer struct {
+}
+
+func (UnimplementedBMCServer) NetworkSource(context.Context, *NetworkSourceRequest) (*NetworkSourceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NetworkSource not implemented")
+}
+func (UnimplementedBMCServer) Reset(context.Context, *ResetRequest) (*ResetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Reset not implemented")
+}
+func (UnimplementedBMCServer) mustEmbedUnimplementedBMCServer() {}
+
+// UnsafeBMCServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BMCServer will
+// result in compilation errors.
+type UnsafeBMCServer interface {
+	mustEmbedUnimplementedBMCServer()
+}
+
+func RegisterBMCServer(s grpc.ServiceRegistrar, srv BMCServer) {
+	s.RegisterService(&_BMC_serviceDesc, srv)
+}
+
+func _BMC_NetworkSource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(NetworkSourceRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return s.NetworkSource(ctx, in)
+		return srv.(BMCServer).NetworkSource(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
-		Server:     s,
+		Server:     srv,
 		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.BMC/NetworkSource",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return s.NetworkSource(ctx, req.(*NetworkSourceRequest))
+		return srv.(BMCServer).NetworkSource(ctx, req.(*NetworkSourceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
-func (s *BMCService) reset(_ interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+
+func _BMC_Reset_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ResetRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return s.Reset(ctx, in)
+		return srv.(BMCServer).Reset(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
-		Server:     s,
+		Server:     srv,
 		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.BMC/Reset",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return s.Reset(ctx, req.(*ResetRequest))
+		return srv.(BMCServer).Reset(ctx, req.(*ResetRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// RegisterBMCService registers a service implementation with a gRPC server.
-func RegisterBMCService(s grpc.ServiceRegistrar, srv *BMCService) {
-	srvCopy := *srv
-	if srvCopy.NetworkSource == nil {
-		srvCopy.NetworkSource = func(context.Context, *NetworkSourceRequest) (*NetworkSourceResponse, error) {
-			return nil, status.Errorf(codes.Unimplemented, "method NetworkSource not implemented")
-		}
-	}
-	if srvCopy.Reset == nil {
-		srvCopy.Reset = func(context.Context, *ResetRequest) (*ResetResponse, error) {
-			return nil, status.Errorf(codes.Unimplemented, "method Reset not implemented")
-		}
-	}
-	sd := grpc.ServiceDesc{
-		ServiceName: "github.com.tinkerbell.pbnj.api.v1.BMC",
-		Methods: []grpc.MethodDesc{
-			{
-				MethodName: "NetworkSource",
-				Handler:    srvCopy.networkSource,
-			},
-			{
-				MethodName: "Reset",
-				Handler:    srvCopy.reset,
-			},
+var _BMC_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "github.com.tinkerbell.pbnj.api.v1.BMC",
+	HandlerType: (*BMCServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "NetworkSource",
+			Handler:    _BMC_NetworkSource_Handler,
 		},
-		Streams:  []grpc.StreamDesc{},
-		Metadata: "api/v1/bmc.proto",
-	}
-
-	s.RegisterService(&sd, nil)
+		{
+			MethodName: "Reset",
+			Handler:    _BMC_Reset_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/v1/bmc.proto",
 }

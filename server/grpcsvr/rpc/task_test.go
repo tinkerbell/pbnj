@@ -51,7 +51,7 @@ func TestTaskFound(t *testing.T) {
 	}
 
 	time.Sleep(10 * time.Millisecond)
-	taskResp, err := taskSvc.Task(ctx, taskReq)
+	taskResp, err := taskSvc.Status(ctx, taskReq)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +100,7 @@ func TestRecordNotFound(t *testing.T) {
 				Log:        logger,
 				TaskRunner: taskRunner,
 			}
-			response, err := taskSvc.Task(ctx, testCase.req)
+			response, err := taskSvc.Status(ctx, testCase.req)
 
 			t.Log("Got : ", response)
 			t.Log("Got : ", err)

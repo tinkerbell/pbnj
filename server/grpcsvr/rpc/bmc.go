@@ -12,6 +12,7 @@ import (
 type BmcService struct {
 	Log        logging.Logger
 	TaskRunner task.Task
+	v1.UnimplementedBMCServer
 }
 
 // NetworkSource sets the BMC network source
@@ -24,8 +25,8 @@ func (b *BmcService) NetworkSource(ctx context.Context, in *v1.NetworkSourceRequ
 	}, nil
 }
 
-// ResetAction calls a reset on a BMC
-func (b *BmcService) ResetAction(ctx context.Context, in *v1.ResetRequest) (*v1.ResetResponse, error) {
+// Reset calls a reset on a BMC
+func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetResponse, error) {
 	l := b.Log.GetContextLogger(ctx)
 	l.V(0).Info("reset action")
 

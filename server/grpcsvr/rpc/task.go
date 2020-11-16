@@ -12,10 +12,11 @@ import (
 type TaskService struct {
 	Log        logging.Logger
 	TaskRunner task.Task
+	v1.UnimplementedTaskServer
 }
 
-// Task returns a task record
-func (t *TaskService) Task(ctx context.Context, in *v1.StatusRequest) (*v1.StatusResponse, error) {
+// Status returns a task record
+func (t *TaskService) Status(ctx context.Context, in *v1.StatusRequest) (*v1.StatusResponse, error) {
 	l := t.Log.GetContextLogger(ctx)
 	l.V(0).Info("getting task record")
 

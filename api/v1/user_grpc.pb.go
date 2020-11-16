@@ -31,10 +31,6 @@ func NewUserClient(cc grpc.ClientConnInterface) UserClient {
 	return &userClient{cc}
 }
 
-var userCreateUserStreamDesc = &grpc.StreamDesc{
-	StreamName: "CreateUser",
-}
-
 func (c *userClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error) {
 	out := new(CreateUserResponse)
 	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.User/CreateUser", in, out, opts...)
@@ -42,10 +38,6 @@ func (c *userClient) CreateUser(ctx context.Context, in *CreateUserRequest, opts
 		return nil, err
 	}
 	return out, nil
-}
-
-var userDeleteUserStreamDesc = &grpc.StreamDesc{
-	StreamName: "DeleteUser",
 }
 
 func (c *userClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error) {
@@ -57,10 +49,6 @@ func (c *userClient) DeleteUser(ctx context.Context, in *DeleteUserRequest, opts
 	return out, nil
 }
 
-var userUpdateUserStreamDesc = &grpc.StreamDesc{
-	StreamName: "UpdateUser",
-}
-
 func (c *userClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error) {
 	out := new(UpdateUserResponse)
 	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.User/UpdateUser", in, out, opts...)
@@ -70,105 +58,113 @@ func (c *userClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts
 	return out, nil
 }
 
-// UserService is the service API for User service.
-// Fields should be assigned to their respective handler implementations only before
-// RegisterUserService is called.  Any unassigned fields will result in the
-// handler for that method returning an Unimplemented error.
-type UserService struct {
-	CreateUser func(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
-	DeleteUser func(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
-	UpdateUser func(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
+// UserServer is the server API for User service.
+// All implementations must embed UnimplementedUserServer
+// for forward compatibility
+type UserServer interface {
+	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
+	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
+	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
+	mustEmbedUnimplementedUserServer()
 }
 
-func (s *UserService) createUser(_ interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+// UnimplementedUserServer must be embedded to have forward compatible implementations.
+type UnimplementedUserServer struct {
+}
+
+func (UnimplementedUserServer) CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
+}
+func (UnimplementedUserServer) DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
+}
+func (UnimplementedUserServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
+}
+func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
+
+// UnsafeUserServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to UserServer will
+// result in compilation errors.
+type UnsafeUserServer interface {
+	mustEmbedUnimplementedUserServer()
+}
+
+func RegisterUserServer(s grpc.ServiceRegistrar, srv UserServer) {
+	s.RegisterService(&_User_serviceDesc, srv)
+}
+
+func _User_CreateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return s.CreateUser(ctx, in)
+		return srv.(UserServer).CreateUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
-		Server:     s,
+		Server:     srv,
 		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.User/CreateUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return s.CreateUser(ctx, req.(*CreateUserRequest))
+		return srv.(UserServer).CreateUser(ctx, req.(*CreateUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
-func (s *UserService) deleteUser(_ interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+
+func _User_DeleteUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return s.DeleteUser(ctx, in)
+		return srv.(UserServer).DeleteUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
-		Server:     s,
+		Server:     srv,
 		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.User/DeleteUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return s.DeleteUser(ctx, req.(*DeleteUserRequest))
+		return srv.(UserServer).DeleteUser(ctx, req.(*DeleteUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
-func (s *UserService) updateUser(_ interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+
+func _User_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return s.UpdateUser(ctx, in)
+		return srv.(UserServer).UpdateUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
-		Server:     s,
+		Server:     srv,
 		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.User/UpdateUser",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return s.UpdateUser(ctx, req.(*UpdateUserRequest))
+		return srv.(UserServer).UpdateUser(ctx, req.(*UpdateUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// RegisterUserService registers a service implementation with a gRPC server.
-func RegisterUserService(s grpc.ServiceRegistrar, srv *UserService) {
-	srvCopy := *srv
-	if srvCopy.CreateUser == nil {
-		srvCopy.CreateUser = func(context.Context, *CreateUserRequest) (*CreateUserResponse, error) {
-			return nil, status.Errorf(codes.Unimplemented, "method CreateUser not implemented")
-		}
-	}
-	if srvCopy.DeleteUser == nil {
-		srvCopy.DeleteUser = func(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error) {
-			return nil, status.Errorf(codes.Unimplemented, "method DeleteUser not implemented")
-		}
-	}
-	if srvCopy.UpdateUser == nil {
-		srvCopy.UpdateUser = func(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
-			return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
-		}
-	}
-	sd := grpc.ServiceDesc{
-		ServiceName: "github.com.tinkerbell.pbnj.api.v1.User",
-		Methods: []grpc.MethodDesc{
-			{
-				MethodName: "CreateUser",
-				Handler:    srvCopy.createUser,
-			},
-			{
-				MethodName: "DeleteUser",
-				Handler:    srvCopy.deleteUser,
-			},
-			{
-				MethodName: "UpdateUser",
-				Handler:    srvCopy.updateUser,
-			},
+var _User_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "github.com.tinkerbell.pbnj.api.v1.User",
+	HandlerType: (*UserServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateUser",
+			Handler:    _User_CreateUser_Handler,
 		},
-		Streams:  []grpc.StreamDesc{},
-		Metadata: "api/v1/user.proto",
-	}
-
-	s.RegisterService(&sd, nil)
+		{
+			MethodName: "DeleteUser",
+			Handler:    _User_DeleteUser_Handler,
+		},
+		{
+			MethodName: "UpdateUser",
+			Handler:    _User_UpdateUser_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/v1/user.proto",
 }

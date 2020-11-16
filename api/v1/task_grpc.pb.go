@@ -29,10 +29,6 @@ func NewTaskClient(cc grpc.ClientConnInterface) TaskClient {
 	return &taskClient{cc}
 }
 
-var taskStatusStreamDesc = &grpc.StreamDesc{
-	StreamName: "Status",
-}
-
 func (c *taskClient) Status(ctx context.Context, in *StatusRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
 	out := new(StatusResponse)
 	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.Task/Status", in, out, opts...)
@@ -42,51 +38,61 @@ func (c *taskClient) Status(ctx context.Context, in *StatusRequest, opts ...grpc
 	return out, nil
 }
 
-// TaskService is the service API for Task service.
-// Fields should be assigned to their respective handler implementations only before
-// RegisterTaskService is called.  Any unassigned fields will result in the
-// handler for that method returning an Unimplemented error.
-type TaskService struct {
-	Status func(context.Context, *StatusRequest) (*StatusResponse, error)
+// TaskServer is the server API for Task service.
+// All implementations must embed UnimplementedTaskServer
+// for forward compatibility
+type TaskServer interface {
+	Status(context.Context, *StatusRequest) (*StatusResponse, error)
+	mustEmbedUnimplementedTaskServer()
 }
 
-func (s *TaskService) status(_ interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+// UnimplementedTaskServer must be embedded to have forward compatible implementations.
+type UnimplementedTaskServer struct {
+}
+
+func (UnimplementedTaskServer) Status(context.Context, *StatusRequest) (*StatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Status not implemented")
+}
+func (UnimplementedTaskServer) mustEmbedUnimplementedTaskServer() {}
+
+// UnsafeTaskServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to TaskServer will
+// result in compilation errors.
+type UnsafeTaskServer interface {
+	mustEmbedUnimplementedTaskServer()
+}
+
+func RegisterTaskServer(s grpc.ServiceRegistrar, srv TaskServer) {
+	s.RegisterService(&_Task_serviceDesc, srv)
+}
+
+func _Task_Status_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(StatusRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return s.Status(ctx, in)
+		return srv.(TaskServer).Status(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
-		Server:     s,
+		Server:     srv,
 		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.Task/Status",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return s.Status(ctx, req.(*StatusRequest))
+		return srv.(TaskServer).Status(ctx, req.(*StatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// RegisterTaskService registers a service implementation with a gRPC server.
-func RegisterTaskService(s grpc.ServiceRegistrar, srv *TaskService) {
-	srvCopy := *srv
-	if srvCopy.Status == nil {
-		srvCopy.Status = func(context.Context, *StatusRequest) (*StatusResponse, error) {
-			return nil, status.Errorf(codes.Unimplemented, "method Status not implemented")
-		}
-	}
-	sd := grpc.ServiceDesc{
-		ServiceName: "github.com.tinkerbell.pbnj.api.v1.Task",
-		Methods: []grpc.MethodDesc{
-			{
-				MethodName: "Status",
-				Handler:    srvCopy.status,
-			},
+var _Task_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "github.com.tinkerbell.pbnj.api.v1.Task",
+	HandlerType: (*TaskServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Status",
+			Handler:    _Task_Status_Handler,
 		},
-		Streams:  []grpc.StreamDesc{},
-		Metadata: "api/v1/task.proto",
-	}
-
-	s.RegisterService(&sd, nil)
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/v1/task.proto",
 }

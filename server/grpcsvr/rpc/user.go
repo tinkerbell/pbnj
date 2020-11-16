@@ -12,6 +12,7 @@ import (
 type UserService struct {
 	Log        logging.Logger
 	TaskRunner task.Task
+	v1.UnimplementedUserServer
 }
 
 // CreateUser creates a user on a BMC
