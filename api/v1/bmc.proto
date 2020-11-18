@@ -9,6 +9,9 @@ import "api/v1/common.proto";
 service BMC {
     rpc NetworkSource (NetworkSourceRequest) returns (NetworkSourceResponse);
     rpc Reset(ResetRequest) returns (ResetResponse);
+    rpc CreateUser (CreateUserRequest) returns (CreateUserResponse);
+    rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
+    rpc UpdateUser (UpdateUserRequest) returns (UpdateUserResponse);
 }
 
 message NetworkSourceRequest {
@@ -36,5 +39,45 @@ message ResetRequest {
 }
 
 message ResetResponse {
+    string task_id = 1;
+}
+
+message UserCreds {
+    string username = 1;
+    string password = 2;
+    enum Role {
+        admin = 0;
+        user = 1;
+    };
+    Role role = 3;
+}
+
+message CreateUserRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+    UserCreds user_creds = 3;
+}
+
+message CreateUserResponse {
+    string task_id = 1;
+}
+
+message DeleteUserRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+    string username = 3;
+}
+
+message DeleteUserResponse {
+    string task_id = 1;
+}
+
+message UpdateUserRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+    UserCreds user_creds = 3;
+}
+
+message UpdateUserResponse {
     string task_id = 1;
 }

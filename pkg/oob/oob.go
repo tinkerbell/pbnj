@@ -21,6 +21,9 @@ type Machine interface {
 
 // BMC management methods
 type BMC interface {
-	Reset() (result string, err repository.Error)
-	NetworkSource() (result string, err repository.Error)
+	// Reset() (result string, err repository.Error)
+	// NetworkSource() (result string, err repository.Error)
+	CreateUser(context.Context) repository.Error
+	UpdateUser(context.Context) repository.Error
+	DeleteUser(context.Context) repository.Error
 }

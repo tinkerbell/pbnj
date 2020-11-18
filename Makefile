@@ -77,7 +77,7 @@ pbs: ## locally generate go stubs from protocol buffers
 	scripts/protoc.sh
 
 .PHONY: pbs-install-deps
-pbs: ## locally install dependencies in order to generate go stubs from protocol buffers
+pbs-install-deps: ## locally install dependencies in order to generate go stubs from protocol buffers
 	scripts/protoc.sh deps
 
 .PHONY: pbs-docker
