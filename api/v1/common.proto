@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 option go_package = "github.com/tinkerbell/pbnj/api/v1";
+option ruby_package = "Pbnj::Api::V1";
 
 package github.com.tinkerbell.pbnj.api.v1;
 

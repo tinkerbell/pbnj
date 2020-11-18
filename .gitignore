@@ -5,3 +5,4 @@ bin/
 pid
 temp.in
 test/resources.yaml
+examples/clients/ruby/lib/api
