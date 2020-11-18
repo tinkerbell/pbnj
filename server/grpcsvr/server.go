@@ -15,7 +15,6 @@ import (
 	"github.com/tinkerbell/pbnj/server/grpcsvr/rpc"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/taskrunner"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
 // Server options
@@ -75,13 +74,6 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 		TaskRunner: taskRunner,
 	}
 	v1.RegisterTaskServer(grpcServer, &ts)
-
-	us := rpc.UserService{
-		Log:        log,
-		TaskRunner: taskRunner,
-	}
-	v1.RegisterUserServer(grpcServer, &us)
-	reflection.Register(grpcServer)
 
 	listen, err := net.Listen("tcp", ":"+port)
 	if err != nil {
