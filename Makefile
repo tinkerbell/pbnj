@@ -95,3 +95,10 @@ image: ## make the Container Image
 .PHONY: run-image
 run-image: ## run PBnJ container image
 	docker run -it --rm -e PNBJ_LOGLEVEL=debug -p 9090:9090 pbnj:local
+
+.PHONY: ruby-client-demo
+ruby-client-demo: image ## run ruby client demo
+	# make ruby-client-demo host=10.10.10.10 user=ADMIN pass=ADMIN
+	docker run -d --name pbnj pbnj:local
+	docker run -it --rm --net container:pbnj -v ${PWD}:/code -w /code/examples/clients/ruby --entrypoint /bin/bash ruby /code/examples/clients/ruby/demo.sh ${host} ${user} ${pass}
+	docker rm -f pbnj
