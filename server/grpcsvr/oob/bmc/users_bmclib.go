@@ -49,7 +49,7 @@ func (b *bmclibUserManagement) create(ctx context.Context) repository.Error {
 		{
 			Name:     b.creds.Username,
 			Password: b.creds.Password,
-			Role:     b.creds.UserRole.String(),
+			Role:     userRoleToString(b.creds.UserRole),
 			Enable:   true,
 		},
 	}
@@ -69,7 +69,7 @@ func (b *bmclibUserManagement) update(ctx context.Context) repository.Error {
 		{
 			Name:     b.creds.Username,
 			Password: b.creds.Password,
-			Role:     b.creds.UserRole.String(),
+			Role:     userRoleToString(b.creds.UserRole),
 			Enable:   true,
 		},
 	}
@@ -101,4 +101,15 @@ func (b *bmclibUserManagement) delete(ctx context.Context) repository.Error {
 		}
 	}
 	return errMsg
+}
+
+func userRoleToString(role v1.UserRole) string {
+	var r string
+	switch role.String() {
+	case "USER_ROLE_USER":
+		r = "user"
+	default:
+		r = "admin"
+	}
+	return r
 }
