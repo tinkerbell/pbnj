@@ -63,34 +63,34 @@ func TestIPMIBootDeviceConnect(t *testing.T) {
 func TestSetBootDevice(t *testing.T) {
 	testCases := []struct {
 		name   string
-		device v1.DeviceRequest_Device
+		device v1.BootDevice
 		err    *repository.Error
 	}{
 		{
 			name:   "set device: pxe",
-			device: v1.DeviceRequest_PXE,
+			device: v1.BootDevice_BOOT_DEVICE_PXE,
 		},
 		{
 			name:   "set device: disk",
-			device: v1.DeviceRequest_DISK,
+			device: v1.BootDevice_BOOT_DEVICE_DISK,
 		},
 		{
 			name:   "set device: cdrom",
-			device: v1.DeviceRequest_CDROM,
+			device: v1.BootDevice_BOOT_DEVICE_CDROM,
 		},
 		{
 			name:   "set device: bios",
-			device: v1.DeviceRequest_BIOS,
+			device: v1.BootDevice_BOOT_DEVICE_BIOS,
 		},
 		{
 			name:   "set device: none",
-			device: v1.DeviceRequest_NONE,
+			device: v1.BootDevice_BOOT_DEVICE_NONE,
 		},
 		{
 			name:   "set device: unknown",
-			device: v1.DeviceRequest_Device(9),
+			device: v1.BootDevice(9),
 			err: &repository.Error{
-				Code:    2,
+				Code:    3,
 				Message: "unknown boot device",
 			},
 		},
@@ -107,7 +107,7 @@ func TestSetBootDevice(t *testing.T) {
 	for _, tc := range testCases {
 		testCase := tc
 		t.Run(testCase.name, func(t *testing.T) {
-			expectedResult := "boot device set: " + strings.ToLower(tc.device.String())
+			expectedResult := "boot device set: " + strings.ToLower(strings.TrimSpace(strings.Split(tc.name, ":")[1]))
 
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			defer cancel()
@@ -119,7 +119,7 @@ func TestSetBootDevice(t *testing.T) {
 						Log:            l,
 						StatusMessages: make(chan string),
 					},
-					BootDeviceRequest: &v1.DeviceRequest{Device: tc.device},
+					BootDeviceRequest: &v1.DeviceRequest{BootDevice: tc.device},
 				},
 				user:     "admin",
 				password: "admin",

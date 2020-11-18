@@ -48,17 +48,17 @@ var machineCmd = &cobra.Command{
 				Authn: &v1.Authn_DirectAuthn{
 					DirectAuthn: &v1.DirectAuthn{
 						Host: &v1.Host{
-							Host: "10.249.51.28",
+							Host: "127.0.0.1",
 						},
-						Username: "Administrator",
-						Password: "YFJDJC9T",
+						Username: "ADMIN",
+						Password: "ADMIN",
 					},
 				},
 			},
 			Vendor: &v1.Vendor{
 				Name: "HP",
 			},
-			Action: v1.PowerRequest_STATUS,
+			PowerAction: v1.PowerAction_POWER_ACTION_STATUS,
 		})
 		if err != nil {
 			logger.V(0).Error(err, "error calling")

@@ -105,7 +105,7 @@ func (m Action) BootDevice(ctx context.Context) (result string, errMsg repositor
 		return result, errMsg
 	}
 
-	base := "setting boot device: " + m.BootDeviceRequest.GetDevice().String()
+	base := "setting boot device: " + m.BootDeviceRequest.GetBootDevice().String()
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
@@ -165,7 +165,7 @@ func (m Action) Power(ctx context.Context) (result string, errMsg repository.Err
 		return result, errMsg
 	}
 
-	base := "power " + m.PowerRequest.GetAction().String()
+	base := "power " + m.PowerRequest.GetPowerAction().String()
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
@@ -205,7 +205,7 @@ func (m Action) Power(ctx context.Context) (result string, errMsg repository.Err
 	for _, connection := range connections {
 		if connection.Connected {
 			m.Log.V(1).Info("trying", "name", connection.Name)
-			result, errMsg = doAction(ctx, m.PowerRequest.GetAction(), connection.pwr)
+			result, errMsg = doAction(ctx, m.PowerRequest.GetPowerAction(), connection.pwr)
 			if errMsg.Message == "" {
 				m.Log.V(1).Info("action implemented by", "implementer", connection.Name)
 				break
@@ -221,22 +221,25 @@ func (m Action) Power(ctx context.Context) (result string, errMsg repository.Err
 	return strings.ToLower(result), errMsg //nolint
 }
 
-func doAction(ctx context.Context, action v1.PowerRequest_Action, pwr power) (result string, errMsg repository.Error) {
+func doAction(ctx context.Context, action v1.PowerAction, pwr power) (result string, errMsg repository.Error) {
 	switch action {
-	case v1.PowerRequest_ON:
+	case v1.PowerAction_POWER_ACTION_ON:
 		result, errMsg = pwr.on(ctx)
-	case v1.PowerRequest_OFF:
+	case v1.PowerAction_POWER_ACTION_OFF:
 		result, errMsg = pwr.off(ctx)
-	case v1.PowerRequest_STATUS:
+	case v1.PowerAction_POWER_ACTION_STATUS:
 		result, errMsg = pwr.status(ctx)
-	case v1.PowerRequest_RESET:
+	case v1.PowerAction_POWER_ACTION_RESET:
 		result, errMsg = pwr.reset(ctx)
-	case v1.PowerRequest_HARDOFF:
+	case v1.PowerAction_POWER_ACTION_HARDOFF:
 		result, errMsg = pwr.hardoff(ctx)
-	case v1.PowerRequest_CYCLE:
+	case v1.PowerAction_POWER_ACTION_CYCLE:
 		result, errMsg = pwr.cycle(ctx)
+	case v1.PowerAction_POWER_ACTION_UNSPECIFIED:
+		errMsg.Code = v1.Code_value["INVALID_ARGUMENT"]
+		errMsg.Message = "UNSPECIFIED power action"
 	default:
-		errMsg.Code = v1.Code_value["UNKNOWN"]
+		errMsg.Code = v1.Code_value["INVALID_ARGUMENT"]
 		errMsg.Message = "unknown power action"
 	}
 	return result, errMsg

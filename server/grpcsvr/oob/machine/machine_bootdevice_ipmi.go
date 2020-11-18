@@ -81,19 +81,23 @@ func (b *ipmiBootDevice) Close(ctx context.Context) {
 // setBootDevice will try to set boot device using ipmitool interface lan and lanplus
 func (b *ipmiBootDevice) setBootDevice(ctx context.Context) (result string, errMsg repository.Error) {
 	var dev goipmi.BootDevice
-	switch b.mAction.BootDeviceRequest.Device {
-	case v1.DeviceRequest_NONE:
+	switch b.mAction.BootDeviceRequest.BootDevice {
+	case v1.BootDevice_BOOT_DEVICE_NONE:
 		dev = goipmi.BootDeviceNone
-	case v1.DeviceRequest_BIOS:
+	case v1.BootDevice_BOOT_DEVICE_BIOS:
 		dev = goipmi.BootDeviceBios
-	case v1.DeviceRequest_CDROM:
+	case v1.BootDevice_BOOT_DEVICE_CDROM:
 		dev = goipmi.BootDeviceCdrom
-	case v1.DeviceRequest_DISK:
+	case v1.BootDevice_BOOT_DEVICE_DISK:
 		dev = goipmi.BootDeviceDisk
-	case v1.DeviceRequest_PXE:
+	case v1.BootDevice_BOOT_DEVICE_PXE:
 		dev = goipmi.BootDevicePxe
+	case v1.BootDevice_BOOT_DEVICE_UNSPECIFIED:
+		errMsg.Code = v1.Code_value["INVALID_ARGUMENT"]
+		errMsg.Message = "UNSPECIFIED boot device"
+		return result, errMsg
 	default:
-		errMsg.Code = v1.Code_value["UNKNOWN"]
+		errMsg.Code = v1.Code_value["INVALID_ARGUMENT"]
 		errMsg.Message = "unknown boot device"
 		return result, errMsg
 	}

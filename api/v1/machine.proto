@@ -15,14 +15,7 @@ service Machine {
 message DeviceRequest {
     v1.Authn authn = 1;
     v1.Vendor vendor = 2;
-    enum Device {
-        NONE = 0;
-        BIOS = 1;
-        CDROM = 2;
-        DISK = 3;
-        PXE = 4;
-    }
-    Device device = 3;
+    BootDevice boot_device = 3;
     bool persistent = 4;
     bool efi_boot = 5;
 }
@@ -34,19 +27,30 @@ message DeviceResponse {
 message PowerRequest {
     v1.Authn authn = 1;
     v1.Vendor vendor = 2;
-    enum Action {
-        ON = 0;
-        OFF = 1;
-        HARDOFF = 2;
-        CYCLE = 3;
-        RESET = 4;
-        STATUS = 5;
-    }
-    Action action = 3;
+    PowerAction power_action = 3;
     int32 soft_timeout = 4;
     int32 off_duration = 5;
 }
 
 message PowerResponse {
     string task_id = 1;
+}
+
+enum BootDevice {
+    BOOT_DEVICE_UNSPECIFIED = 0;
+    BOOT_DEVICE_NONE = 1;
+    BOOT_DEVICE_BIOS = 2;
+    BOOT_DEVICE_CDROM = 4;
+    BOOT_DEVICE_DISK = 5;
+    BOOT_DEVICE_PXE = 6;
+}
+
+enum PowerAction {
+    POWER_ACTION_UNSPECIFIED = 0;
+    POWER_ACTION_ON = 1;
+    POWER_ACTION_OFF = 2;
+    POWER_ACTION_HARDOFF = 3;
+    POWER_ACTION_CYCLE = 4;
+    POWER_ACTION_RESET = 5;
+    POWER_ACTION_STATUS = 6;
 }

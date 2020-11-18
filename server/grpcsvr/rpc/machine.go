@@ -21,7 +21,7 @@ type MachineService struct {
 func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (*v1.DeviceResponse, error) {
 	// TODO figure out how not to have to do this, but still keep the logging abstraction clean?
 	l := m.Log.GetContextLogger(ctx)
-	l.V(0).Info("setting boot device", "device", in.Device.String())
+	l.V(0).Info("setting boot device", "device", in.BootDevice.String())
 
 	taskID, err := m.TaskRunner.Execute(
 		"setting boot device",
@@ -59,7 +59,7 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 		}
 		return mp.Power(ctx)
 	}
-	taskID, err := m.TaskRunner.Execute("power action: "+in.GetAction().String(), execFunc)
+	taskID, err := m.TaskRunner.Execute("power action: "+in.GetPowerAction().String(), execFunc)
 
 	return &v1.PowerResponse{
 		TaskId: taskID,

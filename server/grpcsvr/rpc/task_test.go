@@ -102,12 +102,12 @@ func TestRecordNotFound(t *testing.T) {
 			}
 			response, err := taskSvc.Status(ctx, testCase.req)
 
-			t.Log("Got : ", response)
-			t.Log("Got : ", err)
+			t.Log("Got response: ", response)
+			t.Log("Got err: ", err)
 
 			if testCase.expectedErr {
-				g.Expect(response).To(gomega.BeNil(), "Result should be nil")
-				g.Expect(err).ToNot(gomega.BeNil(), "Result should be nil")
+				g.Expect(response).To(gomega.BeNil(), "Response should be nil")
+				g.Expect(err).ToNot(gomega.BeNil(), "error should not be nil")
 				g.Expect(err.Error()).To(gomega.Equal(testCase.message))
 			} else {
 				g.Expect(response.Result).To(gomega.Equal(testCase.message))

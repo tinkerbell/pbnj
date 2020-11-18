@@ -113,7 +113,7 @@ func TestPower(t *testing.T) {
 				Vendor: &v1.Vendor{
 					Name: "",
 				},
-				Action:      0,
+				PowerAction: 0,
 				SoftTimeout: 0,
 				OffDuration: 0,
 			},
@@ -137,7 +137,7 @@ func TestPower(t *testing.T) {
 				Vendor: &v1.Vendor{
 					Name: "",
 				},
-				Action:      0,
+				PowerAction: 0,
 				SoftTimeout: 0,
 				OffDuration: 0,
 			},

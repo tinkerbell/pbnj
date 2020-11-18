@@ -49,7 +49,7 @@ func (b *bmclibUserManagement) create(ctx context.Context) repository.Error {
 		{
 			Name:     b.creds.Username,
 			Password: b.creds.Password,
-			Role:     b.creds.Role.String(),
+			Role:     b.creds.UserRole.String(),
 			Enable:   true,
 		},
 	}
@@ -69,7 +69,7 @@ func (b *bmclibUserManagement) update(ctx context.Context) repository.Error {
 		{
 			Name:     b.creds.Username,
 			Password: b.creds.Password,
-			Role:     b.creds.Role.String(),
+			Role:     b.creds.UserRole.String(),
 			Enable:   true,
 		},
 	}
