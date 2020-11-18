@@ -18,10 +18,6 @@ service BMC {
 message NetworkSourceRequest {
     v1.Authn authn = 1;
     v1.Vendor vendor = 2;
-    enum NetworkSource {
-        DHCP = 0;
-        STATIC = 1;
-    }
     NetworkSource network_source = 3;
 }
 
@@ -32,11 +28,7 @@ message NetworkSourceResponse {
 message ResetRequest {
     v1.Authn authn = 1;
     v1.Vendor vendor = 2;
-    enum Kind {
-        COLD = 0;
-        WARM = 1;
-    }
-    Kind kind = 3;
+    ResetKind reset_kind = 3;
 }
 
 message ResetResponse {
@@ -46,11 +38,7 @@ message ResetResponse {
 message UserCreds {
     string username = 1;
     string password = 2;
-    enum Role {
-        admin = 0;
-        user = 1;
-    };
-    Role role = 3;
+    UserRole user_role = 3;
 }
 
 message CreateUserRequest {
@@ -81,4 +69,22 @@ message UpdateUserRequest {
 
 message UpdateUserResponse {
     string task_id = 1;
+}
+
+enum UserRole {
+    USER_ROLE_UNSPECIFIED = 0;
+    USER_ROLE_ADMIN = 1;
+    USER_ROLE_USER = 2;
+}
+
+enum ResetKind {
+    RESET_KIND_UNSPECIFIED = 0;
+    RESET_KIND_COLD = 1;
+    RESET_KIND_WARM = 2;
+}
+
+enum NetworkSource {
+    NETWORK_SOURCE_UNSPECIFIED = 0;
+    NETWORK_SOURCE_DHCP = 1;
+    NETWORK_SOURCE_STATIC = 2;
 }

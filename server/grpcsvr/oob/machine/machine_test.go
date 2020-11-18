@@ -42,7 +42,7 @@ func TestBootDevice(t *testing.T) {
 						},
 					},
 				},
-				Device: v1.DeviceRequest_BIOS,
+				BootDevice: v1.BootDevice_BOOT_DEVICE_BIOS,
 			},
 			message: "good",
 			expectedErr: repository.Error{
