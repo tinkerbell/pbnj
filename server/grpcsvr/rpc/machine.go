@@ -34,7 +34,7 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 			if err != nil {
 				return "", err
 			}
-			return mbd.BootDevice(ctx)
+			return mbd.BootDevice(ctx, in.BootDevice.String())
 		})
 
 	return &v1.DeviceResponse{
@@ -57,7 +57,7 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 		if err != nil {
 			return "", err
 		}
-		return mp.Power(ctx)
+		return mp.Power(ctx, in.PowerAction.String())
 	}
 	taskID, err := m.TaskRunner.Execute(ctx, "power action: "+in.GetPowerAction().String(), execFunc)
 

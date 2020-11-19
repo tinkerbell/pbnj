@@ -103,6 +103,10 @@ func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, d
 		} else {
 			sessionRecord.Error.Message = errMsg.Error()
 		}
+		var foundErr *repository.Error
+		if errors.As(errMsg, &foundErr) {
+			sessionRecord.Error = foundErr.StructuredError()
+		}
 	}
 	errI := repo.Update(id, sessionRecord)
 	if errI != nil {

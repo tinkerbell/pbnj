@@ -15,11 +15,11 @@ func TestParseAuth(t *testing.T) {
 
 	tests := map[string]struct {
 		input *v1.Authn
-		want  repository.Error
+		want  *repository.Error
 	}{
-		"with auth":       {input: &v1.Authn{Authn: &v1.Authn_DirectAuthn{DirectAuthn: &v1.DirectAuthn{Host: &v1.Host{Host: "localhost"}, Username: "admin", Password: "admin"}}}, want: repository.Error{}},
-		"nil Direct Auth": {input: &v1.Authn{Authn: &v1.Authn_DirectAuthn{DirectAuthn: nil}}, want: repository.Error{Code: v1.Code_value["UNAUTHENTICATED"], Message: "no auth found", Details: nil}},
-		"nil auth":        {input: nil, want: repository.Error{Code: v1.Code_value["UNAUTHENTICATED"], Message: "no auth found", Details: nil}},
+		"with auth":       {input: &v1.Authn{Authn: &v1.Authn_DirectAuthn{DirectAuthn: &v1.DirectAuthn{Host: &v1.Host{Host: "localhost"}, Username: "admin", Password: "admin"}}}, want: nil},
+		"nil Direct Auth": {input: &v1.Authn{Authn: &v1.Authn_DirectAuthn{DirectAuthn: nil}}, want: &repository.Error{Code: v1.Code_value["UNAUTHENTICATED"], Message: "no auth found", Details: nil}},
+		"nil auth":        {input: nil, want: &repository.Error{Code: v1.Code_value["UNAUTHENTICATED"], Message: "no auth found", Details: nil}},
 	}
 	l, _, _ := logr.NewPacketLogr()
 	sm := make(chan string)
@@ -31,10 +31,12 @@ func TestParseAuth(t *testing.T) {
 			}
 
 			host, username, passwd, errMsg := a.ParseAuth(tc.input)
-			diff := cmp.Diff(tc.want, errMsg)
-			if diff != "" {
-				t.Log(fmt.Sprintf("%+v", errMsg))
-				t.Fatalf(diff)
+			if errMsg != nil {
+				diff := cmp.Diff(tc.want.Error(), errMsg.Error())
+				if diff != "" {
+					t.Log(fmt.Sprintf("%+v", errMsg))
+					t.Fatalf(diff)
+				}
 			}
 
 			expectedHost := tc.input.GetDirectAuthn().GetHost().GetHost()

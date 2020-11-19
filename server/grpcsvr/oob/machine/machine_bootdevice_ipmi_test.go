@@ -20,11 +20,6 @@ import (
 )
 
 func TestIPMIBootDeviceConnect(t *testing.T) {
-	expectedErr := repository.Error{
-		Code:    0,
-		Message: "",
-		Details: nil,
-	}
 
 	sim := goipmi.NewSimulator(net.UDPAddr{})
 	err := sim.Run()
@@ -53,10 +48,8 @@ func TestIPMIBootDeviceConnect(t *testing.T) {
 	}
 
 	errMsg := b.Connect(ctx)
-	diff := cmp.Diff(expectedErr, errMsg)
-	if diff != "" {
-		t.Log(fmt.Sprintf("%+v", errMsg))
-		t.Fatalf(diff)
+	if errMsg != nil {
+		t.Fatal(errMsg)
 	}
 }
 
@@ -128,14 +121,14 @@ func TestSetBootDevice(t *testing.T) {
 				iface:    "lan",
 			}
 			errMsg := b.Connect(ctx)
-			if errMsg.Message != "" {
+			if errMsg != nil {
 				t.Fatal(errMsg)
 			}
 			defer b.Close(ctx)
-			result, errMsg := b.setBootDevice(ctx)
-			if errMsg.Message != "" {
+			result, errMsg := b.BootDevice(ctx, testCase.device.String())
+			if errMsg != nil {
 				if tc.err != nil {
-					diff := cmp.Diff(*tc.err, errMsg)
+					diff := cmp.Diff(tc.err.Error(), errMsg.Error())
 					if diff != "" {
 						t.Log(fmt.Sprintf("%+v", errMsg))
 						t.Fatalf(diff)
