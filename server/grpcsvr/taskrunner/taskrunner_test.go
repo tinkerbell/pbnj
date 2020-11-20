@@ -16,7 +16,7 @@ import (
 
 func TestRoundTrip(t *testing.T) {
 	description := "test task"
-	defaultError := repository.Error{
+	defaultError := &repository.Error{
 		Code:    0,
 		Message: "",
 		Details: nil,
@@ -35,7 +35,7 @@ func TestRoundTrip(t *testing.T) {
 		Log:        logger,
 	}
 
-	id, err := runner.Execute(description, func(s chan string) (string, repository.Error) {
+	id, err := runner.Execute(ctx, description, func(s chan string) (string, error) {
 		return "didnt do anything", defaultError //nolint
 	})
 	if err != nil {
@@ -47,7 +47,7 @@ func TestRoundTrip(t *testing.T) {
 
 	// must be min of 3 because we sleep 2 seconds in worker function to allow final status messages to be written
 	time.Sleep(500 * time.Millisecond)
-	record, err := runner.Status(id)
+	record, err := runner.Status(ctx, id)
 	if err != nil {
 		t.Fatal(err)
 	}

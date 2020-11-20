@@ -91,10 +91,11 @@ func NewBMC(opts ...Option) (oob.BMC, error) {
 }
 
 // CreateUser functionality for machines
-func (m Action) CreateUser(ctx context.Context) (errMsg repository.Error) {
+func (m Action) CreateUser(ctx context.Context) error {
+	var errMsg repository.Error
 	host, user, password, errMsg := m.ParseAuth(m.CreateUserRequest.Authn)
 	if errMsg.Message != "" {
-		return errMsg
+		return &errMsg
 	}
 	creds := m.CreateUserRequest.GetUserCreds()
 	base := "creating user: " + creds.GetUsername()
@@ -135,7 +136,7 @@ func (m Action) CreateUser(ctx context.Context) (errMsg repository.Error) {
 		errMsg.Message = msg
 		errMsg.Details = append(errMsg.Details, combinedErrs...)
 		m.Log.V(0).Info(msg, "error", combinedErrs)
-		return errMsg
+		return &errMsg
 	}
 	m.SendStatusMessage("connected to BMC")
 
@@ -153,16 +154,18 @@ func (m Action) CreateUser(ctx context.Context) (errMsg repository.Error) {
 	if errMsg.Message != "" {
 		m.SendStatusMessage("error with " + base + ": " + errMsg.Message)
 		m.Log.V(0).Info("error with "+base, "error", errMsg.Message)
+		return &errMsg
 	}
 	m.SendStatusMessage(base + " complete")
-	return errMsg //nolint
+	return nil
 }
 
 // UpdateUser functionality for machines
-func (m Action) UpdateUser(ctx context.Context) (errMsg repository.Error) {
+func (m Action) UpdateUser(ctx context.Context) error {
+	var errMsg repository.Error
 	host, user, password, errMsg := m.ParseAuth(m.UpdateUserRequest.Authn)
 	if errMsg.Message != "" {
-		return errMsg
+		return &errMsg
 	}
 	creds := m.UpdateUserRequest.GetUserCreds()
 	base := "updating user: " + creds.GetUsername()
@@ -203,7 +206,7 @@ func (m Action) UpdateUser(ctx context.Context) (errMsg repository.Error) {
 		errMsg.Message = msg
 		errMsg.Details = append(errMsg.Details, combinedErrs...)
 		m.Log.V(0).Info(msg, "error", combinedErrs)
-		return errMsg
+		return &errMsg
 	}
 	m.SendStatusMessage("connected to BMC")
 
@@ -221,16 +224,18 @@ func (m Action) UpdateUser(ctx context.Context) (errMsg repository.Error) {
 	if errMsg.Message != "" {
 		m.SendStatusMessage("error with " + base + ": " + errMsg.Message)
 		m.Log.V(0).Info("error with "+base, "error", errMsg.Message)
+		return &errMsg
 	}
 	m.SendStatusMessage(base + " complete")
-	return errMsg //nolint
+	return nil
 }
 
 // DeleteUser functionality for machines
-func (m Action) DeleteUser(ctx context.Context) (errMsg repository.Error) {
+func (m Action) DeleteUser(ctx context.Context) error {
+	var errMsg repository.Error
 	host, user, password, errMsg := m.ParseAuth(m.DeleteUserRequest.Authn)
 	if errMsg.Message != "" {
-		return errMsg
+		return &errMsg
 	}
 	base := "deleting user: " + m.DeleteUserRequest.Username
 	msg := "working on " + base
@@ -272,7 +277,7 @@ func (m Action) DeleteUser(ctx context.Context) (errMsg repository.Error) {
 		errMsg.Message = msg
 		errMsg.Details = append(errMsg.Details, combinedErrs...)
 		m.Log.V(0).Info(msg, "error", combinedErrs)
-		return errMsg
+		return &errMsg
 	}
 	m.SendStatusMessage("connected to BMC")
 
@@ -290,7 +295,8 @@ func (m Action) DeleteUser(ctx context.Context) (errMsg repository.Error) {
 	if errMsg.Message != "" {
 		m.SendStatusMessage("error with " + base + ": " + errMsg.Message)
 		m.Log.V(0).Info("error with "+base, "error", errMsg.Message)
+		return &errMsg
 	}
 	m.SendStatusMessage(base + " complete")
-	return errMsg //nolint
+	return nil
 }

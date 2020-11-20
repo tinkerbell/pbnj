@@ -20,7 +20,7 @@ func (t *TaskService) Status(ctx context.Context, in *v1.StatusRequest) (*v1.Sta
 	l := t.Log.GetContextLogger(ctx)
 	l.V(0).Info("getting task record")
 
-	record, err := t.TaskRunner.Status(in.TaskId)
+	record, err := t.TaskRunner.Status(ctx, in.TaskId)
 	if err != nil {
 		l.V(0).Error(err, "error getting task status")
 		return nil, err

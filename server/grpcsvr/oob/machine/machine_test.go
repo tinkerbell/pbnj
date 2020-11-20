@@ -26,10 +26,10 @@ func TestBootDevice(t *testing.T) {
 		name        string
 		req         *v1.DeviceRequest
 		message     string
-		expectedErr repository.Error
+		expectedErr *repository.Error
 	}{
 		{
-			name: "timeout",
+			name: "set boot device",
 			req: &v1.DeviceRequest{
 				Authn: &v1.Authn{
 					Authn: &v1.Authn_DirectAuthn{
@@ -44,12 +44,8 @@ func TestBootDevice(t *testing.T) {
 				},
 				BootDevice: v1.BootDevice_BOOT_DEVICE_BIOS,
 			},
-			message: "good",
-			expectedErr: repository.Error{
-				Code:    0,
-				Message: "",
-				Details: nil,
-			},
+			message:     "boot device set: bios",
+			expectedErr: nil,
 		},
 	}
 
@@ -72,11 +68,19 @@ func TestBootDevice(t *testing.T) {
 			t.Log("result got: ", result)
 			t.Log("errMsg got: ", fmt.Sprintf("%+v", errMsg))
 
-			diff := cmp.Diff(testCase.expectedErr, errMsg)
-			if diff != "" {
-				t.Log(fmt.Sprintf("%+v", errMsg))
-				t.Fatalf(diff)
+			if errMsg != nil {
+				diff := cmp.Diff(testCase.expectedErr, errMsg.(*repository.Error))
+				if diff != "" {
+					t.Log(fmt.Sprintf("%+v", errMsg))
+					t.Fatalf(diff)
+				}
+			} else {
+				diff := cmp.Diff(testCase.message, result)
+				if diff != "" {
+					t.Fatalf(diff)
+				}
 			}
+
 		})
 	}
 }

@@ -5,7 +5,6 @@ import (
 
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
-	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/pkg/task"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/oob/machine"
 )
@@ -24,15 +23,16 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 	l.V(0).Info("setting boot device", "device", in.BootDevice.String())
 
 	taskID, err := m.TaskRunner.Execute(
+		ctx,
 		"setting boot device",
-		func(s chan string) (string, repository.Error) {
+		func(s chan string) (string, error) {
 			mbd, err := machine.NewMachine(
 				machine.WithDeviceRequest(in),
 				machine.WithLogger(l),
 				machine.WithStatusMessage(s),
 			)
 			if err != nil {
-				return "", repository.Error{Message: err.Error()}
+				return "", err
 			}
 			return mbd.BootDevice(ctx)
 		})
@@ -48,18 +48,18 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 	l.V(0).Info("power request")
 	// TODO INPUT VALIDATION
 
-	var execFunc = func(s chan string) (string, repository.Error) {
+	var execFunc = func(s chan string) (string, error) {
 		mp, err := machine.NewMachine(
 			machine.WithPowerRequest(in),
 			machine.WithLogger(l),
 			machine.WithStatusMessage(s),
 		)
 		if err != nil {
-			return "", repository.Error{Message: err.Error()}
+			return "", err
 		}
 		return mp.Power(ctx)
 	}
-	taskID, err := m.TaskRunner.Execute("power action: "+in.GetPowerAction().String(), execFunc)
+	taskID, err := m.TaskRunner.Execute(ctx, "power action: "+in.GetPowerAction().String(), execFunc)
 
 	return &v1.PowerResponse{
 		TaskId: taskID,

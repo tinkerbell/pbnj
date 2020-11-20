@@ -23,22 +23,22 @@ type Runner struct {
 }
 
 // Execute a task, update repository with status
-func (r *Runner) Execute(description string, action func(chan string) (string, repository.Error)) (id string, err error) {
+func (r *Runner) Execute(ctx context.Context, description string, action func(chan string) (string, error)) (id string, err error) {
 	rawID := xid.New()
 	id = rawID.String()
-	l := r.Log.GetContextLogger(r.Ctx)
+	l := r.Log.GetContextLogger(ctx)
 	l.V(0).Info("executing task", "taskID", id, "taskDescription", description)
-	go r.worker(r.Ctx, r.Log, id, description, action)
+	go r.worker(ctx, r.Log, id, description, action)
 	return id, err
 }
 
 // does the work, updates the repo record
 // TODO handle retrys, use a timeout
-func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, description string, action func(chan string) (string, repository.Error)) {
+func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, description string, action func(chan string) (string, error)) {
 	l := logger.GetContextLogger(ctx)
 	l.V(0).Info("starting worker", "taskID", id, "description", description)
 	resultChan := make(chan string, 1)
-	errMsgChan := make(chan repository.Error, 1)
+	errMsgChan := make(chan error, 1)
 	messagesChan := make(chan string)
 	actionACK := make(chan bool, 1)
 	actionSyn := make(chan bool, 1)
@@ -94,12 +94,15 @@ func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, d
 	<-actionACK
 	sessionRecord.State = "complete"
 	sessionRecord.Complete = true
-	if errMsg.Message != "" {
-		l.V(1).Info("error running action", "err", errMsg.Message)
+	if errMsg != nil {
+		l.V(0).Info("error running action", "err", errMsg.Error())
 		sessionRecord.Result = "action failed"
-		sessionRecord.Error.Code = errMsg.Code
-		sessionRecord.Error.Details = errMsg.Details
-		sessionRecord.Error.Message = errMsg.Message
+		re, ok := errMsg.(*repository.Error)
+		if ok {
+			sessionRecord.Error = re.StructuredError()
+		} else {
+			sessionRecord.Error.Message = errMsg.Error()
+		}
 	}
 	errI := repo.Update(id, sessionRecord)
 	if errI != nil {
@@ -110,8 +113,8 @@ func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, d
 }
 
 // Status returns the status record of a task
-func (r *Runner) Status(id string) (record repository.Record, err error) {
-	l := r.Log.GetContextLogger(r.Ctx)
+func (r *Runner) Status(ctx context.Context, id string) (record repository.Record, err error) {
+	l := r.Log.GetContextLogger(ctx)
 	l.V(0).Info("getting task record", "taskID", id)
 	record, err = r.Repository.Get(id)
 	if err != nil {
