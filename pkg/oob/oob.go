@@ -73,14 +73,14 @@ func CreateUser(ctx context.Context, u []BMC) (err error) {
 // UpdateUser interface function
 func UpdateUser(ctx context.Context, u []BMC) (err error) {
 	for _, elem := range u {
-		setErr := elem.DeleteUser(ctx)
+		setErr := elem.UpdateUser(ctx)
 		if setErr != nil {
 			err = multierror.Append(err, setErr)
 			continue
 		}
 		return err
 	}
-	return multierror.Append(err, errors.New("delete user failed"))
+	return multierror.Append(err, errors.New("update user failed"))
 }
 
 // DeleteUser interface function
