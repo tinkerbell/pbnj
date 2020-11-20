@@ -2,6 +2,8 @@
 // putting tasks into a persistence layer.
 package repository
 
+import "fmt"
+
 // Actions interface for interacting with the persistence layer
 type Actions interface {
 	Create(id string, val Record) error
@@ -27,4 +29,17 @@ type Error struct {
 	Code    int32
 	Message string
 	Details []string
+}
+
+func (e *Error) Error() string {
+	return fmt.Sprintf("code: %v message: %v details: %v", e.Code, e.Message, e.Details)
+}
+
+// StructuredError returns the error struct for convenience
+func (e *Error) StructuredError() *Error {
+	return &Error{
+		Code:    e.Code,
+		Message: e.Message,
+		Details: e.Details,
+	}
 }

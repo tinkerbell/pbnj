@@ -20,7 +20,7 @@ import (
 func TestTaskFound(t *testing.T) {
 	// create a task
 	ctx := context.Background()
-	defaultError := repository.Error{
+	defaultError := &repository.Error{
 		Code:    0,
 		Message: "",
 		Details: nil,
@@ -37,7 +37,7 @@ func TestTaskFound(t *testing.T) {
 		Ctx:        ctx,
 		Log:        logger,
 	}
-	taskID, err := taskRunner.Execute("test", func(s chan string) (string, repository.Error) {
+	taskID, err := taskRunner.Execute(ctx, "test", func(s chan string) (string, error) {
 		return "doing cool stuff", defaultError // nolint
 	})
 	if err != nil {

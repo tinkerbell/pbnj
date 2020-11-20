@@ -99,10 +99,11 @@ func NewMachine(opts ...Option) (oob.Machine, error) {
 }
 
 // BootDevice functionality for machines
-func (m Action) BootDevice(ctx context.Context) (result string, errMsg repository.Error) {
+func (m Action) BootDevice(ctx context.Context) (result string, err error) {
+	var errMsg repository.Error
 	host, user, password, errMsg := m.ParseAuth(m.BootDeviceRequest.Authn)
 	if errMsg.Message != "" {
-		return result, errMsg
+		return result, &errMsg
 	}
 
 	base := "setting boot device: " + m.BootDeviceRequest.GetBootDevice().String()
@@ -135,7 +136,7 @@ func (m Action) BootDevice(ctx context.Context) (result string, errMsg repositor
 		errMsg.Message = msg
 		errMsg.Details = append(errMsg.Details, combinedErrs...)
 		m.Log.V(0).Info(msg, "error", combinedErrs)
-		return result, errMsg
+		return result, &errMsg
 	}
 	m.SendStatusMessage("connected to BMC")
 
@@ -153,16 +154,18 @@ func (m Action) BootDevice(ctx context.Context) (result string, errMsg repositor
 	if errMsg.Message != "" {
 		m.SendStatusMessage("error with " + base + ": " + errMsg.Message)
 		m.Log.V(0).Info("error with "+base, "error", errMsg.Message)
+		return result, &errMsg
 	}
 	m.SendStatusMessage(base + " complete")
-	return strings.ToLower(result), errMsg //nolint
+	return strings.ToLower(result), nil
 }
 
 // Power functionality for machines
-func (m Action) Power(ctx context.Context) (result string, errMsg repository.Error) {
+func (m Action) Power(ctx context.Context) (result string, err error) {
+	var errMsg repository.Error
 	host, user, password, errMsg := m.ParseAuth(m.PowerRequest.Authn)
 	if errMsg.Message != "" {
-		return result, errMsg
+		return result, &errMsg
 	}
 
 	base := "power " + m.PowerRequest.GetPowerAction().String()
@@ -198,7 +201,7 @@ func (m Action) Power(ctx context.Context) (result string, errMsg repository.Err
 		errMsg.Message = msg
 		errMsg.Details = append(errMsg.Details, combinedErrs...)
 		m.Log.V(0).Info(msg, "error", combinedErrs)
-		return result, errMsg
+		return result, &errMsg
 	}
 	m.SendStatusMessage("connected to BMC")
 
@@ -216,9 +219,10 @@ func (m Action) Power(ctx context.Context) (result string, errMsg repository.Err
 	if errMsg.Message != "" {
 		m.SendStatusMessage("error with " + base + ": " + errMsg.Message)
 		m.Log.V(0).Info("error with "+base, "error", errMsg.Message)
+		return result, &errMsg
 	}
 	m.SendStatusMessage(base + " complete")
-	return strings.ToLower(result), errMsg //nolint
+	return strings.ToLower(result), nil //nolint
 }
 
 func doAction(ctx context.Context, action v1.PowerAction, pwr power) (result string, errMsg repository.Error) {
