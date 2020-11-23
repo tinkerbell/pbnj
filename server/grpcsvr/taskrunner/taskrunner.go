@@ -12,6 +12,7 @@ import (
 
 	"github.com/rs/xid"
 	"github.com/tinkerbell/pbnj/pkg/logging"
+	"github.com/tinkerbell/pbnj/pkg/metrics"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
@@ -35,6 +36,9 @@ func (r *Runner) Execute(ctx context.Context, description string, action func(ch
 // does the work, updates the repo record
 // TODO handle retrys, use a timeout
 func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, description string, action func(chan string) (string, error)) {
+	metrics.TasksTotal.Inc()
+	metrics.TasksActive.Inc()
+	defer metrics.TasksActive.Dec()
 	l := logger.GetContextLogger(ctx)
 	l.V(0).Info("starting worker", "taskID", id, "description", description)
 	resultChan := make(chan string, 1)
