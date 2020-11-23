@@ -14,7 +14,7 @@ import (
 	"github.com/packethost/pkg/log/logr"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
-	"github.com/tinkerbell/pbnj/cmd/zaplog"
+	"github.com/tinkerbell/pbnj/pkg/zaplog"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
