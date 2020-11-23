@@ -11,7 +11,7 @@ import (
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	"github.com/packethost/pkg/log/logr"
 	"github.com/spf13/cobra"
-	"github.com/tinkerbell/pbnj/cmd/pbnj/zaplog"
+	"github.com/tinkerbell/pbnj/pkg/zaplog"
 	"github.com/tinkerbell/pbnj/server/grpcsvr"
 	"goa.design/goa/grpc/middleware"
 	"google.golang.org/grpc"

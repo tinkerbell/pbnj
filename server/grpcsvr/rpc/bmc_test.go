@@ -8,7 +8,7 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/packethost/pkg/log/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
-	"github.com/tinkerbell/pbnj/cmd/zaplog"
+	"github.com/tinkerbell/pbnj/pkg/zaplog"
 )
 
 func TestConfigNetworkSource(t *testing.T) {
