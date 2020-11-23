@@ -50,11 +50,11 @@ buf-lint:  ## run linting
 
 .PHONY: darwin
 darwin: ## complie for darwin
-	GOOS=darwin ${BUILD_ARGS} -o bin/${BINARY}-darwin-amd64 main.go
+	GOOS=darwin ${BUILD_ARGS} -o bin/${BINARY}-darwin-amd64 ./cmd/${BINARY}
 
 .PHONY: linux
 linux: ## complie for linux
-	GOOS=linux ${BUILD_ARGS} -o bin/${BINARY}-linux-amd64 main.go
+	GOOS=linux ${BUILD_ARGS} -o bin/${BINARY}-linux-amd64 ./cmd/${BINARY}
 
 .PHONY: build
 build: ## compile the binary for the native OS
@@ -67,7 +67,7 @@ endif
 PHONY: run-server
 run-server: ## run server locally
 ifeq (, $(shell which jq))
-	go run main.go server
+	go run ./cmd/${BINARY} server
 else
 	scripts/run-server.sh
 endif

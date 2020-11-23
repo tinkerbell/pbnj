@@ -1,4 +1,5 @@
 pbnj
+!cmd/pbnj
 *.iml
 .idea*/**
 bin/
