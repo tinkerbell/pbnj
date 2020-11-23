@@ -18,110 +18,154 @@ type bmclibBMC struct {
 	host     string
 }
 
-func (b *bmclibBMC) Connect(ctx context.Context) repository.Error {
-	var errMsg repository.Error
+func (b *bmclibBMC) Connect(ctx context.Context) error {
 	connection, err := discover.ScanAndConnect(b.host, b.user, b.password, discover.WithLogger(b.log))
 	if err != nil {
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = err.Error()
-		return errMsg //nolint
+		return &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: err.Error(),
+		}
 	}
 	switch conn := connection.(type) {
 	case devices.Bmc:
 		b.conn = conn
 	default:
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = "Unknown device"
-		return errMsg //nolint
+		return &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: "Unknown device",
+		}
 	}
-	return errMsg //nolint
+	return nil
 }
 
 func (b *bmclibBMC) Close(ctx context.Context) {
 	b.conn.Close()
 }
 
-func (b *bmclibBMC) on(ctx context.Context) (result string, errMsg repository.Error) {
+func (b *bmclibBMC) PowerSet(ctx context.Context, action string) (result string, err error) {
+	return doBmclibAction(ctx, action, b)
+}
+
+func doBmclibAction(ctx context.Context, action string, pwr *bmclibBMC) (result string, err error) {
+	switch action {
+	case v1.PowerAction_POWER_ACTION_ON.String():
+		result, err = pwr.on(ctx)
+	case v1.PowerAction_POWER_ACTION_OFF.String():
+		result, err = pwr.off(ctx)
+	case v1.PowerAction_POWER_ACTION_STATUS.String():
+		result, err = pwr.status(ctx)
+	case v1.PowerAction_POWER_ACTION_RESET.String():
+		result, err = pwr.reset(ctx)
+	case v1.PowerAction_POWER_ACTION_HARDOFF.String():
+		result, err = pwr.hardoff(ctx)
+	case v1.PowerAction_POWER_ACTION_CYCLE.String():
+		result, err = pwr.cycle(ctx)
+	case v1.PowerAction_POWER_ACTION_UNSPECIFIED.String():
+		return result, &repository.Error{
+			Code:    v1.Code_value["INVALID_ARGUMENT"],
+			Message: "UNSPECIFIED power action",
+		}
+	default:
+		return result, &repository.Error{
+			Code:    v1.Code_value["INVALID_ARGUMENT"],
+			Message: "unknown power action",
+		}
+	}
+	return result, err
+}
+
+func (b *bmclibBMC) on(ctx context.Context) (result string, err error) {
 	ok, err := b.conn.PowerOn()
 	if err != nil {
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = err.Error()
-		return "", errMsg
+		return result, &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: err.Error(),
+		}
 	}
 	if !ok {
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = "error powering on"
-		return "", errMsg
+		return result, &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: "error powering on",
+		}
 	}
-	return "on", errMsg
+	return "on", nil
 }
 
-func (b *bmclibBMC) off(ctx context.Context) (result string, errMsg repository.Error) {
+func (b *bmclibBMC) off(ctx context.Context) (result string, err error) {
 	ok, err := b.conn.PowerOff()
 	if err != nil {
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = err.Error()
-		return "", errMsg
+		return result, &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: err.Error(),
+		}
 	}
 	if !ok {
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = "error powering off"
-		return "", errMsg
+		return result, &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: "error powering off",
+		}
 	}
-	return "off", errMsg
+	return "off", nil
 }
 
-func (b *bmclibBMC) status(ctx context.Context) (result string, errMsg repository.Error) {
-	result, err := b.conn.PowerState()
+func (b *bmclibBMC) status(ctx context.Context) (result string, err error) {
+	result, err = b.conn.PowerState()
 	if err != nil {
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = err.Error()
-		return result, errMsg
+		return result, &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: err.Error(),
+		}
 	}
-	return result, errMsg
+	return result, nil
 }
 
-func (b *bmclibBMC) reset(ctx context.Context) (result string, errMsg repository.Error) {
+func (b *bmclibBMC) reset(ctx context.Context) (result string, err error) {
 	ok, err := b.conn.PowerCycle()
 	if err != nil {
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = err.Error()
-		return "", errMsg
+		return result, &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: err.Error(),
+		}
 	}
 	if !ok {
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = "error with power reset"
-		return "", errMsg
+		return result, &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: "error with power reset",
+		}
 	}
-	return "reset", errMsg
+	return "reset", nil
 }
 
-func (b *bmclibBMC) hardoff(ctx context.Context) (result string, errMsg repository.Error) {
+func (b *bmclibBMC) hardoff(ctx context.Context) (result string, err error) {
 	ok, err := b.conn.PowerOff()
 	if err != nil {
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = err.Error()
-		return "", errMsg
+		return result, &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: err.Error(),
+		}
 	}
 	if !ok {
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = "error with power hardoff"
-		return "", errMsg
+		return result, &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: "error with power hardoff",
+		}
 	}
-	return "hardoff", errMsg
+	return "hardoff", nil
 }
 
-func (b *bmclibBMC) cycle(ctx context.Context) (result string, errMsg repository.Error) {
+func (b *bmclibBMC) cycle(ctx context.Context) (result string, err error) {
 	ok, err := b.conn.PowerCycle()
 	if err != nil {
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = err.Error()
-		return "", errMsg
+		return result, &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: err.Error(),
+		}
 	}
 	if !ok {
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = "error with power cycle"
-		return "", errMsg
+		return result, &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: "error with power cycle",
+		}
 	}
-	return "cycle", errMsg
+	return "cycle", nil
 }

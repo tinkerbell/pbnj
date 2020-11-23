@@ -31,9 +31,24 @@ func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetR
 	l := b.Log.GetContextLogger(ctx)
 	l.V(0).Info("reset action")
 
+	taskID, err := b.TaskRunner.Execute(
+		ctx,
+		"bmc reset",
+		func(s chan string) (string, error) {
+			task, err := bmc.NewBMCResetter(
+				bmc.WithLogger(l),
+				bmc.WithStatusMessage(s),
+				bmc.WithResetRequest(in),
+			)
+			if err != nil {
+				return "", err
+			}
+			return "", task.BMCReset(ctx, in.ResetKind.String())
+		})
+
 	return &v1.ResetResponse{
-		TaskId: "good",
-	}, nil
+		TaskId: taskID,
+	}, err
 }
 
 // CreateUser sets the next boot device of a machine

@@ -20,13 +20,13 @@ type bmclibUserManagement struct {
 	creds    *v1.UserCreds
 }
 
-func (b *bmclibUserManagement) Connect(ctx context.Context) repository.Error {
+func (b *bmclibUserManagement) Connect(ctx context.Context) error {
 	var errMsg repository.Error
 	connection, err := discover.ScanAndConnect(b.host, b.user, b.password, discover.WithLogger(b.log))
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = err.Error()
-		return errMsg //nolint
+		return &errMsg
 	}
 	switch conn := connection.(type) {
 	case devices.Bmc:
@@ -34,17 +34,16 @@ func (b *bmclibUserManagement) Connect(ctx context.Context) repository.Error {
 	default:
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = "Unknown device"
-		return errMsg //nolint
+		return &errMsg
 	}
-	return errMsg //nolint
+	return nil
 }
 
 func (b *bmclibUserManagement) Close(ctx context.Context) {
 	b.conn.Close()
 }
 
-func (b *bmclibUserManagement) create(ctx context.Context) repository.Error {
-	var errMsg repository.Error
+func (b *bmclibUserManagement) CreateUser(ctx context.Context) error {
 	users := []*cfgresources.User{
 		{
 			Name:     b.creds.Username,
@@ -55,16 +54,15 @@ func (b *bmclibUserManagement) create(ctx context.Context) repository.Error {
 	}
 	err := b.conn.User(users)
 	if err != nil {
-		return repository.Error{
+		return &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
 			Message: err.Error(),
 		}
 	}
-	return errMsg
+	return nil
 }
 
-func (b *bmclibUserManagement) update(ctx context.Context) repository.Error {
-	var errMsg repository.Error
+func (b *bmclibUserManagement) UpdateUser(ctx context.Context) error {
 	users := []*cfgresources.User{
 		{
 			Name:     b.creds.Username,
@@ -75,16 +73,15 @@ func (b *bmclibUserManagement) update(ctx context.Context) repository.Error {
 	}
 	err := b.conn.User(users)
 	if err != nil {
-		return repository.Error{
+		return &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
 			Message: err.Error(),
 		}
 	}
-	return errMsg
+	return nil
 }
 
-func (b *bmclibUserManagement) delete(ctx context.Context) repository.Error {
-	var errMsg repository.Error
+func (b *bmclibUserManagement) DeleteUser(ctx context.Context) error {
 	users := []*cfgresources.User{
 		{
 			Name:     b.creds.Username,
@@ -95,12 +92,12 @@ func (b *bmclibUserManagement) delete(ctx context.Context) repository.Error {
 	}
 	err := b.conn.User(users)
 	if err != nil {
-		return repository.Error{
+		return &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
 			Message: err.Error(),
 		}
 	}
-	return errMsg
+	return nil
 }
 
 func userRoleToString(role v1.UserRole) string {

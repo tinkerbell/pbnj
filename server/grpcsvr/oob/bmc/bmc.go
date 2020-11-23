@@ -2,36 +2,20 @@ package bmc
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/oob"
-	"github.com/tinkerbell/pbnj/pkg/repository"
-	bmc "github.com/tinkerbell/pbnj/server/grpcsvr/oob"
+	common "github.com/tinkerbell/pbnj/server/grpcsvr/oob"
 )
 
 // Action for making bmc actions on BMCs, implements oob.User interface
 type Action struct {
-	bmc.Accessory
+	common.Accessory
 	CreateUserRequest *v1.CreateUserRequest
 	DeleteUserRequest *v1.DeleteUserRequest
 	UpdateUserRequest *v1.UpdateUserRequest
-}
-
-type userConnection struct {
-	bmc.ConnectionDetails
-	user user
-}
-
-// the power interface allows us to abstract these functions
-// between different libraries and BMC connections
-// like ipmi, racadm, redfish, etc
-type user interface {
-	bmc.Connection
-	create(context.Context) repository.Error
-	update(context.Context) repository.Error
-	delete(context.Context) repository.Error
+	ResetBMCRequest   *v1.ResetRequest
 }
 
 // Option to add to an Actions
@@ -77,6 +61,14 @@ func WithUpdateUserRequest(in *v1.UpdateUserRequest) Option {
 	}
 }
 
+// WithResetRequest adds ResetRequest to an Action struct
+func WithResetRequest(in *v1.ResetRequest) Option {
+	return func(a *Action) error {
+		a.ResetBMCRequest = in
+		return nil
+	}
+}
+
 // NewBMC returns an oob.BMC interface
 func NewBMC(opts ...Option) (oob.BMC, error) {
 	a := &Action{}
@@ -90,71 +82,56 @@ func NewBMC(opts ...Option) (oob.BMC, error) {
 	return a, nil
 }
 
+// NewBMCResetter returns an oob.BMCResetter interface
+func NewBMCResetter(opts ...Option) (oob.BMCResetter, error) {
+	a := &Action{}
+
+	for _, opt := range opts {
+		err := opt(a)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return a, nil
+}
+
 // CreateUser functionality for machines
 func (m Action) CreateUser(ctx context.Context) error {
-	var errMsg repository.Error
-	host, user, password, errMsg := m.ParseAuth(m.CreateUserRequest.Authn)
-	if errMsg.Message != "" {
-		return &errMsg
+	var err error
+	host, user, password, parseErr := m.ParseAuth(m.CreateUserRequest.Authn)
+	if parseErr != nil {
+		return parseErr
 	}
-	creds := m.CreateUserRequest.GetUserCreds()
+	creds := m.UpdateUserRequest.GetUserCreds()
 	base := "creating user: " + creds.GetUsername()
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	connections := []userConnection{
-		{
-			ConnectionDetails: bmc.ConnectionDetails{Name: "bmclib"},
-			user: &bmclibUserManagement{
-				user:     user,
-				password: password,
-				host:     host,
-				creds:    creds,
-			},
-		},
+	connections := map[string]interface{}{
+		"bmclib": &bmclibUserManagement{user: user, password: password, host: host, creds: creds},
 	}
 
-	var connected bool
 	m.SendStatusMessage("connecting to BMC")
-	for index := range connections {
-		connections[index].Err = connections[index].user.Connect(ctx)
-		if connections[index].Err.Message == "" {
-			connections[index].Connected = true
-			defer connections[index].user.Close(ctx)
-			connected = true
-		}
-	}
-	m.Log.V(1).Info("connections", "connections", fmt.Sprintf("%+v", connections))
-	if !connected {
+	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
+	if ecErr != nil {
 		m.SendStatusMessage("connecting to BMC failed")
-		var combinedErrs []string
-		for _, connection := range connections {
-			combinedErrs = append(combinedErrs, connection.Err.Message)
-		}
-		msg := "could not connect"
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = msg
-		errMsg.Details = append(errMsg.Details, combinedErrs...)
-		m.Log.V(0).Info(msg, "error", combinedErrs)
-		return &errMsg
+		return ecErr
 	}
 	m.SendStatusMessage("connected to BMC")
 
-	for index := range connections {
-		if connections[index].Connected {
-			m.Log.V(0).Info("trying", "name", connections[index].Name)
-			errMsg = connections[index].user.create(ctx)
-			if errMsg.Message == "" {
-				m.Log.V(0).Info("action implemented by", "implementer", connections[index].Name)
-				break
-			}
+	var userAction []oob.BMC
+	for _, elem := range successfulConnections {
+		conn := connections[elem]
+		switch r := conn.(type) {
+		case oob.BMC:
+			userAction = append(userAction, r)
 		}
 	}
-
-	if errMsg.Message != "" {
-		m.SendStatusMessage("error with " + base + ": " + errMsg.Message)
-		m.Log.V(0).Info("error with "+base, "error", errMsg.Message)
-		return &errMsg
+	err = oob.CreateUser(ctx, userAction)
+	if err != nil {
+		m.SendStatusMessage("error with " + base + ": " + err.Error())
+		m.Log.V(0).Info("error with "+base, "error", err.Error())
+		return err
 	}
 	m.SendStatusMessage(base + " complete")
 	return nil
@@ -162,69 +139,45 @@ func (m Action) CreateUser(ctx context.Context) error {
 
 // UpdateUser functionality for machines
 func (m Action) UpdateUser(ctx context.Context) error {
-	var errMsg repository.Error
-	host, user, password, errMsg := m.ParseAuth(m.UpdateUserRequest.Authn)
-	if errMsg.Message != "" {
-		return &errMsg
+	var err error
+	host, user, password, parseErr := m.ParseAuth(m.UpdateUserRequest.Authn)
+	if parseErr != nil {
+		return parseErr
 	}
 	creds := m.UpdateUserRequest.GetUserCreds()
 	base := "updating user: " + creds.GetUsername()
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	connections := []userConnection{
-		{
-			ConnectionDetails: bmc.ConnectionDetails{Name: "bmclib"},
-			user: &bmclibUserManagement{
-				user:     user,
-				password: password,
-				host:     host,
-				creds:    creds,
-			},
+	connections := map[string]interface{}{
+		"bmclib": &bmclibUserManagement{
+			user:     user,
+			password: password,
+			host:     host,
+			creds:    creds,
 		},
 	}
 
-	var connected bool
 	m.SendStatusMessage("connecting to BMC")
-	for index := range connections {
-		connections[index].Err = connections[index].user.Connect(ctx)
-		if connections[index].Err.Message == "" {
-			connections[index].Connected = true
-			defer connections[index].user.Close(ctx)
-			connected = true
-		}
-	}
-	m.Log.V(1).Info("connections", "connections", fmt.Sprintf("%+v", connections))
-	if !connected {
+	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
+	if ecErr != nil {
 		m.SendStatusMessage("connecting to BMC failed")
-		var combinedErrs []string
-		for _, connection := range connections {
-			combinedErrs = append(combinedErrs, connection.Err.Message)
-		}
-		msg := "could not connect"
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = msg
-		errMsg.Details = append(errMsg.Details, combinedErrs...)
-		m.Log.V(0).Info(msg, "error", combinedErrs)
-		return &errMsg
+		return ecErr
 	}
 	m.SendStatusMessage("connected to BMC")
 
-	for index := range connections {
-		if connections[index].Connected {
-			m.Log.V(0).Info("trying", "name", connections[index].Name)
-			errMsg = connections[index].user.update(ctx)
-			if errMsg.Message == "" {
-				m.Log.V(0).Info("action implemented by", "implementer", connections[index].Name)
-				break
-			}
+	var userAction []oob.BMC
+	for _, elem := range successfulConnections {
+		switch r := connections[elem].(type) {
+		case oob.BMC:
+			userAction = append(userAction, r)
 		}
 	}
-
-	if errMsg.Message != "" {
-		m.SendStatusMessage("error with " + base + ": " + errMsg.Message)
-		m.Log.V(0).Info("error with "+base, "error", errMsg.Message)
-		return &errMsg
+	err = oob.UpdateUser(ctx, userAction)
+	if err != nil {
+		m.SendStatusMessage("error with " + base + ": " + err.Error())
+		m.Log.V(0).Info("error with "+base, "error", err.Error())
+		return err
 	}
 	m.SendStatusMessage(base + " complete")
 	return nil
@@ -232,70 +185,84 @@ func (m Action) UpdateUser(ctx context.Context) error {
 
 // DeleteUser functionality for machines
 func (m Action) DeleteUser(ctx context.Context) error {
-	var errMsg repository.Error
-	host, user, password, errMsg := m.ParseAuth(m.DeleteUserRequest.Authn)
-	if errMsg.Message != "" {
-		return &errMsg
+	var deleteErr error
+	host, user, password, parseErr := m.ParseAuth(m.DeleteUserRequest.Authn)
+	if parseErr != nil {
+		return parseErr
 	}
 	base := "deleting user: " + m.DeleteUserRequest.Username
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	connections := []userConnection{
-		{
-			ConnectionDetails: bmc.ConnectionDetails{Name: "bmclib"},
-			user: &bmclibUserManagement{
-				user:     user,
-				password: password,
-				host:     host,
-				creds: &v1.UserCreds{
-					Username: m.DeleteUserRequest.Username,
-				},
+	connections := map[string]interface{}{
+		"bmclib": &bmclibUserManagement{
+			user:     user,
+			password: password,
+			host:     host,
+			creds: &v1.UserCreds{
+				Username: m.DeleteUserRequest.Username,
 			},
 		},
 	}
 
-	var connected bool
 	m.SendStatusMessage("connecting to BMC")
-	for index := range connections {
-		connections[index].Err = connections[index].user.Connect(ctx)
-		if connections[index].Err.Message == "" {
-			connections[index].Connected = true
-			defer connections[index].user.Close(ctx)
-			connected = true
-		}
-	}
-	m.Log.V(1).Info("connections", "connections", fmt.Sprintf("%+v", connections))
-	if !connected {
+	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
+	if ecErr != nil {
 		m.SendStatusMessage("connecting to BMC failed")
-		var combinedErrs []string
-		for _, connection := range connections {
-			combinedErrs = append(combinedErrs, connection.Err.Message)
-		}
-		msg := "could not connect"
-		errMsg.Code = v1.Code_value["UNKNOWN"]
-		errMsg.Message = msg
-		errMsg.Details = append(errMsg.Details, combinedErrs...)
-		m.Log.V(0).Info(msg, "error", combinedErrs)
-		return &errMsg
+		return ecErr
 	}
 	m.SendStatusMessage("connected to BMC")
 
-	for index := range connections {
-		if connections[index].Connected {
-			m.Log.V(0).Info("trying", "name", connections[index].Name)
-			errMsg = connections[index].user.delete(ctx)
-			if errMsg.Message == "" {
-				m.Log.V(0).Info("action implemented by", "implementer", connections[index].Name)
-				break
-			}
+	var deleteUsers []oob.BMC
+	for _, elem := range successfulConnections {
+		switch r := connections[elem].(type) {
+		case oob.BMC:
+			deleteUsers = append(deleteUsers, r)
+		}
+	}
+	deleteErr = oob.DeleteUser(ctx, deleteUsers)
+	if deleteErr != nil {
+		m.SendStatusMessage("error with " + base + ": " + deleteErr.Error())
+		m.Log.V(0).Info("error with "+base, "error", deleteErr.Error())
+		return deleteErr
+	}
+	m.SendStatusMessage(base + " complete")
+	return nil
+}
+
+// BMCReset functionality for machines
+func (m Action) BMCReset(ctx context.Context, rType string) error {
+	var resetErr error
+	host, user, password, parseErr := m.ParseAuth(m.ResetBMCRequest.Authn)
+	if parseErr != nil {
+		return parseErr
+	}
+	base := "reset BMC cold"
+	m.SendStatusMessage("working on " + base)
+	connections := map[string]interface{}{
+		"bmclib": &bmcilbResetBMC{user: user, password: password, host: host, log: m.Log},
+	}
+	m.SendStatusMessage("connecting to BMC")
+	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
+	if ecErr != nil {
+		m.SendStatusMessage("connecting to BMC failed")
+		return ecErr
+	}
+	m.SendStatusMessage("connected to BMC")
+
+	var resetBmcs []oob.BMCResetter
+	for _, elem := range successfulConnections {
+		switch r := connections[elem].(type) {
+		case oob.BMCResetter:
+			resetBmcs = append(resetBmcs, r)
 		}
 	}
 
-	if errMsg.Message != "" {
-		m.SendStatusMessage("error with " + base + ": " + errMsg.Message)
-		m.Log.V(0).Info("error with "+base, "error", errMsg.Message)
-		return &errMsg
+	resetErr = oob.ResetBMC(ctx, rType, resetBmcs)
+	if resetErr != nil {
+		m.SendStatusMessage("error with " + base + ": " + resetErr.Error())
+		m.Log.V(0).Info("error with "+base, "error", resetErr.Error())
+		return resetErr
 	}
 	m.SendStatusMessage(base + " complete")
 	return nil

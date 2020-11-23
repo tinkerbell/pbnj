@@ -2,15 +2,16 @@ package machine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"github.com/hashicorp/go-multierror"
 	"github.com/packethost/pkg/log/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
-	"github.com/tinkerbell/pbnj/pkg/repository"
 	goipmi "github.com/vmware/goipmi"
 )
 
@@ -26,7 +27,7 @@ func TestBootDevice(t *testing.T) {
 		name        string
 		req         *v1.DeviceRequest
 		message     string
-		expectedErr *repository.Error
+		expectedErr error
 	}{
 		{
 			name: "set boot device",
@@ -44,8 +45,12 @@ func TestBootDevice(t *testing.T) {
 				},
 				BootDevice: v1.BootDevice_BOOT_DEVICE_BIOS,
 			},
-			message:     "boot device set: bios",
-			expectedErr: nil,
+			message: "boot device set: bios",
+			expectedErr: &multierror.Error{
+				Errors: []error{
+					errors.New("set boot device failed"),
+				},
+			},
 		},
 	}
 
@@ -56,20 +61,21 @@ func TestBootDevice(t *testing.T) {
 
 			l, zapLogger, _ := logr.NewPacketLogr()
 			ctx = ctxzap.ToContext(ctx, zapLogger)
-			ma, err := NewMachine(
+			ma, err := NewBootDeviceSetter(
 				WithDeviceRequest(tc.req),
 				WithLogger(l),
 				WithStatusMessage(make(chan string)),
+				WithDeviceRequest(testCase.req),
 			)
 			if err != nil {
 				t.Fatal(err)
 			}
-			result, errMsg := ma.BootDevice(ctx)
+			result, errMsg := ma.BootDeviceSet(ctx, testCase.req.BootDevice.String())
 			t.Log("result got: ", result)
 			t.Log("errMsg got: ", fmt.Sprintf("%+v", errMsg))
 
 			if errMsg != nil {
-				diff := cmp.Diff(testCase.expectedErr, errMsg.(*repository.Error))
+				diff := cmp.Diff(testCase.expectedErr.Error(), errMsg.Error())
 				if diff != "" {
 					t.Log(fmt.Sprintf("%+v", errMsg))
 					t.Fatalf(diff)

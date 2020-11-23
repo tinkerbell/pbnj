@@ -26,7 +26,7 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 		ctx,
 		"setting boot device",
 		func(s chan string) (string, error) {
-			mbd, err := machine.NewMachine(
+			mbd, err := machine.NewBootDeviceSetter(
 				machine.WithDeviceRequest(in),
 				machine.WithLogger(l),
 				machine.WithStatusMessage(s),
@@ -34,7 +34,7 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 			if err != nil {
 				return "", err
 			}
-			return mbd.BootDevice(ctx)
+			return mbd.BootDeviceSet(ctx, in.BootDevice.String())
 		})
 
 	return &v1.DeviceResponse{
@@ -49,7 +49,7 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 	// TODO INPUT VALIDATION
 
 	var execFunc = func(s chan string) (string, error) {
-		mp, err := machine.NewMachine(
+		mp, err := machine.NewPowerSetter(
 			machine.WithPowerRequest(in),
 			machine.WithLogger(l),
 			machine.WithStatusMessage(s),
@@ -57,7 +57,7 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 		if err != nil {
 			return "", err
 		}
-		return mp.Power(ctx)
+		return mp.PowerSet(ctx, in.PowerAction.String())
 	}
 	taskID, err := m.TaskRunner.Execute(ctx, "power action: "+in.GetPowerAction().String(), execFunc)
 
