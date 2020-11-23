@@ -61,7 +61,7 @@ func TestBootDevice(t *testing.T) {
 
 			l, zapLogger, _ := logr.NewPacketLogr()
 			ctx = ctxzap.ToContext(ctx, zapLogger)
-			ma, err := NewMachine(
+			ma, err := NewBootDeviceSetter(
 				WithDeviceRequest(tc.req),
 				WithLogger(l),
 				WithStatusMessage(make(chan string)),
@@ -70,7 +70,7 @@ func TestBootDevice(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			result, errMsg := ma.BootDevice(ctx, testCase.req.BootDevice.String())
+			result, errMsg := ma.BootDeviceSet(ctx, testCase.req.BootDevice.String())
 			t.Log("result got: ", result)
 			t.Log("errMsg got: ", fmt.Sprintf("%+v", errMsg))
 

@@ -51,8 +51,8 @@ func WithPowerRequest(in *v1.PowerRequest) Option {
 	}
 }
 
-// NewMachine returns an oob.Machine interface
-func NewMachine(opts ...Option) (oob.Machine, error) {
+// NewPowerSetter returns an oob.PowerSetter interface
+func NewPowerSetter(opts ...Option) (oob.PowerSetter, error) {
 	a := &Action{}
 	for _, opt := range opts {
 		err := opt(a)
@@ -63,8 +63,20 @@ func NewMachine(opts ...Option) (oob.Machine, error) {
 	return a, nil
 }
 
-// BootDevice functionality for machines
-func (m Action) BootDevice(ctx context.Context, device string) (result string, err error) {
+// NewBootDeviceSetter returns an oob.BootDeviceSetter interface
+func NewBootDeviceSetter(opts ...Option) (oob.BootDeviceSetter, error) {
+	a := &Action{}
+	for _, opt := range opts {
+		err := opt(a)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return a, nil
+}
+
+// BootDeviceSet functionality for machines
+func (m Action) BootDeviceSet(ctx context.Context, device string) (result string, err error) {
 	host, user, password, parseErr := m.ParseAuth(m.BootDeviceRequest.Authn)
 	if parseErr != nil {
 		return result, parseErr
@@ -73,8 +85,8 @@ func (m Action) BootDevice(ctx context.Context, device string) (result string, e
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	connections := []interface{}{
-		&ipmiBootDevice{mAction: m, user: user, password: password, host: host, port: "623"},
+	connections := map[string]interface{}{
+		"ipmitool": &ipmiBootDevice{mAction: m, user: user, password: password, host: host, port: "623"},
 	}
 
 	m.SendStatusMessage("connecting to BMC")
@@ -85,15 +97,15 @@ func (m Action) BootDevice(ctx context.Context, device string) (result string, e
 	}
 	m.SendStatusMessage("connected to BMC")
 
-	var userAction []oob.Machine
+	var userAction []oob.BootDeviceSetter
 	for _, elem := range successfulConnections {
-		elem := *elem
-		switch r := elem.(type) {
-		case oob.Machine:
+		conn := connections[elem]
+		switch r := conn.(type) {
+		case oob.BootDeviceSetter:
 			userAction = append(userAction, r)
 		}
 	}
-	result, err = oob.MachineBootDevice(ctx, device, userAction)
+	result, err = oob.SetBootDevice(ctx, device, userAction)
 	if err != nil {
 		m.SendStatusMessage("error with " + base + ": " + err.Error())
 		m.Log.V(0).Info("error with "+base, "error", err.Error())
@@ -103,8 +115,8 @@ func (m Action) BootDevice(ctx context.Context, device string) (result string, e
 	return result, nil
 }
 
-// Power functionality for machines
-func (m Action) Power(ctx context.Context, action string) (result string, err error) {
+// PowerSet functionality for machines
+func (m Action) PowerSet(ctx context.Context, action string) (result string, err error) {
 
 	host, user, password, parseErr := m.ParseAuth(m.PowerRequest.Authn)
 	if parseErr != nil {
@@ -115,13 +127,13 @@ func (m Action) Power(ctx context.Context, action string) (result string, err er
 	m.SendStatusMessage(msg)
 
 	// the order here is the order in which these connections/operations will be tried
-	connections := []interface{}{
-		&bmclibBMC{user: user, password: password, host: host, log: m.Log},
-		&ipmiBMC{user: user, password: password, host: host, log: m.Log},
-		&redfishBMC{user: user, password: password, host: host, log: m.Log},
+
+	connections := map[string]interface{}{
+		"bmclib":   &bmclibBMC{user: user, password: password, host: host, log: m.Log},
+		"ipmitool": &ipmiBMC{user: user, password: password, host: host, log: m.Log},
+		"redfish":  &redfishBMC{user: user, password: password, host: host, log: m.Log},
 	}
 
-	m.SendStatusMessage("connecting to BMC")
 	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
 	if ecErr != nil {
 		m.SendStatusMessage("connecting to BMC failed")
@@ -129,15 +141,18 @@ func (m Action) Power(ctx context.Context, action string) (result string, err er
 	}
 	m.SendStatusMessage("connected to BMC")
 
-	var userAction []oob.Machine
+	var pwrActions []oob.PowerSetter
 	for _, elem := range successfulConnections {
-		elem := *elem
-		switch r := elem.(type) {
-		case oob.Machine:
-			userAction = append(userAction, r)
+		conn := connections[elem]
+		switch r := conn.(type) {
+		case oob.PowerSetter:
+			pwrActions = append(pwrActions, r)
 		}
 	}
-	result, err = oob.MachinePower(ctx, action, userAction)
+	if len(pwrActions) == 0 {
+		m.SendStatusMessage("no successful connections able to run power actions")
+	}
+	result, err = oob.SetPower(ctx, action, pwrActions)
 	if err != nil {
 		m.SendStatusMessage("error with " + base + ": " + err.Error())
 		m.Log.V(0).Info("error with "+base, "error", err.Error())

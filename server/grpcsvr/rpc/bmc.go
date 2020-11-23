@@ -6,7 +6,6 @@ import (
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/task"
-	"github.com/tinkerbell/pbnj/server/grpcsvr/oob"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/oob/bmc"
 )
 
@@ -36,14 +35,15 @@ func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetR
 		ctx,
 		"bmc reset",
 		func(s chan string) (string, error) {
-			task := bmc.Action{
-				Accessory: oob.Accessory{
-					Log:            l,
-					StatusMessages: s,
-				},
-				ResetBMCRequest: in,
+			task, err := bmc.NewBMCResetter(
+				bmc.WithLogger(l),
+				bmc.WithStatusMessage(s),
+				bmc.WithResetRequest(in),
+			)
+			if err != nil {
+				return "", err
 			}
-			return "", task.ResetBMC(ctx)
+			return "", task.BMCReset(ctx, in.ResetKind.String())
 		})
 
 	return &v1.ResetResponse{

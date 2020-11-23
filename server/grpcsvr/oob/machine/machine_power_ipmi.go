@@ -48,7 +48,7 @@ func (b *ipmiBMC) Close(ctx context.Context) {
 	b.conn.Close(ctx)
 }
 
-func (b *ipmiBMC) Power(ctx context.Context, action string) (result string, err error) {
+func (b *ipmiBMC) PowerSet(ctx context.Context, action string) (result string, err error) {
 	return doIpmiAction(ctx, action, b)
 }
 

@@ -13,30 +13,23 @@ type OOBTester struct {
 	MakeFail bool
 }
 
-func (o *OOBTester) Power(ctx context.Context, action string) (result string, err error) {
+func (o *OOBTester) PowerSet(ctx context.Context, action string) (result string, err error) {
 	if o.MakeFail {
 		return result, errors.New("power failed")
 	}
 	return "power action complete: " + action, nil
 }
 
-func (o *OOBTester) BootDevice(ctx context.Context, device string) (result string, err error) {
+func (o *OOBTester) BootDeviceSet(ctx context.Context, device string) (result string, err error) {
 	if o.MakeFail {
 		return result, errors.New("boot device failed")
 	}
 	return "boot device set: " + device, nil
 }
 
-func (o *OOBTester) ResetWarm(ctx context.Context) (err error) {
+func (o *OOBTester) BMCReset(ctx context.Context, rType string) (err error) {
 	if o.MakeFail {
-		return errors.New("failed: BMC warm reset")
-	}
-	return nil
-}
-
-func (o *OOBTester) ResetCold(ctx context.Context) (err error) {
-	if o.MakeFail {
-		return errors.New("failed: BMC cold reset")
+		return errors.New("failed: BMC reset")
 	}
 	return nil
 }
@@ -78,7 +71,7 @@ func TestMachinePower(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			testImplementation := OOBTester{MakeFail: tc.makeFail}
 			expectedResult := "power action complete: " + tc.action
-			result, err := MachinePower(context.Background(), tc.action, []Machine{&testImplementation})
+			result, err := SetPower(context.Background(), tc.action, []PowerSetter{&testImplementation})
 			if err != nil {
 				diff := cmp.Diff(tc.err.Error(), err.Error())
 				if diff != "" {
@@ -112,7 +105,7 @@ func TestMachineBootDevice(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			testImplementation := OOBTester{MakeFail: tc.makeFail}
 			expectedResult := "boot device set: " + tc.device
-			result, err := MachineBootDevice(context.Background(), tc.device, []Machine{&testImplementation})
+			result, err := SetBootDevice(context.Background(), tc.device, []BootDeviceSetter{&testImplementation})
 			if err != nil {
 				diff := cmp.Diff(tc.err.Error(), err.Error())
 				if diff != "" {
@@ -130,46 +123,22 @@ func TestMachineBootDevice(t *testing.T) {
 	}
 }
 
-func TestWarmBMCReset(t *testing.T) {
+func TestBMCReset(t *testing.T) {
 	testCases := []struct {
-		name     string
-		makeFail bool
-		err      error
+		name      string
+		resetType string
+		makeFail  bool
+		err       error
 	}{
-		{name: "success", err: nil},
-		{name: "BMC warm reset fails", makeFail: true, err: &multierror.Error{Errors: []error{errors.New("failed: BMC warm reset"), errors.New("BMC warm reset failed")}}},
+		{name: "success", resetType: "cold", err: nil},
+		{name: "BMC reset fails", resetType: "cold", makeFail: true, err: &multierror.Error{Errors: []error{errors.New("failed: BMC reset"), errors.New("BMC reset failed")}}},
 	}
 
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			testImplementation := OOBTester{MakeFail: tc.makeFail}
-			err := WarmBMCReset(context.Background(), []BMCReset{&testImplementation})
-			if err != nil {
-				diff := cmp.Diff(tc.err.Error(), err.Error())
-				if diff != "" {
-					t.Fatal(diff)
-				}
-			}
-		})
-	}
-}
-
-func TestColdBMCReset(t *testing.T) {
-	testCases := []struct {
-		name     string
-		makeFail bool
-		err      error
-	}{
-		{name: "success", err: nil},
-		{name: "BMC cold reset fails", makeFail: true, err: &multierror.Error{Errors: []error{errors.New("failed: BMC cold reset"), errors.New("BMC cold reset failed")}}},
-	}
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			testImplementation := OOBTester{MakeFail: tc.makeFail}
-			err := ColdBMCReset(context.Background(), []BMCReset{&testImplementation})
+			err := ResetBMC(context.Background(), tc.resetType, []BMCResetter{&testImplementation})
 			if err != nil {
 				diff := cmp.Diff(tc.err.Error(), err.Error())
 				if diff != "" {

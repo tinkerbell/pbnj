@@ -4,7 +4,6 @@ go 1.15
 
 require (
 	github.com/bmc-toolbox/bmclib v0.4.4
-	github.com/bombsimon/logrusr v1.0.0
 	github.com/gebn/bmc v0.0.0-20200904230046-a5643220ab2a
 	github.com/go-logr/logr v0.3.0
 	github.com/go-logr/zapr v0.2.0
@@ -19,7 +18,6 @@ require (
 	github.com/philippgille/gokv/freecache v0.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/xid v1.2.1
-	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1

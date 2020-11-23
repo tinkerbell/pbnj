@@ -125,7 +125,7 @@ func TestSetBootDevice(t *testing.T) {
 				t.Fatal(errMsg)
 			}
 			defer b.Close(ctx)
-			result, errMsg := b.BootDevice(ctx, testCase.device.String())
+			result, errMsg := b.BootDeviceSet(ctx, testCase.device.String())
 			if errMsg != nil {
 				if tc.err != nil {
 					diff := cmp.Diff(tc.err.Error(), errMsg.Error())

@@ -6,7 +6,6 @@ import (
 	"github.com/go-logr/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/oob"
-	"github.com/tinkerbell/pbnj/pkg/repository"
 	common "github.com/tinkerbell/pbnj/server/grpcsvr/oob"
 )
 
@@ -62,8 +61,29 @@ func WithUpdateUserRequest(in *v1.UpdateUserRequest) Option {
 	}
 }
 
+// WithResetRequest adds ResetRequest to an Action struct
+func WithResetRequest(in *v1.ResetRequest) Option {
+	return func(a *Action) error {
+		a.ResetBMCRequest = in
+		return nil
+	}
+}
+
 // NewBMC returns an oob.BMC interface
 func NewBMC(opts ...Option) (oob.BMC, error) {
+	a := &Action{}
+
+	for _, opt := range opts {
+		err := opt(a)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return a, nil
+}
+
+// NewBMCResetter returns an oob.BMCResetter interface
+func NewBMCResetter(opts ...Option) (oob.BMCResetter, error) {
 	a := &Action{}
 
 	for _, opt := range opts {
@@ -87,13 +107,8 @@ func (m Action) CreateUser(ctx context.Context) error {
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	connections := []interface{}{
-		&bmclibUserManagement{
-			user:     user,
-			password: password,
-			host:     host,
-			creds:    creds,
-		},
+	connections := map[string]interface{}{
+		"bmclib": &bmclibUserManagement{user: user, password: password, host: host, creds: creds},
 	}
 
 	m.SendStatusMessage("connecting to BMC")
@@ -106,8 +121,8 @@ func (m Action) CreateUser(ctx context.Context) error {
 
 	var userAction []oob.BMC
 	for _, elem := range successfulConnections {
-		elem := *elem
-		switch r := elem.(type) {
+		conn := connections[elem]
+		switch r := conn.(type) {
 		case oob.BMC:
 			userAction = append(userAction, r)
 		}
@@ -134,8 +149,8 @@ func (m Action) UpdateUser(ctx context.Context) error {
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	connections := []interface{}{
-		&bmclibUserManagement{
+	connections := map[string]interface{}{
+		"bmclib": &bmclibUserManagement{
 			user:     user,
 			password: password,
 			host:     host,
@@ -153,8 +168,7 @@ func (m Action) UpdateUser(ctx context.Context) error {
 
 	var userAction []oob.BMC
 	for _, elem := range successfulConnections {
-		elem := *elem
-		switch r := elem.(type) {
+		switch r := connections[elem].(type) {
 		case oob.BMC:
 			userAction = append(userAction, r)
 		}
@@ -180,8 +194,8 @@ func (m Action) DeleteUser(ctx context.Context) error {
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	connections := []interface{}{
-		&bmclibUserManagement{
+	connections := map[string]interface{}{
+		"bmclib": &bmclibUserManagement{
 			user:     user,
 			password: password,
 			host:     host,
@@ -201,8 +215,7 @@ func (m Action) DeleteUser(ctx context.Context) error {
 
 	var deleteUsers []oob.BMC
 	for _, elem := range successfulConnections {
-		elem := *elem
-		switch r := elem.(type) {
+		switch r := connections[elem].(type) {
 		case oob.BMC:
 			deleteUsers = append(deleteUsers, r)
 		}
@@ -217,8 +230,8 @@ func (m Action) DeleteUser(ctx context.Context) error {
 	return nil
 }
 
-// ResetBMC functionality for machines
-func (m Action) ResetBMC(ctx context.Context) error {
+// BMCReset functionality for machines
+func (m Action) BMCReset(ctx context.Context, rType string) error {
 	var resetErr error
 	host, user, password, parseErr := m.ParseAuth(m.ResetBMCRequest.Authn)
 	if parseErr != nil {
@@ -226,8 +239,8 @@ func (m Action) ResetBMC(ctx context.Context) error {
 	}
 	base := "reset BMC cold"
 	m.SendStatusMessage("working on " + base)
-	connections := []interface{}{
-		&bmcilbResetBMC{user: user, password: password, host: host, log: m.Log},
+	connections := map[string]interface{}{
+		"bmclib": &bmcilbResetBMC{user: user, password: password, host: host, log: m.Log},
 	}
 	m.SendStatusMessage("connecting to BMC")
 	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
@@ -237,30 +250,15 @@ func (m Action) ResetBMC(ctx context.Context) error {
 	}
 	m.SendStatusMessage("connected to BMC")
 
-	var resetBmcs []oob.BMCReset
+	var resetBmcs []oob.BMCResetter
 	for _, elem := range successfulConnections {
-		elem := *elem
-		switch r := elem.(type) {
-		case oob.BMCReset:
+		switch r := connections[elem].(type) {
+		case oob.BMCResetter:
 			resetBmcs = append(resetBmcs, r)
 		}
 	}
-	switch m.ResetBMCRequest.ResetKind {
-	case v1.ResetKind_RESET_KIND_COLD:
-		resetErr = oob.ColdBMCReset(ctx, resetBmcs)
-	case v1.ResetKind_RESET_KIND_WARM:
-		resetErr = oob.WarmBMCReset(ctx, resetBmcs)
-	case v1.ResetKind_RESET_KIND_UNSPECIFIED:
-		resetErr = &repository.Error{
-			Code:    v1.Code_value["UNKNOWN"],
-			Message: "reset kind UNSPECIFIED",
-		}
-	default:
-		resetErr = &repository.Error{
-			Code:    v1.Code_value["UNKNOWN"],
-			Message: "reset kind UNKNOWN",
-		}
-	}
+
+	resetErr = oob.ResetBMC(ctx, rType, resetBmcs)
 	if resetErr != nil {
 		m.SendStatusMessage("error with " + base + ": " + resetErr.Error())
 		m.Log.V(0).Info("error with "+base, "error", resetErr.Error())

@@ -33,18 +33,18 @@ func Close(ctx context.Context, conn Connection) {
 }
 
 // EstablishConnections tries to connect to all BMCs.
-// Successful connections are returned in the slice of interfaces.
+// Successful connection names are returned in a slice of strings.
 // If no connections were successful then an error is returned.
-func EstablishConnections(ctx context.Context, bmcs []interface{}) (successfulConnections []*interface{}, err error) {
+func EstablishConnections(ctx context.Context, bmcs map[string]interface{}) (successfulConnections []string, err error) {
 	var connErrs []error
 	var connected bool
 
-	for _, elem := range bmcs {
+	for name, elem := range bmcs {
 		switch con := elem.(type) {
 		case Connection:
-			connErr := con.Connect(ctx)
+			connErr := Connect(ctx, con)
 			if connErr == nil {
-				successfulConnections = append(successfulConnections, &elem)
+				successfulConnections = append(successfulConnections, name)
 				connected = true
 			} else {
 				connErrs = append(connErrs, connErr)

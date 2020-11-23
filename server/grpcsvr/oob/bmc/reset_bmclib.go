@@ -2,7 +2,6 @@ package bmc
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/bmc-toolbox/bmclib/devices"
 	"github.com/bmc-toolbox/bmclib/discover"
@@ -20,7 +19,6 @@ type bmcilbResetBMC struct {
 }
 
 func (b *bmcilbResetBMC) Connect(ctx context.Context) error {
-	b.log.V(0).Info("debugging", "struct", fmt.Sprintf("%+v", b))
 	connection, err := discover.ScanAndConnect(b.host, b.user, b.password, discover.WithLogger(b.log), discover.WithContext(ctx))
 	if err != nil {
 		return &repository.Error{
@@ -37,7 +35,6 @@ func (b *bmcilbResetBMC) Connect(ctx context.Context) error {
 			Message: "Unknown device",
 		}
 	}
-	b.log.V(0).Info("debugging", "struct", fmt.Sprintf("%+v", b))
 	return nil
 }
 
@@ -45,13 +42,38 @@ func (b *bmcilbResetBMC) Close(ctx context.Context) {
 	b.conn.Close()
 }
 
-func (b *bmcilbResetBMC) ResetCold(ctx context.Context) error {
-	ok, err := b.conn.PowerCycleBmc()
-	if err != nil {
-		return &repository.Error{
-			Code:    v1.Code_value["UNKNOWN"],
-			Message: err.Error(),
+func (b *bmcilbResetBMC) BMCReset(ctx context.Context, rType string) error {
+	var err error
+	var ok bool
+	switch rType {
+	case v1.ResetKind_RESET_KIND_COLD.String():
+		var coldErr error
+		ok, coldErr = b.conn.PowerCycleBmc()
+		if coldErr != nil {
+			err = &repository.Error{
+				Code:    v1.Code_value["UNKNOWN"],
+				Message: coldErr.Error(),
+			}
 		}
+	case v1.ResetKind_RESET_KIND_WARM.String():
+		err = &repository.Error{
+			Code:    v1.Code_value["UNIMPLEMENTED"],
+			Message: "reset warm unimplemented",
+		}
+	case v1.ResetKind_RESET_KIND_UNSPECIFIED.String():
+		err = &repository.Error{
+			Code:    v1.Code_value["INVALID_ARGUMENT"],
+			Message: "UNSPECIFIED reset request",
+		}
+	default:
+		err = &repository.Error{
+			Code:    v1.Code_value["INVALID_ARGUMENT"],
+			Message: "unknown reset request",
+		}
+	}
+
+	if err != nil {
+		return err
 	}
 	if !ok {
 		return &repository.Error{
@@ -60,12 +82,4 @@ func (b *bmcilbResetBMC) ResetCold(ctx context.Context) error {
 		}
 	}
 	return nil
-}
-
-func (b *bmcilbResetBMC) ResetWarm(ctx context.Context) error {
-	return &repository.Error{
-		Code:    v1.Code_value["UNIMPLEMENTED"],
-		Message: "reset warm unimplemented",
-	}
-
 }

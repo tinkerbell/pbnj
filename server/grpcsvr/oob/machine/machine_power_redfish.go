@@ -42,7 +42,7 @@ func (r *redfishBMC) Close(ctx context.Context) {
 	r.conn.Logout()
 }
 
-func (r *redfishBMC) Power(ctx context.Context, action string) (result string, err error) {
+func (r *redfishBMC) PowerSet(ctx context.Context, action string) (result string, err error) {
 	return doRedfishAction(ctx, action, r)
 }
 

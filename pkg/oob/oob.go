@@ -7,12 +7,15 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
-// Machine management methods
-type Machine interface {
-	// BootDevice sets the next boot device
-	BootDevice(ctx context.Context, device string) (result string, err error)
+// PowerSetter management methods
+type PowerSetter interface {
 	// Power get status and sets power states like on/off/etc
-	Power(ctx context.Context, action string) (result string, err error)
+	PowerSet(ctx context.Context, action string) (result string, err error)
+}
+
+// BootDeviceSetter takes care of resetting a BMC
+type BootDeviceSetter interface {
+	BootDeviceSet(ctx context.Context, device string) (result string, err error)
 }
 
 // BMC management methods
@@ -23,18 +26,17 @@ type BMC interface {
 	DeleteUser(context.Context) error
 }
 
-// BMCReset options
-type BMCReset interface {
-	// ResetWarm resets the management console without rebooting the BMC
-	ResetWarm(context.Context) error
-	// ResetCold Reboots the BMC
-	ResetCold(context.Context) error
+// BMCResetter options
+type BMCResetter interface {
+	// BMCReset resets the management console without rebooting the BMC (warm) or
+	// Reboots the BMC (cold)
+	BMCReset(ctx context.Context, rType string) error
 }
 
-// MachinePower interface function for power actions
-func MachinePower(ctx context.Context, action string, m []Machine) (result string, err error) {
+// SetPower interface function for power actions
+func SetPower(ctx context.Context, action string, m []PowerSetter) (result string, err error) {
 	for _, elem := range m {
-		result, setErr := elem.Power(ctx, action)
+		result, setErr := elem.PowerSet(ctx, action)
 		if setErr != nil {
 			err = multierror.Append(err, setErr)
 			continue
@@ -44,10 +46,10 @@ func MachinePower(ctx context.Context, action string, m []Machine) (result strin
 	return result, multierror.Append(err, errors.New("power state failed"))
 }
 
-// MachineBootDevice interface function for setting next boot device
-func MachineBootDevice(ctx context.Context, device string, m []Machine) (result string, err error) {
+// SetBootDevice interface function for setting next boot device
+func SetBootDevice(ctx context.Context, device string, m []BootDeviceSetter) (result string, err error) {
 	for _, elem := range m {
-		result, setErr := elem.BootDevice(ctx, device)
+		result, setErr := elem.BootDeviceSet(ctx, device)
 		if setErr != nil {
 			err = multierror.Append(err, setErr)
 			continue
@@ -96,28 +98,15 @@ func DeleteUser(ctx context.Context, u []BMC) (err error) {
 	return multierror.Append(err, errors.New("delete user failed"))
 }
 
-// WarmBMCReset interface function
-func WarmBMCReset(ctx context.Context, r []BMCReset) (err error) {
+// ResetBMC interface function
+func ResetBMC(ctx context.Context, rType string, r []BMCResetter) (err error) {
 	for _, elem := range r {
-		setErr := elem.ResetWarm(ctx)
+		setErr := elem.BMCReset(ctx, rType)
 		if setErr != nil {
 			err = multierror.Append(err, setErr)
 			continue
 		}
 		return err
 	}
-	return multierror.Append(err, errors.New("BMC warm reset failed"))
-}
-
-// ColdBMCReset interface function
-func ColdBMCReset(ctx context.Context, r []BMCReset) (err error) {
-	for _, elem := range r {
-		setErr := elem.ResetCold(ctx)
-		if setErr != nil {
-			err = multierror.Append(err, setErr)
-			continue
-		}
-		return err
-	}
-	return multierror.Append(err, errors.New("BMC cold reset failed"))
+	return multierror.Append(err, errors.New("BMC reset failed"))
 }

@@ -42,7 +42,7 @@ func (b *bmclibBMC) Close(ctx context.Context) {
 	b.conn.Close()
 }
 
-func (b *bmclibBMC) Power(ctx context.Context, action string) (result string, err error) {
+func (b *bmclibBMC) PowerSet(ctx context.Context, action string) (result string, err error) {
 	return doBmclibAction(ctx, action, b)
 }
 

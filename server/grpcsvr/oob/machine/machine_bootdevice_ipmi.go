@@ -79,7 +79,7 @@ func (b *ipmiBootDevice) Close(ctx context.Context) {
 }
 
 // setBootDevice will try to set boot device using ipmitool interface lan and lanplus
-func (b *ipmiBootDevice) BootDevice(ctx context.Context, device string) (result string, err error) {
+func (b *ipmiBootDevice) BootDeviceSet(ctx context.Context, device string) (result string, err error) {
 	var errMsg repository.Error
 	var dev goipmi.BootDevice
 	switch device {
