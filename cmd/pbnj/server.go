@@ -3,13 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/packethost/pkg/log/logr"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"github.com/tinkerbell/pbnj/pkg/zaplog"
 	"github.com/tinkerbell/pbnj/server/grpcsvr"
@@ -23,7 +26,8 @@ const (
 )
 
 var (
-	port string
+	port        string
+	metricsAddr string
 	// serverCmd represents the server command
 	serverCmd = &cobra.Command{
 		Use:   "server",
@@ -49,6 +53,7 @@ var (
 
 			grpcServer := grpc.NewServer(
 				grpc_middleware.WithUnaryServerChain(
+					grpc_prometheus.UnaryServerInterceptor,
 					grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor)),
 					middleware.UnaryRequestID(middleware.UseXRequestIDMetadataOption(true), middleware.XRequestMetadataLimitOption(512)),
 					zaplog.UnaryLogRequestID(zlog, requestIDKey, requestIDLogKey),
@@ -56,6 +61,15 @@ var (
 					grpc_validator.UnaryServerInterceptor(),
 				),
 			)
+
+			go func() {
+				http.Handle("/metrics", promhttp.Handler())
+				err := http.ListenAndServe(metricsAddr, nil)
+				if err != nil {
+					logger.Error(err, "failed to serve http")
+					os.Exit(1)
+				}
+			}()
 
 			if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger), grpcServer, port); err != nil {
 				logger.Error(err, "error running server")
@@ -66,6 +80,7 @@ var (
 )
 
 func init() {
-	serverCmd.PersistentFlags().StringVar(&port, "port", "9090", "server port (default is 9090")
+	serverCmd.PersistentFlags().StringVar(&port, "port", "9090", "grpc server port")
+	serverCmd.PersistentFlags().StringVar(&metricsAddr, "metrics-listen-addr", ":8080", "metrics server listen address")
 	rootCmd.AddCommand(serverCmd)
 }

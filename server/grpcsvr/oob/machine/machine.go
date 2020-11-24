@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	"github.com/prometheus/client_golang/prometheus"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
+	"github.com/tinkerbell/pbnj/pkg/metrics"
 	"github.com/tinkerbell/pbnj/pkg/oob"
 	common "github.com/tinkerbell/pbnj/server/grpcsvr/oob"
 )
@@ -77,6 +79,13 @@ func NewBootDeviceSetter(opts ...Option) (oob.BootDeviceSetter, error) {
 
 // BootDeviceSet functionality for machines
 func (m Action) BootDeviceSet(ctx context.Context, device string) (result string, err error) {
+	labels := prometheus.Labels{
+		"service": "machine",
+		"action":  "boot_device",
+	}
+	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
+	defer timer.ObserveDuration()
+
 	host, user, password, parseErr := m.ParseAuth(m.BootDeviceRequest.Authn)
 	if parseErr != nil {
 		return result, parseErr
@@ -117,6 +126,12 @@ func (m Action) BootDeviceSet(ctx context.Context, device string) (result string
 
 // PowerSet functionality for machines
 func (m Action) PowerSet(ctx context.Context, action string) (result string, err error) {
+	labels := prometheus.Labels{
+		"service": "machine",
+		"action":  "power",
+	}
+	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
+	defer timer.ObserveDuration()
 
 	host, user, password, parseErr := m.ParseAuth(m.PowerRequest.Authn)
 	if parseErr != nil {

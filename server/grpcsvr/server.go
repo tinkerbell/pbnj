@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
@@ -74,6 +75,8 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 		TaskRunner: taskRunner,
 	}
 	v1.RegisterTaskServer(grpcServer, &ts)
+
+	grpc_prometheus.Register(grpcServer)
 
 	listen, err := net.Listen("tcp", ":"+port)
 	if err != nil {

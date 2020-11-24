@@ -4,7 +4,9 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	"github.com/prometheus/client_golang/prometheus"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
+	"github.com/tinkerbell/pbnj/pkg/metrics"
 	"github.com/tinkerbell/pbnj/pkg/oob"
 	common "github.com/tinkerbell/pbnj/server/grpcsvr/oob"
 )
@@ -97,6 +99,13 @@ func NewBMCResetter(opts ...Option) (oob.BMCResetter, error) {
 
 // CreateUser functionality for machines
 func (m Action) CreateUser(ctx context.Context) error {
+	labels := prometheus.Labels{
+		"service": "bmc",
+		"action":  "create_user",
+	}
+	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
+	defer timer.ObserveDuration()
+
 	var err error
 	host, user, password, parseErr := m.ParseAuth(m.CreateUserRequest.Authn)
 	if parseErr != nil {
@@ -139,6 +148,13 @@ func (m Action) CreateUser(ctx context.Context) error {
 
 // UpdateUser functionality for machines
 func (m Action) UpdateUser(ctx context.Context) error {
+	labels := prometheus.Labels{
+		"service": "bmc",
+		"action":  "update_user",
+	}
+	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
+	defer timer.ObserveDuration()
+
 	var err error
 	host, user, password, parseErr := m.ParseAuth(m.UpdateUserRequest.Authn)
 	if parseErr != nil {
@@ -185,6 +201,13 @@ func (m Action) UpdateUser(ctx context.Context) error {
 
 // DeleteUser functionality for machines
 func (m Action) DeleteUser(ctx context.Context) error {
+	labels := prometheus.Labels{
+		"service": "bmc",
+		"action":  "delete_user",
+	}
+	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
+	defer timer.ObserveDuration()
+
 	var deleteErr error
 	host, user, password, parseErr := m.ParseAuth(m.DeleteUserRequest.Authn)
 	if parseErr != nil {
