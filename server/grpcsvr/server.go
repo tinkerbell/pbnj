@@ -10,6 +10,7 @@ import (
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
+	"github.com/tinkerbell/pbnj/pkg/http"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
@@ -57,6 +58,8 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 		Ctx:        ctx,
 		Log:        log,
 	}
+
+	http.WithTaskRunner(taskRunner)
 
 	ms := rpc.MachineService{
 		Log:        log,

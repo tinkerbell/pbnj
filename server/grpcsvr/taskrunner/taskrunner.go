@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"sync"
 	"syscall"
 	"time"
 
@@ -21,6 +22,23 @@ type Runner struct {
 	Repository repository.Actions
 	Ctx        context.Context
 	Log        logging.Logger
+	active     int
+	total      int
+	counterMu  sync.RWMutex
+}
+
+// ActiveWorkers returns a count of currently active worker jobs
+func (r *Runner) ActiveWorkers() int {
+	r.counterMu.RLock()
+	defer r.counterMu.RUnlock()
+	return r.active
+}
+
+// TotalWorkers returns a count total workers executed
+func (r *Runner) TotalWorkers() int {
+	r.counterMu.RLock()
+	defer r.counterMu.RUnlock()
+	return r.total
 }
 
 // Execute a task, update repository with status
@@ -36,6 +54,16 @@ func (r *Runner) Execute(ctx context.Context, description string, action func(ch
 // does the work, updates the repo record
 // TODO handle retrys, use a timeout
 func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, description string, action func(chan string) (string, error)) {
+	r.counterMu.Lock()
+	r.active++
+	r.total++
+	r.counterMu.Unlock()
+	defer func() {
+		r.counterMu.Lock()
+		r.active--
+		r.counterMu.Unlock()
+	}()
+
 	metrics.TasksTotal.Inc()
 	metrics.TasksActive.Inc()
 	defer metrics.TasksActive.Dec()
