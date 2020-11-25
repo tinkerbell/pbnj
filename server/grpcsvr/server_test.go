@@ -14,6 +14,7 @@ import (
 	"github.com/packethost/pkg/log/logr"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
+	"github.com/tinkerbell/pbnj/pkg/http"
 	"github.com/tinkerbell/pbnj/pkg/zaplog"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
 	"golang.org/x/sync/errgroup"
@@ -41,10 +42,12 @@ func TestRunServer(t *testing.T) {
 	repo := &persistence.GoKV{Store: s, Ctx: ctx}
 
 	grpcServer := grpc.NewServer()
+	httpServer := http.NewHTTPServer(fmt.Sprintf(":%d", port+1))
+	httpServer.WithLogger(l)
 
 	g := new(errgroup.Group)
 	g.Go(func() error {
-		return RunServer(ctx, log, grpcServer, strconv.Itoa(port), WithPersistence(repo))
+		return RunServer(ctx, log, grpcServer, strconv.Itoa(port), httpServer, WithPersistence(repo))
 	})
 
 	time.Sleep(500 * time.Millisecond)
@@ -70,10 +73,12 @@ func TestRunServerSignals(t *testing.T) {
 	max := 40099
 	port := rand.Intn(max-min+1) + min
 	grpcServer := grpc.NewServer()
+	httpServer := http.NewHTTPServer(fmt.Sprintf(":%d", port+1))
+	httpServer.WithLogger(l)
 
 	g := new(errgroup.Group)
 	g.Go(func() error {
-		return RunServer(ctx, log, grpcServer, strconv.Itoa(port))
+		return RunServer(ctx, log, grpcServer, strconv.Itoa(port), httpServer)
 	})
 
 	proc, err := os.FindProcess(os.Getpid())
@@ -108,7 +113,10 @@ func TestRunServerPortInUse(t *testing.T) {
 	}
 
 	grpcServer := grpc.NewServer()
-	err = RunServer(ctx, log, grpcServer, strconv.Itoa(port))
+	httpServer := http.NewHTTPServer(fmt.Sprintf(":%d", port+1))
+	httpServer.WithLogger(l)
+
+	err = RunServer(ctx, log, grpcServer, strconv.Itoa(port), httpServer)
 	if err.Error() != "listen tcp :40041: bind: address already in use" {
 		t.Fatal(err)
 	}

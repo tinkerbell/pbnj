@@ -35,7 +35,7 @@ func WithPersistence(repo repository.Actions) ServerOption {
 }
 
 // RunServer registers all services and runs the server
-func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server, port string, opts ...ServerOption) error {
+func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server, port string, httpServer *http.HTTPServer, opts ...ServerOption) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -60,8 +60,6 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 		Ctx:        ctx,
 		Log:        log,
 	}
-
-	http.WithTaskRunner(taskRunner)
 
 	ms := rpc.MachineService{
 		Log:        log,
@@ -90,6 +88,16 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 	if err != nil {
 		return err
 	}
+
+	httpServer.WithTaskRunner(taskRunner)
+
+	go func() {
+		err := httpServer.Run()
+		if err != nil {
+			log.V(0).Error(err, "failed to serve http")
+			os.Exit(1)
+		}
+	}()
 
 	// graceful shutdowns
 	sigChan := make(chan os.Signal, 1)

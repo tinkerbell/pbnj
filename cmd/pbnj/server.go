@@ -61,17 +61,10 @@ var (
 				),
 			)
 
-			go func() {
-				http.WithLogger(logger)
-				http.RegisterHandlers()
-				err := http.ListenAndServe(metricsAddr)
-				if err != nil {
-					logger.Error(err, "failed to serve http")
-					os.Exit(1)
-				}
-			}()
+			httpServer := http.NewHTTPServer(metricsAddr)
+			httpServer.WithLogger(logger)
 
-			if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger), grpcServer, port); err != nil {
+			if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger), grpcServer, port, httpServer); err != nil {
 				logger.Error(err, "error running server")
 				os.Exit(1)
 			}
