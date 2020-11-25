@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
@@ -12,8 +11,8 @@ import (
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/packethost/pkg/log/logr"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
+	"github.com/tinkerbell/pbnj/pkg/http"
 	"github.com/tinkerbell/pbnj/pkg/zaplog"
 	"github.com/tinkerbell/pbnj/server/grpcsvr"
 	"goa.design/goa/grpc/middleware"
@@ -62,16 +61,10 @@ var (
 				),
 			)
 
-			go func() {
-				http.Handle("/metrics", promhttp.Handler())
-				err := http.ListenAndServe(metricsAddr, nil)
-				if err != nil {
-					logger.Error(err, "failed to serve http")
-					os.Exit(1)
-				}
-			}()
+			httpServer := http.NewHTTPServer(metricsAddr)
+			httpServer.WithLogger(logger)
 
-			if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger), grpcServer, port); err != nil {
+			if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger), grpcServer, port, httpServer); err != nil {
 				logger.Error(err, "error running server")
 				os.Exit(1)
 			}
