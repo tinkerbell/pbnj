@@ -10,6 +10,7 @@ import (
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
+	"github.com/tinkerbell/pbnj/pkg/healthcheck"
 	"github.com/tinkerbell/pbnj/pkg/http"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/repository"
@@ -17,6 +18,7 @@ import (
 	"github.com/tinkerbell/pbnj/server/grpcsvr/rpc"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/taskrunner"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 // Server options
@@ -80,6 +82,9 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 	v1.RegisterTaskServer(grpcServer, &ts)
 
 	grpc_prometheus.Register(grpcServer)
+
+	hc := healthcheck.NewHealthChecker()
+	grpc_health_v1.RegisterHealthServer(grpcServer, hc)
 
 	listen, err := net.Listen("tcp", ":"+port)
 	if err != nil {
