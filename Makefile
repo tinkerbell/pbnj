@@ -4,7 +4,7 @@ PROTOS_LOC:=v2/protos
 BINARY:=pbnj
 OSFLAG:= $(shell go env GOHOSTOS)
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
-BUILD_ARGS:=GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags '-s -w -extldflags "-static"'
+BUILD_ARGS:=GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags '-s -w -extldflags "-static" -X ${REPO}/server/httpsvr.GitRev=${GIT_COMMIT}'
 PROTOBUF_BUILDER_IMG:=pbnj-protobuf-builder
 
 help:
@@ -94,7 +94,8 @@ image: ## make the Container Image
 
 .PHONY: run-image
 run-image: ## run PBnJ container image
-	docker run -it --rm -e PNBJ_LOGLEVEL=debug -p 9090:9090 pbnj:local
+	scripts/run-image.sh
+
 
 .PHONY: ruby-client-demo
 ruby-client-demo: image ## run ruby client demo

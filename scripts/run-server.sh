@@ -17,7 +17,7 @@ function ctrl_c() {
     exit 0
 }
 
-go run main.go server > temp.in 2>&1 &
+ACCESS_ID=1234 ACCESS_SECRET=1234 GIN_MODE=release go run ./cmd/pbnj server > temp.in 2>&1 &
 RUN_PID=$!
 ( tail -f temp.in & echo $! >&3 ) 3>pid | jq . &
 cat -
