@@ -15,6 +15,7 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/http"
 	"github.com/tinkerbell/pbnj/pkg/zaplog"
 	"github.com/tinkerbell/pbnj/server/grpcsvr"
+	"github.com/tinkerbell/pbnj/server/httpsvr"
 	"goa.design/goa/grpc/middleware"
 	"google.golang.org/grpc"
 )
@@ -64,6 +65,7 @@ var (
 			httpServer := http.NewHTTPServer(metricsAddr)
 			httpServer.WithLogger(logger)
 
+			go httpsvr.RunHTTPServer()
 			if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger), grpcServer, port, httpServer); err != nil {
 				logger.Error(err, "error running server")
 				os.Exit(1)
@@ -73,7 +75,7 @@ var (
 )
 
 func init() {
-	serverCmd.PersistentFlags().StringVar(&port, "port", "9090", "grpc server port")
+	serverCmd.PersistentFlags().StringVar(&port, "port", "50051", "grpc server port")
 	serverCmd.PersistentFlags().StringVar(&metricsAddr, "metrics-listen-addr", ":8080", "metrics server listen address")
 	rootCmd.AddCommand(serverCmd)
 }
