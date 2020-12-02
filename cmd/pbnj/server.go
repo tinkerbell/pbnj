@@ -28,6 +28,7 @@ const (
 var (
 	port        string
 	metricsAddr string
+	enableHTTP  bool
 	// serverCmd represents the server command
 	serverCmd = &cobra.Command{
 		Use:   "server",
@@ -65,7 +66,9 @@ var (
 			httpServer := http.NewHTTPServer(metricsAddr)
 			httpServer.WithLogger(logger)
 
-			go httpsvr.RunHTTPServer()
+			if enableHTTP {
+				go httpsvr.RunHTTPServer()
+			}
 			if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger), grpcServer, port, httpServer); err != nil {
 				logger.Error(err, "error running server")
 				os.Exit(1)
@@ -77,5 +80,6 @@ var (
 func init() {
 	serverCmd.PersistentFlags().StringVar(&port, "port", "50051", "grpc server port")
 	serverCmd.PersistentFlags().StringVar(&metricsAddr, "metrics-listen-addr", ":8080", "metrics server listen address")
+	serverCmd.PersistentFlags().BoolVar(&enableHTTP, "enableHTTP", false, "enable the HTTP server")
 	rootCmd.AddCommand(serverCmd)
 }
