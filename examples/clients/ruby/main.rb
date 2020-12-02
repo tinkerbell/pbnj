@@ -12,7 +12,7 @@ def main
     user = ARGV.shift || "ADMIN"
     pass = ARGV.shift || "ADMIN"
 
-    config = {"pbnj_ip"=> "localhost", "pbnj_port"=> "9090"}
+    config = {"pbnj_ip"=> "localhost", "pbnj_port"=> "50051"}
     client = PBnJ::Client.new(config)
     task_response = client.power_status(host, user, pass)
     

@@ -54,7 +54,7 @@ RUN wget -O/tmp/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-
 
 ENV GIN_MODE release 
 USER pbnj
-EXPOSE 50051 9090
+EXPOSE 50051 9090 8080
 
 COPY scripts/etc-passwd /etc/passwd
 COPY --from=builder /code/bin/pbnj-linux-amd64 /pbnj-linux-amd64

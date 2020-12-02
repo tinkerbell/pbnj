@@ -94,7 +94,8 @@ image: ## make the Container Image
 
 .PHONY: run-image
 run-image: ## run PBnJ container image
-	docker run -it --rm -e PNBJ_LOGLEVEL=debug -p 9090:9090 pbnj:local
+	scripts/run-image.sh
+
 
 .PHONY: ruby-client-demo
 ruby-client-demo: image ## run ruby client demo
