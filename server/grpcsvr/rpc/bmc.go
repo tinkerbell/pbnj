@@ -2,12 +2,19 @@ package rpc
 
 import (
 	"context"
+	"time"
 
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/task"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/oob/bmc"
 )
+
+// defaultTimeout is how long a task should be run
+// before it is cancelled. This is for use in a
+// TaskRunner.Execute function that runs all BMC
+// interactions in the background.
+const defaultTimeout = 5 * time.Minute
 
 // BmcService for doing BMC actions
 type BmcService struct {
@@ -43,7 +50,9 @@ func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetR
 			if err != nil {
 				return "", err
 			}
-			return "", task.BMCReset(ctx, in.ResetKind.String())
+			// TODO(jacobweinstock) Add task cancellation in taskrunner to honor timeout.
+			taskCtx, _ := context.WithTimeout(context.Background(), defaultTimeout) // nolint
+			return "", task.BMCReset(taskCtx, in.ResetKind.String())
 		})
 
 	return &v1.ResetResponse{
