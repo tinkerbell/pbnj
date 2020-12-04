@@ -3,6 +3,7 @@ module github.com/tinkerbell/pbnj
 go 1.15
 
 require (
+	bou.ke/monkey v1.0.2
 	github.com/bmc-toolbox/bmclib v0.4.6
 	github.com/gebn/bmc v0.0.0-20200904230046-a5643220ab2a
 	github.com/gin-gonic/gin v1.6.3
