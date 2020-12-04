@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 
 	"github.com/rs/xid"
@@ -47,13 +48,13 @@ func (r *Runner) Execute(ctx context.Context, description string, action func(ch
 	id = rawID.String()
 	l := r.Log.GetContextLogger(ctx)
 	l.V(0).Info("executing task", "taskID", id, "taskDescription", description)
-	go r.worker(ctx, r.Log, id, description, action)
+	go r.worker(ctx, l, id, description, action)
 	return id, err
 }
 
 // does the work, updates the repo record
 // TODO handle retrys, use a timeout
-func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, description string, action func(chan string) (string, error)) {
+func (r *Runner) worker(ctx context.Context, logger logr.Logger, id string, description string, action func(chan string) (string, error)) {
 	r.counterMu.Lock()
 	r.active++
 	r.total++
@@ -67,14 +68,11 @@ func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, d
 	metrics.TasksTotal.Inc()
 	metrics.TasksActive.Inc()
 	defer metrics.TasksActive.Dec()
-	l := logger.GetContextLogger(ctx)
-	l.V(0).Info("starting worker", "taskID", id, "description", description)
-	resultChan := make(chan string, 1)
-	errMsgChan := make(chan error, 1)
+	logger.V(0).Info("starting worker", "taskID", id, "description", description)
+
 	messagesChan := make(chan string)
 	actionACK := make(chan bool, 1)
 	actionSyn := make(chan bool, 1)
-	defer close(resultChan)
 	defer close(messagesChan)
 	defer close(actionACK)
 	defer close(actionSyn)
@@ -93,7 +91,7 @@ func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, d
 	err := repo.Create(id, sessionRecord)
 	if err != nil {
 		// TODO how to handle unable to create record; ie network error, persistence error, etc?
-		l.V(0).Error(err, "creating record failed")
+		logger.V(0).Error(err, "creating record failed")
 		return
 	}
 
@@ -101,7 +99,7 @@ func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, d
 		for {
 			select {
 			case msg := <-messagesChan:
-				l.V(0).Info("STATUS MESSAGE", "statusMsg", msg)
+				logger.V(0).Info("STATUS MESSAGE", "statusMsg", msg)
 				currStatus, _ := repo.Get(id)
 				sessionRecord.Messages = append(currStatus.Messages, msg)
 				_ = repo.Update(id, sessionRecord)
@@ -114,36 +112,29 @@ func (r *Runner) worker(ctx context.Context, logger logging.Logger, id string, d
 		}
 	}()
 
-	go func() {
-		result, eMsg := action(messagesChan)
-		resultChan <- result
-		errMsgChan <- eMsg
-	}()
-
-	sessionRecord.Result = <-resultChan
-	errMsg := <-errMsgChan // nolint
+	sessionRecord.Result, err = action(messagesChan)
 	actionSyn <- true
 	<-actionACK
 	sessionRecord.State = "complete"
 	sessionRecord.Complete = true
-	if errMsg != nil {
-		l.V(0).Info("error running action", "err", errMsg.Error())
+	if err != nil {
+		logger.V(0).Info("error running action", "err", err.Error())
 		sessionRecord.Result = "action failed"
-		re, ok := errMsg.(*repository.Error)
+		re, ok := err.(*repository.Error)
 		if ok {
 			sessionRecord.Error = re.StructuredError()
 		} else {
-			sessionRecord.Error.Message = errMsg.Error()
+			sessionRecord.Error.Message = err.Error()
 		}
 		var foundErr *repository.Error
-		if errors.As(errMsg, &foundErr) {
+		if errors.As(err, &foundErr) {
 			sessionRecord.Error = foundErr.StructuredError()
 		}
 	}
 	errI := repo.Update(id, sessionRecord)
 	if errI != nil {
 		// TODO handle unable to update record; ie network error, persistence error, etc
-		l.V(0).Error(err, "updating record failed")
+		logger.V(0).Error(err, "updating record failed")
 		return
 	}
 }

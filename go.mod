@@ -3,8 +3,8 @@ module github.com/tinkerbell/pbnj
 go 1.15
 
 require (
-	github.com/bmc-toolbox/bmclib v0.4.4
-	github.com/bombsimon/logrusr v1.0.0
+	bou.ke/monkey v1.0.2
+	github.com/bmc-toolbox/bmclib v0.4.6
 	github.com/gebn/bmc v0.0.0-20200904230046-a5643220ab2a
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-logr/logr v0.3.0
@@ -23,7 +23,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.7.1
 	github.com/rs/xid v1.2.1
-	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1

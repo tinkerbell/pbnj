@@ -3,11 +3,13 @@ package bmc
 import (
 	"context"
 
+	"github.com/bmc-toolbox/bmclib"
 	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/metrics"
 	"github.com/tinkerbell/pbnj/pkg/oob"
+	"github.com/tinkerbell/pbnj/pkg/repository"
 	common "github.com/tinkerbell/pbnj/server/grpcsvr/oob"
 )
 
@@ -254,39 +256,41 @@ func (m Action) DeleteUser(ctx context.Context) error {
 }
 
 // BMCReset functionality for machines
-func (m Action) BMCReset(ctx context.Context, rType string) error {
-	var resetErr error
+func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 	host, user, password, parseErr := m.ParseAuth(m.ResetBMCRequest.Authn)
 	if parseErr != nil {
 		return parseErr
 	}
-	base := "reset BMC cold"
-	m.SendStatusMessage("working on " + base)
-	connections := map[string]interface{}{
-		"bmclib": &bmcilbResetBMC{user: user, password: password, host: host, log: m.Log},
+	m.SendStatusMessage("working on bmc reset")
+	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
+	err = client.DiscoverProviders(ctx)
+	if err != nil {
+		m.Log.V(1).Info("error with provider discovery", "err", err.Error())
 	}
-	m.SendStatusMessage("connecting to BMC")
-	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
-	if ecErr != nil {
-		m.SendStatusMessage("connecting to BMC failed")
-		return ecErr
+	var errMsg string
+	lookup := map[string]string{
+		v1.ResetKind_RESET_KIND_COLD.String(): "cold",
+		v1.ResetKind_RESET_KIND_WARM.String(): "warm",
 	}
-	m.SendStatusMessage("connected to BMC")
-
-	var resetBmcs []oob.BMCResetter
-	for _, elem := range successfulConnections {
-		switch r := connections[elem].(type) {
-		case oob.BMCResetter:
-			resetBmcs = append(resetBmcs, r)
+	rLookup, ok := lookup[rType]
+	if !ok {
+		return &repository.Error{
+			Code:    v1.Code_value["INVALID_ARGUMENT"],
+			Message: "unknown reset request",
 		}
 	}
-
-	resetErr = oob.ResetBMC(ctx, rType, resetBmcs)
-	if resetErr != nil {
-		m.SendStatusMessage("error with " + base + ": " + resetErr.Error())
-		m.Log.V(0).Info("error with "+base, "error", resetErr.Error())
-		return resetErr
+	ok, err = client.ResetBMC(ctx, rLookup)
+	if err != nil {
+		errMsg = err.Error()
+	} else if !ok {
+		errMsg = "reset failed"
 	}
-	m.SendStatusMessage(base + " complete")
-	return nil
+	if errMsg != "" {
+		err = &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: errMsg,
+		}
+	}
+	m.SendStatusMessage("bmc reset complete")
+	return err
 }

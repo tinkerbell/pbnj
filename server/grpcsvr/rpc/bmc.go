@@ -2,12 +2,19 @@ package rpc
 
 import (
 	"context"
+	"time"
 
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/task"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/oob/bmc"
 )
+
+// defaultTimeout is how long a task should be run
+// before it is cancelled. This is for use in a
+// TaskRunner.Execute function that runs all BMC
+// interactions in the background.
+const defaultTimeout = 5 * time.Minute
 
 // BmcService for doing BMC actions
 type BmcService struct {
@@ -43,7 +50,12 @@ func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetR
 			if err != nil {
 				return "", err
 			}
-			return "", task.BMCReset(ctx, in.ResetKind.String())
+			taskCtx, cancel := context.WithTimeout(ctx, defaultTimeout)
+			// cant defer this cancel because it cancels the context before the func is run
+			// cant have cancel be _ because go vet complains.
+			// TODO(jacobweinstock): maybe move this context withTimeout into the TaskRunner.Execute function
+			_ = cancel
+			return "", task.BMCReset(taskCtx, in.ResetKind.String())
 		})
 
 	return &v1.ResetResponse{
@@ -69,7 +81,9 @@ func (b *BmcService) CreateUser(ctx context.Context, in *v1.CreateUserRequest) (
 			if err != nil {
 				return "", err
 			}
-			return "", task.CreateUser(ctx)
+			taskCtx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+			_ = cancel
+			return "", task.CreateUser(taskCtx)
 		})
 
 	return &v1.CreateUserResponse{
@@ -95,7 +109,9 @@ func (b *BmcService) UpdateUser(ctx context.Context, in *v1.UpdateUserRequest) (
 			if err != nil {
 				return "", err
 			}
-			return "", task.UpdateUser(ctx)
+			taskCtx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+			_ = cancel
+			return "", task.UpdateUser(taskCtx)
 		})
 
 	return &v1.UpdateUserResponse{
@@ -121,7 +137,9 @@ func (b *BmcService) DeleteUser(ctx context.Context, in *v1.DeleteUserRequest) (
 			if err != nil {
 				return "", err
 			}
-			return "", task.DeleteUser(ctx)
+			taskCtx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+			_ = cancel
+			return "", task.DeleteUser(taskCtx)
 		})
 
 	return &v1.DeleteUserResponse{
