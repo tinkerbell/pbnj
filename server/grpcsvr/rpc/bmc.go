@@ -14,7 +14,7 @@ import (
 // before it is cancelled. This is for use in a
 // TaskRunner.Execute function that runs all BMC
 // interactions in the background.
-const defaultTimeout = 5 * time.Minute
+const defaultTimeout = 15 * time.Second
 
 // BmcService for doing BMC actions
 type BmcService struct {
