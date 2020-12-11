@@ -134,6 +134,10 @@ func (m Action) CreateUser(ctx context.Context) error {
 	for _, elem := range successfulConnections {
 		conn := connections[elem]
 		switch r := conn.(type) {
+		case common.Connection:
+			defer r.Close(ctx)
+		}
+		switch r := conn.(type) {
 		case oob.BMC:
 			userAction = append(userAction, r)
 		}
@@ -186,7 +190,12 @@ func (m Action) UpdateUser(ctx context.Context) error {
 
 	var userAction []oob.BMC
 	for _, elem := range successfulConnections {
-		switch r := connections[elem].(type) {
+		conn := connections[elem]
+		switch r := conn.(type) {
+		case common.Connection:
+			defer r.Close(ctx)
+		}
+		switch r := conn.(type) {
 		case oob.BMC:
 			userAction = append(userAction, r)
 		}
@@ -240,7 +249,12 @@ func (m Action) DeleteUser(ctx context.Context) error {
 
 	var deleteUsers []oob.BMC
 	for _, elem := range successfulConnections {
-		switch r := connections[elem].(type) {
+		conn := connections[elem]
+		switch r := conn.(type) {
+		case common.Connection:
+			defer r.Close(ctx)
+		}
+		switch r := conn.(type) {
 		case oob.BMC:
 			deleteUsers = append(deleteUsers, r)
 		}
