@@ -130,7 +130,7 @@ func (r *redfishBMC) status(ctx context.Context) (result string, err error) {
 		return result, &errMsg
 	}
 	for _, system := range ss {
-		return string(system.PowerState), &errMsg
+		return string(system.PowerState), nil
 	}
 	return result, nil
 }

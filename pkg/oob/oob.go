@@ -41,7 +41,7 @@ func SetPower(ctx context.Context, action string, m []PowerSetter) (result strin
 			err = multierror.Append(err, setErr)
 			continue
 		}
-		return result, err
+		return result, nil
 	}
 	return result, multierror.Append(err, errors.New("power state failed"))
 }
@@ -54,7 +54,7 @@ func SetBootDevice(ctx context.Context, device string, m []BootDeviceSetter) (re
 			err = multierror.Append(err, setErr)
 			continue
 		}
-		return result, err
+		return result, nil
 	}
 	return result, multierror.Append(err, errors.New("set boot device failed"))
 }
@@ -67,7 +67,7 @@ func CreateUser(ctx context.Context, u []BMC) (err error) {
 			err = multierror.Append(err, setErr)
 			continue
 		}
-		return err
+		return nil
 	}
 	return multierror.Append(err, errors.New("create user failed"))
 }
@@ -80,7 +80,7 @@ func UpdateUser(ctx context.Context, u []BMC) (err error) {
 			err = multierror.Append(err, setErr)
 			continue
 		}
-		return err
+		return nil
 	}
 	return multierror.Append(err, errors.New("update user failed"))
 }
@@ -93,7 +93,7 @@ func DeleteUser(ctx context.Context, u []BMC) (err error) {
 			err = multierror.Append(err, setErr)
 			continue
 		}
-		return err
+		return nil
 	}
 	return multierror.Append(err, errors.New("delete user failed"))
 }
@@ -106,7 +106,7 @@ func ResetBMC(ctx context.Context, rType string, r []BMCResetter) (err error) {
 			err = multierror.Append(err, setErr)
 			continue
 		}
-		return err
+		return nil
 	}
 	return multierror.Append(err, errors.New("BMC reset failed"))
 }
