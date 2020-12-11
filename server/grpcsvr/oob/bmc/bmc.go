@@ -113,7 +113,7 @@ func (m Action) CreateUser(ctx context.Context) error {
 	if parseErr != nil {
 		return parseErr
 	}
-	creds := m.UpdateUserRequest.GetUserCreds()
+	creds := m.CreateUserRequest.GetUserCreds()
 	base := "creating user: " + creds.GetUsername()
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
