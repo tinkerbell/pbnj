@@ -36,13 +36,19 @@ type BMCResetter interface {
 // SetPower interface function for power actions
 func SetPower(ctx context.Context, action string, m []PowerSetter) (result string, err error) {
 	for _, elem := range m {
-		if elem != nil {
-			result, setErr := elem.PowerSet(ctx, action)
-			if setErr != nil {
-				err = multierror.Append(err, setErr)
-				continue
+		select {
+		case <-ctx.Done():
+			err = multierror.Append(err, ctx.Err())
+			break
+		default:
+			if elem != nil {
+				result, setErr := elem.PowerSet(ctx, action)
+				if setErr != nil {
+					err = multierror.Append(err, setErr)
+					continue
+				}
+				return result, nil
 			}
-			return result, nil
 		}
 	}
 	return result, multierror.Append(err, errors.New("power state failed"))
@@ -51,13 +57,19 @@ func SetPower(ctx context.Context, action string, m []PowerSetter) (result strin
 // SetBootDevice interface function for setting next boot device
 func SetBootDevice(ctx context.Context, device string, m []BootDeviceSetter) (result string, err error) {
 	for _, elem := range m {
-		if elem != nil {
-			result, setErr := elem.BootDeviceSet(ctx, device)
-			if setErr != nil {
-				err = multierror.Append(err, setErr)
-				continue
+		select {
+		case <-ctx.Done():
+			err = multierror.Append(err, ctx.Err())
+			break
+		default:
+			if elem != nil {
+				result, setErr := elem.BootDeviceSet(ctx, device)
+				if setErr != nil {
+					err = multierror.Append(err, setErr)
+					continue
+				}
+				return result, nil
 			}
-			return result, nil
 		}
 	}
 	return result, multierror.Append(err, errors.New("set boot device failed"))
@@ -66,13 +78,19 @@ func SetBootDevice(ctx context.Context, device string, m []BootDeviceSetter) (re
 // CreateUser interface function
 func CreateUser(ctx context.Context, u []BMC) (err error) {
 	for _, elem := range u {
-		if elem != nil {
-			setErr := elem.CreateUser(ctx)
-			if setErr != nil {
-				err = multierror.Append(err, setErr)
-				continue
+		select {
+		case <-ctx.Done():
+			err = multierror.Append(err, ctx.Err())
+			break
+		default:
+			if elem != nil {
+				setErr := elem.CreateUser(ctx)
+				if setErr != nil {
+					err = multierror.Append(err, setErr)
+					continue
+				}
+				return nil
 			}
-			return nil
 		}
 	}
 	return multierror.Append(err, errors.New("create user failed"))
@@ -81,13 +99,19 @@ func CreateUser(ctx context.Context, u []BMC) (err error) {
 // UpdateUser interface function
 func UpdateUser(ctx context.Context, u []BMC) (err error) {
 	for _, elem := range u {
-		if elem != nil {
-			setErr := elem.UpdateUser(ctx)
-			if setErr != nil {
-				err = multierror.Append(err, setErr)
-				continue
+		select {
+		case <-ctx.Done():
+			err = multierror.Append(err, ctx.Err())
+			break
+		default:
+			if elem != nil {
+				setErr := elem.UpdateUser(ctx)
+				if setErr != nil {
+					err = multierror.Append(err, setErr)
+					continue
+				}
+				return nil
 			}
-			return nil
 		}
 	}
 	return multierror.Append(err, errors.New("update user failed"))
@@ -96,13 +120,19 @@ func UpdateUser(ctx context.Context, u []BMC) (err error) {
 // DeleteUser interface function
 func DeleteUser(ctx context.Context, u []BMC) (err error) {
 	for _, elem := range u {
-		if elem != nil {
-			setErr := elem.DeleteUser(ctx)
-			if setErr != nil {
-				err = multierror.Append(err, setErr)
-				continue
+		select {
+		case <-ctx.Done():
+			err = multierror.Append(err, ctx.Err())
+			break
+		default:
+			if elem != nil {
+				setErr := elem.DeleteUser(ctx)
+				if setErr != nil {
+					err = multierror.Append(err, setErr)
+					continue
+				}
+				return nil
 			}
-			return nil
 		}
 	}
 	return multierror.Append(err, errors.New("delete user failed"))
@@ -111,13 +141,19 @@ func DeleteUser(ctx context.Context, u []BMC) (err error) {
 // ResetBMC interface function
 func ResetBMC(ctx context.Context, rType string, r []BMCResetter) (err error) {
 	for _, elem := range r {
-		if elem != nil {
-			setErr := elem.BMCReset(ctx, rType)
-			if setErr != nil {
-				err = multierror.Append(err, setErr)
-				continue
+		select {
+		case <-ctx.Done():
+			err = multierror.Append(err, ctx.Err())
+			break
+		default:
+			if elem != nil {
+				setErr := elem.BMCReset(ctx, rType)
+				if setErr != nil {
+					err = multierror.Append(err, setErr)
+					continue
+				}
+				return nil
 			}
-			return nil
 		}
 	}
 	return multierror.Append(err, errors.New("BMC reset failed"))
