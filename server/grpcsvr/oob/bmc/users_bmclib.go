@@ -22,7 +22,7 @@ type bmclibUserManagement struct {
 
 func (b *bmclibUserManagement) Connect(ctx context.Context) error {
 	var errMsg repository.Error
-	connection, err := discover.ScanAndConnect(b.host, b.user, b.password, discover.WithLogger(b.log))
+	connection, err := discover.ScanAndConnect(b.host, b.user, b.password, discover.WithLogger(b.log), discover.WithContext(ctx))
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = err.Error()

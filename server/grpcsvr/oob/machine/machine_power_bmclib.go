@@ -19,7 +19,7 @@ type bmclibBMC struct {
 }
 
 func (b *bmclibBMC) Connect(ctx context.Context) error {
-	connection, err := discover.ScanAndConnect(b.host, b.user, b.password, discover.WithLogger(b.log))
+	connection, err := discover.ScanAndConnect(b.host, b.user, b.password, discover.WithLogger(b.log), discover.WithContext(ctx))
 	if err != nil {
 		return &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
