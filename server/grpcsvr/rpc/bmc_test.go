@@ -3,7 +3,10 @@ package rpc
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -19,6 +22,8 @@ import (
 	"github.com/tinkerbell/pbnj/server/grpcsvr/taskrunner"
 )
 
+const tempIPMITool = "/tmp/ipmitool"
+
 var (
 	log        logging.Logger
 	ctx        context.Context
@@ -27,6 +32,13 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	setup()
+	code := m.Run()
+	teardown()
+	os.Exit(code)
+}
+
+func setup() {
 	ctx = context.Background()
 	l, zapLogger, _ := logr.NewPacketLogr()
 	log = zaplog.RegisterLogger(l)
@@ -48,7 +60,21 @@ func TestMain(m *testing.M) {
 		TaskRunner:             taskRunner,
 		UnimplementedBMCServer: v1.UnimplementedBMCServer{},
 	}
-	os.Exit(m.Run())
+	_, err := exec.LookPath("ipmitool")
+	if err != nil {
+		err := ioutil.WriteFile(tempIPMITool, []byte{}, 0777)
+		if err != nil {
+			fmt.Println("didnt find ipmitool in PATH and couldnt create one in /tmp")
+			os.Exit(3)
+		}
+		path := os.Getenv("PATH")
+		os.Setenv("PATH", fmt.Sprintf("%v:/tmp", path))
+	}
+
+}
+
+func teardown() {
+	os.Remove(tempIPMITool)
 }
 
 func TestConfigNetworkSource(t *testing.T) {
