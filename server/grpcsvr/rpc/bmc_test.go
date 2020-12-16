@@ -23,6 +23,7 @@ var (
 	log        logging.Logger
 	ctx        context.Context
 	taskRunner *taskrunner.Runner
+	bmcService BmcService
 )
 
 func TestMain(m *testing.M) {
@@ -41,6 +42,11 @@ func TestMain(m *testing.M) {
 		Repository: repo,
 		Ctx:        ctx,
 		Log:        log,
+	}
+	bmcService = BmcService{
+		Log:                    log,
+		TaskRunner:             taskRunner,
+		UnimplementedBMCServer: v1.UnimplementedBMCServer{},
 	}
 	os.Exit(m.Run())
 }
@@ -72,9 +78,7 @@ func TestConfigNetworkSource(t *testing.T) {
 		testCase := tc
 		t.Run(testCase.name, func(t *testing.T) {
 			g := gomega.NewGomegaWithT(t)
-			bmcSvc := BmcService{Log: log}
-			response, err := bmcSvc.NetworkSource(ctx, testCase.req)
-
+			response, err := bmcService.NetworkSource(ctx, testCase.req)
 			t.Log("Got : ", response)
 
 			if testCase.expectedErr {
@@ -87,239 +91,249 @@ func TestConfigNetworkSource(t *testing.T) {
 	}
 }
 
+func newResetRequest(authErr bool) *v1.ResetRequest {
+	var auth *v1.DirectAuthn
+	if authErr {
+		auth = &v1.DirectAuthn{
+			Host: &v1.Host{
+				Host: "",
+			},
+			Username: "ADMIN",
+			Password: "ADMIN",
+		}
+	} else {
+		auth = &v1.DirectAuthn{
+			Host: &v1.Host{
+				Host: "127.0.0.1",
+			},
+			Username: "ADMIN",
+			Password: "ADMIN",
+		}
+	}
+	return &v1.ResetRequest{
+		Authn: &v1.Authn{
+			Authn: &v1.Authn_DirectAuthn{
+				DirectAuthn: auth,
+			},
+		},
+		Vendor: &v1.Vendor{
+			Name: "local",
+		},
+		ResetKind: 0,
+	}
+}
 func TestReset(t *testing.T) {
 	testCases := []struct {
 		name        string
-		req         *v1.ResetRequest
-		message     string
 		expectedErr error
+		in          *v1.ResetRequest
+		out         *v1.ResetResponse
 	}{
-		{
-			name: "status good; direct auth",
-			req: &v1.ResetRequest{
-				Authn: &v1.Authn{
-					Authn: &v1.Authn_DirectAuthn{
-						DirectAuthn: &v1.DirectAuthn{
-							Host: &v1.Host{
-								Host: "127.0.1.1",
-							},
-							Username: "ADMIN",
-							Password: "ADMIN",
-						},
-					},
-				},
-				Vendor: &v1.Vendor{
-					Name: "",
-				},
-				ResetKind: v1.ResetKind_RESET_KIND_COLD,
-			},
-			message: "good",
-		},
-		{
-			name:        "validation failure",
-			req:         &v1.ResetRequest{Authn: &v1.Authn{Authn: &v1.Authn_DirectAuthn{DirectAuthn: &v1.DirectAuthn{}}}},
-			message:     "",
-			expectedErr: errors.New("input arguments are invalid: invalid field Authn.DirectAuthn.Username: value '' must not be an empty string"),
-		},
+		{"success", nil, newResetRequest(false), &v1.ResetResponse{TaskId: ""}},
+		{"missing auth err", errors.New("input arguments are invalid: invalid field Authn.DirectAuthn.Host.Host: value '' must not be an empty string"), newResetRequest(true), nil},
 	}
 
 	for _, tc := range testCases {
-		testCase := tc
-		t.Run(testCase.name, func(t *testing.T) {
-			g := gomega.NewGomegaWithT(t)
-			bmcSvc := BmcService{Log: log, TaskRunner: taskRunner}
-			response, err := bmcSvc.Reset(ctx, testCase.req)
-
-			t.Log("Got : ", response)
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			response, err := bmcService.Reset(ctx, tc.in)
 			if err != nil {
-				diff := cmp.Diff(testCase.expectedErr.Error(), err.Error())
+				diff := cmp.Diff(tc.expectedErr.Error(), err.Error())
 				if diff != "" {
 					t.Fatal(diff)
 				}
 			} else {
-				g.Expect(response.TaskId).Should(gomega.HaveLen(20))
+				if response.TaskId == "" {
+					t.Fatal("expected taskId, got:", response.TaskId)
+				}
 			}
 		})
 	}
 }
 
+func newCreateUserRequest(authErr bool) *v1.CreateUserRequest {
+	var auth *v1.DirectAuthn
+	if authErr {
+		auth = &v1.DirectAuthn{
+			Host: &v1.Host{
+				Host: "",
+			},
+			Username: "ADMIN",
+			Password: "ADMIN",
+		}
+	} else {
+		auth = &v1.DirectAuthn{
+			Host: &v1.Host{
+				Host: "127.0.0.1",
+			},
+			Username: "ADMIN",
+			Password: "ADMIN",
+		}
+	}
+	return &v1.CreateUserRequest{
+		Authn: &v1.Authn{
+			Authn: &v1.Authn_DirectAuthn{
+				DirectAuthn: auth,
+			},
+		},
+		Vendor: &v1.Vendor{
+			Name: "local",
+		},
+		UserCreds: &v1.UserCreds{
+			Username: "",
+			Password: "",
+			UserRole: 0,
+		},
+	}
+}
 func TestCreateUser(t *testing.T) {
 	testCases := []struct {
 		name        string
-		req         *v1.CreateUserRequest
 		expectedErr error
+		in          *v1.CreateUserRequest
+		out         *v1.CreateUserResponse
 	}{
-		{
-			name: "status good; direct auth",
-			req: &v1.CreateUserRequest{
-				Authn: &v1.Authn{
-					Authn: &v1.Authn_DirectAuthn{
-						DirectAuthn: &v1.DirectAuthn{
-							Host: &v1.Host{
-								Host: "127.0.1.1",
-							},
-							Username: "ADMIN",
-							Password: "ADMIN",
-						},
-					},
-				},
-				Vendor: &v1.Vendor{
-					Name: "",
-				},
-				UserCreds: &v1.UserCreds{
-					Username: "admin",
-					Password: "admin",
-					UserRole: 0,
-				},
-			},
-		},
-		{
-			name:        "validation failure",
-			req:         &v1.CreateUserRequest{Authn: &v1.Authn{Authn: &v1.Authn_DirectAuthn{DirectAuthn: &v1.DirectAuthn{}}}},
-			expectedErr: errors.New("input arguments are invalid: invalid field Authn.DirectAuthn.Username: value '' must not be an empty string"),
-		},
+		{"success", nil, newCreateUserRequest(false), &v1.CreateUserResponse{TaskId: ""}},
+		{"missing auth err", errors.New("input arguments are invalid: invalid field Authn.DirectAuthn.Host.Host: value '' must not be an empty string"), newCreateUserRequest(true), nil},
 	}
 
 	for _, tc := range testCases {
-		testCase := tc
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
-			g := gomega.NewGomegaWithT(t)
-			bmcSvc := BmcService{
-				Log:        log,
-				TaskRunner: taskRunner,
-			}
-			response, err := bmcSvc.CreateUser(ctx, testCase.req)
-
-			t.Log("Got : ", response)
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			response, err := bmcService.CreateUser(ctx, tc.in)
 			if err != nil {
-				diff := cmp.Diff(testCase.expectedErr.Error(), err.Error())
+				diff := cmp.Diff(tc.expectedErr.Error(), err.Error())
 				if diff != "" {
 					t.Fatal(diff)
 				}
-
 			} else {
-				g.Expect(response.TaskId).Should(gomega.HaveLen(20))
+				if response.TaskId == "" {
+					t.Fatal("expected taskId, got:", response.TaskId)
+				}
 			}
 		})
 	}
 }
 
+func newUpdateUserRequest(authErr bool) *v1.UpdateUserRequest {
+	var auth *v1.DirectAuthn
+	if authErr {
+		auth = &v1.DirectAuthn{
+			Host: &v1.Host{
+				Host: "",
+			},
+			Username: "ADMIN",
+			Password: "ADMIN",
+		}
+	} else {
+		auth = &v1.DirectAuthn{
+			Host: &v1.Host{
+				Host: "127.0.0.1",
+			},
+			Username: "ADMIN",
+			Password: "ADMIN",
+		}
+	}
+	return &v1.UpdateUserRequest{
+		Authn: &v1.Authn{
+			Authn: &v1.Authn_DirectAuthn{
+				DirectAuthn: auth,
+			},
+		},
+		Vendor: &v1.Vendor{
+			Name: "local",
+		},
+		UserCreds: &v1.UserCreds{
+			Username: "",
+			Password: "",
+			UserRole: 0,
+		},
+	}
+}
 func TestUpdateUser(t *testing.T) {
 	testCases := []struct {
 		name        string
-		req         *v1.UpdateUserRequest
 		expectedErr error
+		in          *v1.UpdateUserRequest
+		out         *v1.UpdateUserResponse
 	}{
-		{
-			name: "status good; direct auth",
-			req: &v1.UpdateUserRequest{
-				Authn: &v1.Authn{
-					Authn: &v1.Authn_DirectAuthn{
-						DirectAuthn: &v1.DirectAuthn{
-							Host: &v1.Host{
-								Host: "127.0.1.1",
-							},
-							Username: "ADMIN",
-							Password: "ADMIN",
-						},
-					},
-				},
-				Vendor: &v1.Vendor{
-					Name: "",
-				},
-				UserCreds: &v1.UserCreds{
-					Username: "admin",
-					Password: "admin",
-					UserRole: 0,
-				},
-			},
-		},
-		{
-			name:        "validation failure",
-			req:         &v1.UpdateUserRequest{Authn: &v1.Authn{Authn: &v1.Authn_DirectAuthn{DirectAuthn: &v1.DirectAuthn{}}}},
-			expectedErr: errors.New("input arguments are invalid: invalid field Authn.DirectAuthn.Username: value '' must not be an empty string"),
-		},
+		{"success", nil, newUpdateUserRequest(false), &v1.UpdateUserResponse{TaskId: ""}},
+		{"missing auth err", errors.New("input arguments are invalid: invalid field Authn.DirectAuthn.Host.Host: value '' must not be an empty string"), newUpdateUserRequest(true), nil},
 	}
 
 	for _, tc := range testCases {
-		testCase := tc
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
-			g := gomega.NewGomegaWithT(t)
-			bmcSvc := BmcService{
-				Log:        log,
-				TaskRunner: taskRunner,
-			}
-			response, err := bmcSvc.UpdateUser(ctx, testCase.req)
-
-			t.Log("Got : ", response)
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			response, err := bmcService.UpdateUser(ctx, tc.in)
 			if err != nil {
-				diff := cmp.Diff(testCase.expectedErr.Error(), err.Error())
+				diff := cmp.Diff(tc.expectedErr.Error(), err.Error())
 				if diff != "" {
 					t.Fatal(diff)
 				}
-
 			} else {
-				g.Expect(response.TaskId).Should(gomega.HaveLen(20))
+				if response.TaskId == "" {
+					t.Fatal("expected taskId, got:", response.TaskId)
+				}
 			}
 		})
 	}
 }
 
+func newDeleteUserRequest(authErr bool) *v1.DeleteUserRequest {
+	var auth *v1.DirectAuthn
+	if authErr {
+		auth = &v1.DirectAuthn{
+			Host: &v1.Host{
+				Host: "",
+			},
+			Username: "ADMIN",
+			Password: "ADMIN",
+		}
+	} else {
+		auth = &v1.DirectAuthn{
+			Host: &v1.Host{
+				Host: "127.0.0.1",
+			},
+			Username: "ADMIN",
+			Password: "ADMIN",
+		}
+	}
+	return &v1.DeleteUserRequest{
+		Authn: &v1.Authn{
+			Authn: &v1.Authn_DirectAuthn{
+				DirectAuthn: auth,
+			},
+		},
+		Vendor: &v1.Vendor{
+			Name: "local",
+		},
+		Username: "blah",
+	}
+}
 func TestDeleteUser(t *testing.T) {
 	testCases := []struct {
 		name        string
-		req         *v1.DeleteUserRequest
 		expectedErr error
+		in          *v1.DeleteUserRequest
+		out         *v1.UpdateUserResponse
 	}{
-		{
-			name: "status good; direct auth",
-			req: &v1.DeleteUserRequest{
-				Authn: &v1.Authn{
-					Authn: &v1.Authn_DirectAuthn{
-						DirectAuthn: &v1.DirectAuthn{
-							Host: &v1.Host{
-								Host: "127.0.1.1",
-							},
-							Username: "ADMIN",
-							Password: "ADMIN",
-						},
-					},
-				},
-				Vendor: &v1.Vendor{
-					Name: "",
-				},
-				Username: "me",
-			},
-		},
-		{
-			name:        "validation failure",
-			req:         &v1.DeleteUserRequest{Authn: &v1.Authn{Authn: &v1.Authn_DirectAuthn{DirectAuthn: &v1.DirectAuthn{}}}},
-			expectedErr: errors.New("input arguments are invalid: invalid field Authn.DirectAuthn.Username: value '' must not be an empty string"),
-		},
+		{"success", nil, newDeleteUserRequest(false), &v1.UpdateUserResponse{TaskId: ""}},
+		{"missing auth err", errors.New("input arguments are invalid: invalid field Authn.DirectAuthn.Host.Host: value '' must not be an empty string"), newDeleteUserRequest(true), nil},
 	}
 
 	for _, tc := range testCases {
-		testCase := tc
-		t.Run(testCase.name, func(t *testing.T) {
-			t.Parallel()
-			g := gomega.NewGomegaWithT(t)
-			bmcSvc := BmcService{
-				Log:        log,
-				TaskRunner: taskRunner,
-			}
-			response, err := bmcSvc.DeleteUser(ctx, testCase.req)
-
-			t.Log("Got : ", response)
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			response, err := bmcService.DeleteUser(ctx, tc.in)
 			if err != nil {
-				diff := cmp.Diff(testCase.expectedErr.Error(), err.Error())
+				diff := cmp.Diff(tc.expectedErr.Error(), err.Error())
 				if diff != "" {
 					t.Fatal(diff)
 				}
-
 			} else {
-				g.Expect(response.TaskId).Should(gomega.HaveLen(20))
+				if response.TaskId == "" {
+					t.Fatal("expected taskId, got:", response.TaskId)
+				}
 			}
 		})
 	}
