@@ -1,6 +1,6 @@
 # PBNJ
 
-[![Build Status](https://github.com/tinkerbell/pbnj/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/pbnj/workflows/For%20each%20commit%20and%20PR/badge.svg)
+[![Build Status](https://github.com/tinkerbell/pbnj/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/pbnj/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amaster)
 ![](https://img.shields.io/badge/Stability-Experimental-red.svg)
 
 This service handles BMC interactions.
