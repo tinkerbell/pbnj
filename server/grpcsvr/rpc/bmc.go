@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/pkg/errors"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/task"
@@ -27,6 +28,9 @@ type BmcService struct {
 func (b *BmcService) NetworkSource(ctx context.Context, in *v1.NetworkSourceRequest) (*v1.NetworkSourceResponse, error) {
 	l := b.Log.GetContextLogger(ctx)
 	l.V(0).Info("setting network source")
+	if err := in.Validate(); err != nil {
+		return nil, errors.Wrap(err, "input arguments are invalid")
+	}
 
 	return &v1.NetworkSourceResponse{
 		TaskId: "good",
@@ -37,6 +41,9 @@ func (b *BmcService) NetworkSource(ctx context.Context, in *v1.NetworkSourceRequ
 func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetResponse, error) {
 	l := b.Log.GetContextLogger(ctx)
 	l.V(0).Info("reset action")
+	if err := in.Validate(); err != nil {
+		return nil, errors.Wrap(err, "input arguments are invalid")
+	}
 
 	taskID, err := b.TaskRunner.Execute(
 		ctx,
@@ -65,6 +72,9 @@ func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetR
 
 // CreateUser sets the next boot device of a machine
 func (b *BmcService) CreateUser(ctx context.Context, in *v1.CreateUserRequest) (*v1.CreateUserResponse, error) {
+	if err := in.Validate(); err != nil {
+		return nil, errors.Wrap(err, "input arguments are invalid")
+	}
 	// TODO figure out how not to have to do this, but still keep the logging abstraction clean?
 	l := b.Log.GetContextLogger(ctx)
 	l.V(0).Info("creating user", "user", in.UserCreds.Username)
@@ -93,6 +103,9 @@ func (b *BmcService) CreateUser(ctx context.Context, in *v1.CreateUserRequest) (
 
 // UpdateUser updates a users credentials on a BMC
 func (b *BmcService) UpdateUser(ctx context.Context, in *v1.UpdateUserRequest) (*v1.UpdateUserResponse, error) {
+	if err := in.Validate(); err != nil {
+		return nil, errors.Wrap(err, "input arguments are invalid")
+	}
 	// TODO figure out how not to have to do this, but still keep the logging abstraction clean?
 	l := b.Log.GetContextLogger(ctx)
 	l.V(0).Info("updating user", "user", in.UserCreds.Username)
@@ -121,6 +134,9 @@ func (b *BmcService) UpdateUser(ctx context.Context, in *v1.UpdateUserRequest) (
 
 // DeleteUser deletes a user on a BMC
 func (b *BmcService) DeleteUser(ctx context.Context, in *v1.DeleteUserRequest) (*v1.DeleteUserResponse, error) {
+	if err := in.Validate(); err != nil {
+		return nil, errors.Wrap(err, "input arguments are invalid")
+	}
 	// TODO figure out how not to have to do this, but still keep the logging abstraction clean?
 	l := b.Log.GetContextLogger(ctx)
 	l.V(0).Info("deleting user", "user", in.Username)

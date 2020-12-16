@@ -2,8 +2,10 @@ package rpc
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/onsi/gomega"
 	"github.com/packethost/pkg/log/logr"
@@ -20,7 +22,7 @@ func TestDevice(t *testing.T) {
 		name        string
 		req         *v1.DeviceRequest
 		message     string
-		expectedErr bool
+		expectedErr error
 	}{
 		{
 			name: "status good; direct auth",
@@ -29,10 +31,10 @@ func TestDevice(t *testing.T) {
 					Authn: &v1.Authn_DirectAuthn{
 						DirectAuthn: &v1.DirectAuthn{
 							Host: &v1.Host{
-								Host: "",
+								Host: "127.0.0.1",
 							},
-							Username: "",
-							Password: "",
+							Username: "ADMIN",
+							Password: "ADMIN",
 						},
 					},
 				},
@@ -42,8 +44,13 @@ func TestDevice(t *testing.T) {
 				Persistent: false,
 				EfiBoot:    false,
 			},
-			message:     "good",
-			expectedErr: false,
+			message: "good",
+		},
+		{
+			name:        "validation failure",
+			req:         &v1.DeviceRequest{Authn: &v1.Authn{Authn: &v1.Authn_DirectAuthn{DirectAuthn: &v1.DirectAuthn{}}}},
+			message:     "",
+			expectedErr: errors.New("input arguments are invalid: invalid field Authn.DirectAuthn.Username: value '' must not be an empty string"),
 		},
 	}
 
@@ -77,10 +84,12 @@ func TestDevice(t *testing.T) {
 			response, err := machineSvc.BootDevice(ctx, testCase.req)
 
 			t.Log("Got : ", response)
+			if err != nil {
+				diff := cmp.Diff(testCase.expectedErr.Error(), err.Error())
+				if diff != "" {
+					t.Fatal(diff)
+				}
 
-			if testCase.expectedErr {
-				g.Expect(response).ToNot(gomega.BeNil(), "Result should be nil")
-				g.Expect(err).ToNot(gomega.BeNil(), "Result should be nil")
 			} else {
 				g.Expect(response.TaskId).Should(gomega.HaveLen(20))
 			}
@@ -94,7 +103,7 @@ func TestPower(t *testing.T) {
 		name        string
 		req         *v1.PowerRequest
 		message     string
-		expectedErr bool
+		expectedErr error
 	}{
 		{
 			name: "status good; direct auth",
@@ -117,8 +126,7 @@ func TestPower(t *testing.T) {
 				SoftTimeout: 0,
 				OffDuration: 0,
 			},
-			message:     "on",
-			expectedErr: false,
+			message: "on",
 		},
 		{
 			name: "status good; external auth",
@@ -141,8 +149,13 @@ func TestPower(t *testing.T) {
 				SoftTimeout: 0,
 				OffDuration: 0,
 			},
-			message:     "on",
-			expectedErr: false,
+			message: "on",
+		},
+		{
+			name:        "validation failure",
+			req:         &v1.PowerRequest{Authn: &v1.Authn{Authn: &v1.Authn_DirectAuthn{DirectAuthn: &v1.DirectAuthn{}}}},
+			message:     "",
+			expectedErr: errors.New("input arguments are invalid: invalid field Authn.DirectAuthn.Username: value '' must not be an empty string"),
 		},
 	}
 
@@ -177,13 +190,16 @@ func TestPower(t *testing.T) {
 
 			t.Log("Got response: ", response)
 			t.Log("Got err: ", err)
+			if err != nil {
+				diff := cmp.Diff(testCase.expectedErr.Error(), err.Error())
+				if diff != "" {
+					t.Fatal(diff)
+				}
 
-			if testCase.expectedErr {
-				g.Expect(response).ToNot(gomega.BeNil(), "Result should be nil")
-				g.Expect(err).ToNot(gomega.BeNil(), "Result should be nil")
 			} else {
 				g.Expect(response.TaskId).Should(gomega.HaveLen(20))
 			}
+
 		})
 	}
 }

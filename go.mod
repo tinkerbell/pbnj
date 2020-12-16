@@ -10,11 +10,13 @@ require (
 	github.com/go-logr/logr v0.3.0
 	github.com/go-logr/zapr v0.2.0
 	github.com/go-test/deep v1.0.4
+	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/protobuf v1.4.2
 	github.com/google/go-cmp v0.5.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-multierror v1.1.0
+	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/onsi/gomega v1.10.2
 	github.com/packethost/pkg v0.0.0-20201022155256-04dd7aeb2c72
 	github.com/packethost/pkg/log/logr v0.0.0-20201013193546-e9489d08ff6d

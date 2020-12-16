@@ -5,8 +5,10 @@ option ruby_package = "Pbnj::Api::V1";
 
 package github.com.tinkerbell.pbnj.api.v1;
 
+import "github.com/mwitkow/go-proto-validators@v0.3.2/validator.proto";
+
 message Host {
-    string host = 1;
+    string host = 1 [(validator.field) = {string_not_empty : true}];
 }
 
 message ExternalAuthn {
@@ -15,8 +17,8 @@ message ExternalAuthn {
 
 message DirectAuthn {
     Host host = 1;
-    string username = 2;
-    string password = 3;
+    string username = 2 [(validator.field) = {string_not_empty : true}];
+    string password = 3 [(validator.field) = {string_not_empty : true}];
 }
 
 message Authn {
