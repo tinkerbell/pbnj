@@ -33,7 +33,7 @@ func TestRunServer(t *testing.T) {
 
 	rand.Seed(time.Now().UnixNano())
 	min := 40041
-	max := 40099
+	max := 40042
 	port := rand.Intn(max-min+1) + min
 
 	f := freecache.NewStore(freecache.DefaultOptions)
@@ -69,8 +69,8 @@ func TestRunServerSignals(t *testing.T) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	min := 40041
-	max := 40099
+	min := 40044
+	max := 40045
 	port := rand.Intn(max-min+1) + min
 	grpcServer := grpc.NewServer()
 	httpServer := http.NewHTTPServer(fmt.Sprintf(":%d", port+1))
@@ -93,7 +93,7 @@ func TestRunServerSignals(t *testing.T) {
 }
 
 func TestRunServerPortInUse(t *testing.T) {
-	port := 40041
+	port := 40039
 
 	// listen on a port
 	test, err := net.Listen("tcp", fmt.Sprintf(":%v", port))
@@ -117,7 +117,7 @@ func TestRunServerPortInUse(t *testing.T) {
 	httpServer.WithLogger(l)
 
 	err = RunServer(ctx, log, grpcServer, strconv.Itoa(port), httpServer)
-	if err.Error() != "listen tcp :40041: bind: address already in use" {
+	if err.Error() != "listen tcp :40039: bind: address already in use" {
 		t.Fatal(err)
 	}
 
