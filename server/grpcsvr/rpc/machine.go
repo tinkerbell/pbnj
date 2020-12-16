@@ -3,6 +3,8 @@ package rpc
 import (
 	"context"
 
+	"github.com/pkg/errors"
+
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/task"
@@ -21,6 +23,9 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 	// TODO figure out how not to have to do this, but still keep the logging abstraction clean?
 	l := m.Log.GetContextLogger(ctx)
 	l.V(0).Info("setting boot device", "device", in.BootDevice.String())
+	if err := in.Validate(); err != nil {
+		return nil, errors.Wrap(err, "input arguments are invalid")
+	}
 
 	taskID, err := m.TaskRunner.Execute(
 		ctx,
@@ -48,7 +53,9 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.PowerResponse, error) {
 	l := m.Log.GetContextLogger(ctx)
 	l.V(0).Info("power request")
-	// TODO INPUT VALIDATION
+	if err := in.Validate(); err != nil {
+		return nil, errors.Wrap(err, "input arguments are invalid")
+	}
 
 	var execFunc = func(s chan string) (string, error) {
 		mp, err := machine.NewPowerSetter(

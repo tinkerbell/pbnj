@@ -2,7 +2,6 @@ package taskrunner
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/url"
 	"sync"
@@ -145,8 +144,6 @@ func (r *Runner) Status(ctx context.Context, id string) (record repository.Recor
 	l.V(0).Info("getting task record", "taskID", id)
 	record, err = r.Repository.Get(id)
 	if err != nil {
-		l.V(0).Error(err, "error getting task")
-		l.V(0).Info(fmt.Sprintf("%T", err))
 		switch t := err.(type) {
 		case *net.OpError:
 			if t.Op == "dial" {
