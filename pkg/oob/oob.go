@@ -49,6 +49,7 @@ func SetPower(ctx context.Context, action string, m []PowerSetter) (result strin
 				}
 				return result, nil
 			}
+			err = multierror.Append(err, errors.New("power request not executed"))
 		}
 	}
 	return result, multierror.Append(err, errors.New("power state failed"))
@@ -70,6 +71,7 @@ func SetBootDevice(ctx context.Context, device string, m []BootDeviceSetter) (re
 				}
 				return result, nil
 			}
+			err = multierror.Append(err, errors.New("set boot device request not executed"))
 		}
 	}
 	return result, multierror.Append(err, errors.New("set boot device failed"))
@@ -91,6 +93,7 @@ func CreateUser(ctx context.Context, u []BMC) (err error) {
 				}
 				return nil
 			}
+			err = multierror.Append(err, errors.New("create user request not executed"))
 		}
 	}
 	return multierror.Append(err, errors.New("create user failed"))
@@ -112,6 +115,7 @@ func UpdateUser(ctx context.Context, u []BMC) (err error) {
 				}
 				return nil
 			}
+			err = multierror.Append(err, errors.New("update user request not executed"))
 		}
 	}
 	return multierror.Append(err, errors.New("update user failed"))
@@ -133,6 +137,7 @@ func DeleteUser(ctx context.Context, u []BMC) (err error) {
 				}
 				return nil
 			}
+			err = multierror.Append(err, errors.New("delete user request not executed"))
 		}
 	}
 	return multierror.Append(err, errors.New("delete user failed"))
@@ -154,6 +159,7 @@ func ResetBMC(ctx context.Context, rType string, r []BMCResetter) (err error) {
 				}
 				return nil
 			}
+			err = multierror.Append(err, errors.New("BMC reset request not executed"))
 		}
 	}
 	return multierror.Append(err, errors.New("BMC reset failed"))
