@@ -59,6 +59,7 @@ var (
 					middleware.UnaryRequestID(middleware.UseXRequestIDMetadataOption(true), middleware.XRequestMetadataLimitOption(512)),
 					zaplog.UnaryLogRequestID(zlog, requestIDKey, requestIDLogKey),
 					grpc_zap.UnaryServerInterceptor(zlog),
+					zaplog.UnaryLogBMCIP(),
 					grpc_validator.UnaryServerInterceptor(),
 				),
 			)
