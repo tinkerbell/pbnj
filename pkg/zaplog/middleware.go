@@ -2,10 +2,12 @@ package zaplog
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"github.com/rs/xid"
+	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -34,5 +36,26 @@ func UnaryLogRequestID(logger *zap.Logger, requestIDKey, requestIDLogKey string)
 
 		resp, err := handler(newCtx, req)
 		return resp, err
+	}
+}
+
+// UnaryLogBMCIP returns a new unary server interceptors that adds the BMC IP to the logger.
+func UnaryLogBMCIP() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		// get BMC IP
+		var bmcIP string
+		r := reflect.ValueOf(req)
+		a, ok := r.Elem().FieldByName("Authn").Interface().(*v1.Authn)
+		if ok {
+			bmcIP = a.GetDirectAuthn().GetHost().GetHost()
+		}
+
+		// Get logger from context and add ip to logger
+		logger := ctxzap.Extract(ctx).With(zap.String("bmcIP", bmcIP))
+
+		// Add the logger back to the context
+		newCtx := ctxzap.ToContext(ctx, logger)
+
+		return handler(newCtx, req)
 	}
 }
