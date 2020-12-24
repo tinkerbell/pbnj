@@ -41,12 +41,17 @@ func UnaryLogRequestID(logger *zap.Logger, requestIDKey, requestIDLogKey string)
 
 // UnaryLogBMCIP returns a new unary server interceptors that adds the BMC IP to the logger.
 func UnaryLogBMCIP() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (h interface{}, err error) {
+		// handle panics from reflect by just moving on. Calls to the task endpoint will always panic,
+		// as they don't contain Authn.
+		defer func() {
+			if r := recover(); r != nil {
+				h, err = handler(ctx, req)
+			}
+		}()
 		// get BMC IP
 		var bmcIP string
-		r := reflect.ValueOf(req)
-		a, ok := r.Elem().FieldByName("Authn").Interface().(*v1.Authn)
-		if ok {
+		if a, ok := reflect.ValueOf(req).Elem().FieldByName("Authn").Interface().(*v1.Authn); ok {
 			bmcIP = a.GetDirectAuthn().GetHost().GetHost()
 		}
 
