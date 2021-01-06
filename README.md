@@ -51,3 +51,7 @@ Run
 # default gRPC port is 50051, default HTTP port is 9090; does a `go run` of the code base
 make run-server
 ```
+
+## Authorization
+
+Documentation on enabling authorization can be found [here](docs/Authorization.md).
