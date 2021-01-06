@@ -37,7 +37,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.pbnj.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is pbnj.yaml)")
 	rootCmd.PersistentFlags().StringVar(&logLevel, "logLevel", "info", "log level (default is info")
 }
 

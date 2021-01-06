@@ -103,3 +103,7 @@ ruby-client-demo: image ## run ruby client demo
 	docker run -d --name pbnj pbnj:local
 	docker run -it --rm --net container:pbnj -v ${PWD}:/code -w /code/examples/clients/ruby --entrypoint /bin/bash ruby /code/examples/clients/ruby/demo.sh ${host} ${user} ${pass}
 	docker rm -f pbnj
+
+.PHONY: evans
+evans: ## run evans grpc client
+	evans --path $$(go env GOMODCACHE) --path . --proto $$(find api/v1 -type f -name '*.proto'| xargs | tr " " ",") repl
