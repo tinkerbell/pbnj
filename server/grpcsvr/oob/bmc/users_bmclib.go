@@ -36,7 +36,8 @@ func (b *bmclibUserManagement) Connect(ctx context.Context) error {
 		errMsg.Message = "Unknown device"
 		return &errMsg
 	}
-	return nil
+
+	return b.conn.CheckCredentials()
 }
 
 func (b *bmclibUserManagement) Close(ctx context.Context) {

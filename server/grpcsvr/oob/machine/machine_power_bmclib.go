@@ -35,7 +35,7 @@ func (b *bmclibBMC) Connect(ctx context.Context) error {
 			Message: "Unknown device",
 		}
 	}
-	return nil
+	return b.conn.CheckCredentials()
 }
 
 func (b *bmclibBMC) Close(ctx context.Context) {

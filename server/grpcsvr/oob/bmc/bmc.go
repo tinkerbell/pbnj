@@ -277,10 +277,8 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 	}
 	m.SendStatusMessage("working on bmc reset")
 	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
-	err = client.DiscoverProviders(ctx)
-	if err != nil {
-		m.Log.V(1).Info("error with provider discovery", "err", err.Error())
-	}
+	client.Registry.Drivers = client.Registry.FilterForCompatible(ctx)
+
 	var errMsg string
 	lookup := map[string]string{
 		v1.ResetKind_RESET_KIND_COLD.String(): "cold",
