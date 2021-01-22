@@ -2,22 +2,23 @@
 
 Authorization in PBnJ uses json web tokens (JWT).
 
-* More info about JWT can be found at <https://jwt.io>
+- More info about JWT can be found at <https://jwt.io>
 
 Authorization in PBnJ is optional.
 
-* It is disabled by default. To enable it set the cli flag or env var or config value of `enableAuthz` to true.
+- It is disabled by default.
+  To enable it set the cli flag or env var or config value of `enableAuthz` to true.
 
 Enabled Authorization must also include a symmetric or asymmetric key.
 
-* HMAC(symmetric) and RS(asymmetric) keys are supported.
-* Use the cli flag or env var or config value `HSKey` for symmetric HMAC.
+- HMAC(symmetric) and RS(asymmetric) keys are supported.
+- Use the cli flag or env var or config value `HSKey` for symmetric HMAC.
 
 ```yaml
 HSKey: "supersecret"
 ```
 
-* Use the cli flag or env var or config value `RSPubKey` for asymmetric RS.
+- Use the cli flag or env var or config value `RSPubKey` for asymmetric RS.
 
 ```yaml
 RSPubKey: |
@@ -34,14 +35,14 @@ RSPubKey: |
 
 When enabled, Authorization will protect the following RPC methods
 
-* github.com.tinkerbell.pbnj.api.v1.
-  * Machine/Power
-  * Machine/BootDevice
-  * BMC/NetworkSource
-  * BMC/Reset
-  * BMC/CreateUser
-  * BMC/DeleteUser
-  * BMC/UpdateUser
+- github.com.tinkerbell.pbnj.api.v1.
+  - Machine/Power
+  - Machine/BootDevice
+  - BMC/NetworkSource
+  - BMC/Reset
+  - BMC/CreateUser
+  - BMC/DeleteUser
+  - BMC/UpdateUser
 
 Clients must set the following gRPC metadata/header for requests
 
