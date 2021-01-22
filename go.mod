@@ -4,13 +4,13 @@ go 1.15
 
 require (
 	bou.ke/monkey v1.0.2
-	github.com/bmc-toolbox/bmclib v0.4.7
+	github.com/bmc-toolbox/bmclib v0.4.9
 	github.com/cristalhq/jwt/v3 v3.0.4
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gebn/bmc v0.0.0-20200904230046-a5643220ab2a
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-logr/logr v0.3.0
-	github.com/go-logr/zapr v0.2.0
+	github.com/go-logr/zapr v0.3.0
 	github.com/go-test/deep v1.0.4
 	github.com/golang/protobuf v1.4.3
 	github.com/google/go-cmp v0.5.4
