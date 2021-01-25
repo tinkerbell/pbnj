@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	bou.ke/monkey v1.0.2
-	github.com/bmc-toolbox/bmclib v0.4.9
+	github.com/bmc-toolbox/bmclib v0.4.10
 	github.com/cristalhq/jwt/v3 v3.0.4
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gebn/bmc v0.0.0-20200904230046-a5643220ab2a
@@ -17,6 +17,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-multierror v1.1.0
+	github.com/jacobweinstock/registrar v0.3.2
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/onsi/gomega v1.10.2
 	github.com/packethost/pkg v0.0.0-20201221225314-ce5e5387b334

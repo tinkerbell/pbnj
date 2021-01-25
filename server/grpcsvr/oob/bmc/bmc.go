@@ -291,6 +291,14 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 			Message: "unknown reset request",
 		}
 	}
+	err = client.Open(ctx)
+	if err != nil {
+		return &repository.Error{
+			Code:    v1.Code_value["PERMISSION_DENIED"],
+			Message: err.Error(),
+		}
+	}
+	defer client.Close(ctx)
 	ok, err = client.ResetBMC(ctx, rLookup)
 	if err != nil {
 		errMsg = err.Error()

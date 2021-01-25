@@ -75,16 +75,22 @@ func TestBMCReset(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			monkey.PatchInstanceMethod(reflect.TypeOf(b), "Open", func(_ *bmclib.Client, _ context.Context) (err error) {
+				return nil
+			})
 			monkey.PatchInstanceMethod(reflect.TypeOf(b), "ResetBMC", func(_ *bmclib.Client, _ context.Context, _ string) (ok bool, err error) {
 				return tc.ok, tc.err
 			})
 			err = tc.actionStruct.BMCReset(context.Background(), tc.resetType)
 			if err != nil {
-				diff := cmp.Diff(err.Error(), tc.wantErr.Error())
-				if diff != "" {
-					t.Fatal(diff)
+				if tc.wantErr != nil {
+					diff := cmp.Diff(err.Error(), tc.wantErr.Error())
+					if diff != "" {
+						t.Fatal(diff)
+					}
 				}
 			}
+
 		})
 	}
 }
