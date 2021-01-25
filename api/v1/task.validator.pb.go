@@ -8,6 +8,7 @@ import (
 	math "math"
 
 	proto "github.com/golang/protobuf/proto"
+	_ "github.com/mwitkow/go-proto-validators"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -17,6 +18,9 @@ var _ = fmt.Errorf
 var _ = math.Inf
 
 func (this *StatusRequest) Validate() error {
+	if this.TaskId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("TaskId", fmt.Errorf(`value '%v' must not be an empty string`, this.TaskId))
+	}
 	return nil
 }
 func (this *StatusResponse) Validate() error {
