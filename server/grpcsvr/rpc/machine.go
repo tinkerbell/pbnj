@@ -36,7 +36,7 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 			}
 			taskCtx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 			_ = cancel
-			return mbd.BootDeviceSet(taskCtx, in.BootDevice.String())
+			return mbd.BootDeviceSet(taskCtx, in.BootDevice.String(), in.Persistent, in.EfiBoot)
 		})
 
 	return &v1.DeviceResponse{

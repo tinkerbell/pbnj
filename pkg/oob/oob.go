@@ -15,7 +15,7 @@ type PowerSetter interface {
 
 // BootDeviceSetter takes care of resetting a BMC
 type BootDeviceSetter interface {
-	BootDeviceSet(ctx context.Context, device string) (result string, err error)
+	BootDeviceSet(ctx context.Context, device string, persistent, efiBoot bool) (result string, err error)
 }
 
 // BMC management methods
@@ -56,7 +56,7 @@ func SetPower(ctx context.Context, action string, m []PowerSetter) (result strin
 }
 
 // SetBootDevice interface function for setting next boot device
-func SetBootDevice(ctx context.Context, device string, m []BootDeviceSetter) (result string, err error) {
+func SetBootDevice(ctx context.Context, device string, persistent, efiBoot bool, m []BootDeviceSetter) (result string, err error) {
 	for _, elem := range m {
 		select {
 		case <-ctx.Done():
@@ -64,7 +64,7 @@ func SetBootDevice(ctx context.Context, device string, m []BootDeviceSetter) (re
 			break
 		default:
 			if elem != nil {
-				result, setErr := elem.BootDeviceSet(ctx, device)
+				result, setErr := elem.BootDeviceSet(ctx, device, persistent, efiBoot)
 				if setErr != nil {
 					err = multierror.Append(err, setErr)
 					continue

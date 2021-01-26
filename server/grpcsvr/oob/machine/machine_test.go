@@ -3,87 +3,100 @@ package machine
 import (
 	"context"
 	"errors"
-	"fmt"
-	"net"
+	"reflect"
 	"testing"
 
+	"bou.ke/monkey"
+	"github.com/bmc-toolbox/bmclib"
 	"github.com/google/go-cmp/cmp"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	"github.com/hashicorp/go-multierror"
+	"github.com/jacobweinstock/registrar"
 	"github.com/packethost/pkg/log/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
-	goipmi "github.com/vmware/goipmi"
+	"github.com/tinkerbell/pbnj/pkg/repository"
+	common "github.com/tinkerbell/pbnj/server/grpcsvr/oob"
 )
 
-func TestBootDevice(t *testing.T) {
-	sim := goipmi.NewSimulator(net.UDPAddr{})
-	err := sim.Run()
-	if err != nil {
-		t.Fatal(err)
+func newAction(withAuthErr bool) Action {
+	l, _, _ := logr.NewPacketLogr()
+	var authn *v1.Authn_DirectAuthn
+	if withAuthErr {
+		authn = &v1.Authn_DirectAuthn{
+			DirectAuthn: nil,
+		}
+	} else {
+		authn = &v1.Authn_DirectAuthn{
+			DirectAuthn: &v1.DirectAuthn{
+				Host: &v1.Host{
+					Host: "localhost",
+				},
+				Username: "admin",
+				Password: "admin",
+			},
+		}
 	}
-	port := sim.LocalAddr().Port
-	defer sim.Stop()
-	testCases := []struct {
-		name        string
-		req         *v1.DeviceRequest
-		message     string
-		expectedErr error
-	}{
-		{
-			name: "set boot device",
-			req: &v1.DeviceRequest{
-				Authn: &v1.Authn{
-					Authn: &v1.Authn_DirectAuthn{
-						DirectAuthn: &v1.DirectAuthn{
-							Host: &v1.Host{
-								Host: fmt.Sprintf("127.0.0.1:%v", port),
-							},
-							Username: "admin",
-							Password: "admin",
-						},
-					},
-				},
-				BootDevice: v1.BootDevice_BOOT_DEVICE_BIOS,
-			},
-			message: "boot device set: bios",
-			expectedErr: &multierror.Error{
-				Errors: []error{
-					errors.New("set boot device failed"),
-				},
-			},
+	m := Action{
+		Accessory: common.Accessory{
+			Log:            l,
+			StatusMessages: make(chan string),
 		},
+		BootDeviceRequest: &v1.DeviceRequest{
+			Authn: &v1.Authn{
+				Authn: authn,
+			},
+			Vendor: &v1.Vendor{
+				Name: "local",
+			},
+			BootDevice: v1.BootDevice_BOOT_DEVICE_PXE,
+		},
+	}
+	return m
+}
+
+func TestBootDevice(t *testing.T) {
+	b := bmclib.NewClient("localhost", "623", "admin", "admin")
+	m := newAction(false)
+	authErr := newAction(true)
+
+	testCases := []struct {
+		name         string
+		ok           bool
+		err          error
+		want         string
+		wantErr      error
+		bootDevice   string
+		actionStruct Action
+	}{
+		{"reset err", false, errors.New("bad"), "", &repository.Error{Code: v1.Code_value["UNKNOWN"], Message: "bad", Details: []string{}}, v1.BootDevice_BOOT_DEVICE_PXE.String(), m},
+		{"success", true, nil, "", nil, v1.BootDevice_BOOT_DEVICE_PXE.String(), m},
+		{"reset not ok", false, nil, "", &repository.Error{Code: v1.Code_value["UNKNOWN"], Message: "setting boot device failed", Details: []string{}}, v1.BootDevice_BOOT_DEVICE_PXE.String(), m},
+		{"unknown reset request", true, nil, "", &repository.Error{Code: v1.Code_value["INVALID_ARGUMENT"], Message: "unknown boot device", Details: []string{}}, "blah", m},
+		{"auth parse err", true, nil, "", &repository.Error{Code: v1.Code_value["UNAUTHENTICATED"], Message: "no auth found", Details: []string{}}, v1.BootDevice_BOOT_DEVICE_PXE.String(), authErr},
 	}
 
 	for _, tc := range testCases {
-		testCase := tc
-		t.Run(testCase.name, func(t *testing.T) {
-			ctx := context.Background()
-
-			l, zapLogger, _ := logr.NewPacketLogr()
-			ctx = ctxzap.ToContext(ctx, zapLogger)
-			ma, err := NewBootDeviceSetter(
-				WithDeviceRequest(tc.req),
-				WithLogger(l),
-				WithStatusMessage(make(chan string)),
-				WithDeviceRequest(testCase.req),
-			)
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			monkey.PatchInstanceMethod(reflect.TypeOf(b), "Open", func(_ *bmclib.Client, _ context.Context) (err error) {
+				return nil
+			})
+			monkey.PatchInstanceMethod(reflect.TypeOf(&registrar.Registry{}), "FilterForCompatible", func(_ *registrar.Registry, _ context.Context) (drvs registrar.Drivers) {
+				return b.Registry.Drivers
+			})
+			monkey.PatchInstanceMethod(reflect.TypeOf(b), "SetBootDevice", func(_ *bmclib.Client, _ context.Context, _ string, _ bool, _ bool) (ok bool, err error) {
+				return tc.ok, tc.err
+			})
+			result, err := tc.actionStruct.BootDeviceSet(context.Background(), tc.bootDevice, false, false)
 			if err != nil {
-				t.Fatal(err)
-			}
-			result, errMsg := ma.BootDeviceSet(ctx, testCase.req.BootDevice.String())
-			t.Log("result got: ", result)
-			t.Log("errMsg got: ", fmt.Sprintf("%+v", errMsg))
-
-			if errMsg != nil {
-				diff := cmp.Diff(testCase.expectedErr.Error(), errMsg.Error())
-				if diff != "" {
-					t.Log(fmt.Sprintf("%+v", errMsg))
-					t.Fatalf(diff)
+				if tc.wantErr != nil {
+					diff := cmp.Diff(err.Error(), tc.wantErr.Error())
+					if diff != "" {
+						t.Fatal(diff)
+					}
 				}
 			} else {
-				diff := cmp.Diff(testCase.message, result)
+				diff := cmp.Diff(result, tc.want)
 				if diff != "" {
-					t.Fatalf(diff)
+					t.Fatal(diff)
 				}
 			}
 

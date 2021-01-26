@@ -3,11 +3,13 @@ package machine
 import (
 	"context"
 
+	"github.com/bmc-toolbox/bmclib"
 	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/metrics"
 	"github.com/tinkerbell/pbnj/pkg/oob"
+	"github.com/tinkerbell/pbnj/pkg/repository"
 	common "github.com/tinkerbell/pbnj/server/grpcsvr/oob"
 )
 
@@ -78,7 +80,7 @@ func NewBootDeviceSetter(opts ...Option) (oob.BootDeviceSetter, error) {
 }
 
 // BootDeviceSet functionality for machines
-func (m Action) BootDeviceSet(ctx context.Context, device string) (result string, err error) {
+func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, efiBoot bool) (result string, err error) {
 	labels := prometheus.Labels{
 		"service": "machine",
 		"action":  "boot_device",
@@ -93,36 +95,55 @@ func (m Action) BootDeviceSet(ctx context.Context, device string) (result string
 	base := "setting boot device: " + m.BootDeviceRequest.GetBootDevice().String()
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
-
-	connections := map[string]interface{}{
-		"ipmitool": &ipmiBootDevice{mAction: m, user: user, password: password, host: host, port: "623"},
-	}
+	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
+	client.Registry.Drivers = client.Registry.FilterForCompatible(ctx)
 
 	m.SendStatusMessage("connecting to BMC")
-	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
-	if ecErr != nil {
-		m.SendStatusMessage("connecting to BMC failed")
-		return result, ecErr
-	}
-	m.SendStatusMessage("connected to BMC")
-
-	var userAction []oob.BootDeviceSetter
-	for _, elem := range successfulConnections {
-		conn := connections[elem]
-		switch r := conn.(type) {
-		case common.Connection:
-			defer r.Close(ctx)
-		}
-		switch r := conn.(type) {
-		case oob.BootDeviceSetter:
-			userAction = append(userAction, r)
-		}
-	}
-	result, err = oob.SetBootDevice(ctx, device, userAction)
+	err = client.Open(ctx)
 	if err != nil {
-		m.SendStatusMessage("error with " + base + ": " + err.Error())
-		m.Log.V(0).Info("error with "+base, "error", err.Error())
-		return result, err
+		return "", &repository.Error{
+			Code:    v1.Code_value["PERMISSION_DENIED"],
+			Message: err.Error(),
+		}
+	}
+	defer client.Close(ctx)
+
+	var dev string
+	switch device {
+	case v1.BootDevice_BOOT_DEVICE_NONE.String():
+		dev = "none"
+	case v1.BootDevice_BOOT_DEVICE_BIOS.String():
+		dev = "bios"
+	case v1.BootDevice_BOOT_DEVICE_CDROM.String():
+		dev = "cdrom"
+	case v1.BootDevice_BOOT_DEVICE_DISK.String():
+		dev = "disk"
+	case v1.BootDevice_BOOT_DEVICE_PXE.String():
+		dev = "pxe"
+	case v1.BootDevice_BOOT_DEVICE_UNSPECIFIED.String():
+		return "", &repository.Error{
+			Code:    v1.Code_value["INVALID_ARGUMENT"],
+			Message: "UNSPECIFIED boot device",
+		}
+	default:
+		return "", &repository.Error{
+			Code:    v1.Code_value["INVALID_ARGUMENT"],
+			Message: "unknown boot device",
+		}
+	}
+
+	var errMsg string
+	ok, err := client.SetBootDevice(ctx, dev, persistent, efiBoot)
+	if err != nil {
+		errMsg = err.Error()
+	} else if !ok {
+		errMsg = "setting boot device failed"
+	}
+	if errMsg != "" {
+		return "", &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: errMsg,
+		}
 	}
 	m.SendStatusMessage(base + " complete")
 	return result, nil

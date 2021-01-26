@@ -21,7 +21,7 @@ func (o *OOBTester) PowerSet(ctx context.Context, action string) (result string,
 	return "power action complete: " + action, nil
 }
 
-func (o *OOBTester) BootDeviceSet(ctx context.Context, device string) (result string, err error) {
+func (o *OOBTester) BootDeviceSet(ctx context.Context, device string, persistent, efiBoot bool) (result string, err error) {
 	if o.MakeFail {
 		return result, errors.New("boot device failed")
 	}
@@ -120,7 +120,7 @@ func TestMachineBootDevice(t *testing.T) {
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), tc.ctxTimeout)
 			defer cancel()
-			result, err := SetBootDevice(ctx, tc.device, []BootDeviceSetter{&testImplementation})
+			result, err := SetBootDevice(ctx, tc.device, true, false, []BootDeviceSetter{&testImplementation})
 			if err != nil {
 				diff := cmp.Diff(tc.err.Error(), err.Error())
 				if diff != "" {
