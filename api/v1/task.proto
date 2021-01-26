@@ -5,12 +5,14 @@ option ruby_package = "Pbnj::Api::V1";
 
 package github.com.tinkerbell.pbnj.api.v1;
 
+import "github.com/mwitkow/go-proto-validators@v0.3.2/validator.proto";
+
 service Task {
     rpc Status(StatusRequest) returns (StatusResponse);
 }
 
 message StatusRequest {
-    string task_id = 1;
+    string task_id = 1 [(validator.field) = {string_not_empty : true}];
 }
 
 message StatusResponse {

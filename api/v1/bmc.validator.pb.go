@@ -8,6 +8,7 @@ import (
 	math "math"
 
 	proto "github.com/golang/protobuf/proto"
+	_ "github.com/mwitkow/go-proto-validators"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -27,6 +28,9 @@ func (this *NetworkSourceRequest) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("Vendor", err)
 		}
 	}
+	if _, ok := NetworkSource_name[int32(this.NetworkSource)]; !ok {
+		return github_com_mwitkow_go_proto_validators.FieldError("NetworkSource", fmt.Errorf(`value '%v' must be a valid NetworkSource field`, this.NetworkSource))
+	}
 	return nil
 }
 func (this *NetworkSourceResponse) Validate() error {
@@ -43,12 +47,24 @@ func (this *ResetRequest) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("Vendor", err)
 		}
 	}
+	if _, ok := ResetKind_name[int32(this.ResetKind)]; !ok {
+		return github_com_mwitkow_go_proto_validators.FieldError("ResetKind", fmt.Errorf(`value '%v' must be a valid ResetKind field`, this.ResetKind))
+	}
 	return nil
 }
 func (this *ResetResponse) Validate() error {
 	return nil
 }
 func (this *UserCreds) Validate() error {
+	if this.Username == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Username", fmt.Errorf(`value '%v' must not be an empty string`, this.Username))
+	}
+	if this.Password == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Password", fmt.Errorf(`value '%v' must not be an empty string`, this.Password))
+	}
+	if _, ok := UserRole_name[int32(this.UserRole)]; !ok {
+		return github_com_mwitkow_go_proto_validators.FieldError("UserRole", fmt.Errorf(`value '%v' must be a valid UserRole field`, this.UserRole))
+	}
 	return nil
 }
 func (this *CreateUserRequest) Validate() error {
@@ -82,6 +98,9 @@ func (this *DeleteUserRequest) Validate() error {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Vendor); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Vendor", err)
 		}
+	}
+	if this.Username == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Username", fmt.Errorf(`value '%v' must not be an empty string`, this.Username))
 	}
 	return nil
 }

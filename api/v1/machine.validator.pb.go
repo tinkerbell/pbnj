@@ -8,6 +8,7 @@ import (
 	math "math"
 
 	proto "github.com/golang/protobuf/proto"
+	_ "github.com/mwitkow/go-proto-validators"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
@@ -27,6 +28,9 @@ func (this *DeviceRequest) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("Vendor", err)
 		}
 	}
+	if _, ok := BootDevice_name[int32(this.BootDevice)]; !ok {
+		return github_com_mwitkow_go_proto_validators.FieldError("BootDevice", fmt.Errorf(`value '%v' must be a valid BootDevice field`, this.BootDevice))
+	}
 	return nil
 }
 func (this *DeviceResponse) Validate() error {
@@ -42,6 +46,15 @@ func (this *PowerRequest) Validate() error {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Vendor); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Vendor", err)
 		}
+	}
+	if _, ok := PowerAction_name[int32(this.PowerAction)]; !ok {
+		return github_com_mwitkow_go_proto_validators.FieldError("PowerAction", fmt.Errorf(`value '%v' must be a valid PowerAction field`, this.PowerAction))
+	}
+	if !(this.SoftTimeout > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SoftTimeout", fmt.Errorf(`value '%v' must be greater than '0'`, this.SoftTimeout))
+	}
+	if !(this.OffDuration > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("OffDuration", fmt.Errorf(`value '%v' must be greater than '0'`, this.OffDuration))
 	}
 	return nil
 }

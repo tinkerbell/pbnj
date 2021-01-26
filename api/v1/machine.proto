@@ -6,6 +6,7 @@ option ruby_package = "Pbnj::Api::V1";
 package github.com.tinkerbell.pbnj.api.v1;
 
 import "api/v1/common.proto";
+import "github.com/mwitkow/go-proto-validators@v0.3.2/validator.proto";
 
 service Machine {
     rpc BootDevice (DeviceRequest) returns (DeviceResponse);
@@ -15,7 +16,7 @@ service Machine {
 message DeviceRequest {
     v1.Authn authn = 1;
     v1.Vendor vendor = 2;
-    BootDevice boot_device = 3;
+    BootDevice boot_device = 3 [(validator.field) = {is_in_enum : true}];
     bool persistent = 4;
     bool efi_boot = 5;
 }
@@ -27,9 +28,9 @@ message DeviceResponse {
 message PowerRequest {
     v1.Authn authn = 1;
     v1.Vendor vendor = 2;
-    PowerAction power_action = 3;
-    int32 soft_timeout = 4;
-    int32 off_duration = 5;
+    PowerAction power_action = 3 [(validator.field) = {is_in_enum : true}];
+    int32 soft_timeout = 4 [(validator.field) = {int_gt: 0}];
+    int32 off_duration = 5 [(validator.field) = {int_gt: 0}];
 }
 
 message PowerResponse {
