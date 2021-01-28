@@ -8,6 +8,6 @@ import (
 
 // Task interface for doing BMC actions
 type Task interface {
-	Execute(ctx context.Context, description string, action func(chan string) (string, error)) (id string, err error)
-	Status(ctx context.Context, id string) (record repository.Record, err error)
+	Execute(ctx context.Context, description, taskID string, action func(chan string) (string, error))
+	Status(ctx context.Context, taskID string) (record repository.Record, err error)
 }
