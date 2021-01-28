@@ -50,11 +50,11 @@ func (this *PowerRequest) Validate() error {
 	if _, ok := PowerAction_name[int32(this.PowerAction)]; !ok {
 		return github_com_mwitkow_go_proto_validators.FieldError("PowerAction", fmt.Errorf(`value '%v' must be a valid PowerAction field`, this.PowerAction))
 	}
-	if !(this.SoftTimeout > 0) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SoftTimeout", fmt.Errorf(`value '%v' must be greater than '0'`, this.SoftTimeout))
+	if !(this.SoftTimeout > -1) {
+		return github_com_mwitkow_go_proto_validators.FieldError("SoftTimeout", fmt.Errorf(`value '%v' must be greater than '-1'`, this.SoftTimeout))
 	}
-	if !(this.OffDuration > 0) {
-		return github_com_mwitkow_go_proto_validators.FieldError("OffDuration", fmt.Errorf(`value '%v' must be greater than '0'`, this.OffDuration))
+	if !(this.OffDuration > -1) {
+		return github_com_mwitkow_go_proto_validators.FieldError("OffDuration", fmt.Errorf(`value '%v' must be greater than '-1'`, this.OffDuration))
 	}
 	return nil
 }
