@@ -8,10 +8,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/go-logr/logr"
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 
-	"github.com/rs/xid"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/metrics"
 	"github.com/tinkerbell/pbnj/pkg/repository"
@@ -42,18 +41,15 @@ func (r *Runner) TotalWorkers() int {
 }
 
 // Execute a task, update repository with status
-func (r *Runner) Execute(ctx context.Context, description string, action func(chan string) (string, error)) (id string, err error) {
-	rawID := xid.New()
-	id = rawID.String()
-	l := r.Log.GetContextLogger(ctx)
-	l.V(0).Info("executing task", "taskID", id, "taskDescription", description)
-	go r.worker(ctx, l, id, description, action)
-	return id, err
+func (r *Runner) Execute(ctx context.Context, description, taskID string, action func(chan string) (string, error)) {
+	go r.worker(ctx, description, taskID, action)
 }
 
 // does the work, updates the repo record
 // TODO handle retrys, use a timeout
-func (r *Runner) worker(ctx context.Context, logger logr.Logger, id string, description string, action func(chan string) (string, error)) {
+func (r *Runner) worker(ctx context.Context, description, taskID string, action func(chan string) (string, error)) {
+	logger := r.Log.GetContextLogger(ctx)
+	logger = logger.WithValues("complete", false, "taskID", taskID, "description", description)
 	r.counterMu.Lock()
 	r.active++
 	r.total++
@@ -67,7 +63,6 @@ func (r *Runner) worker(ctx context.Context, logger logr.Logger, id string, desc
 	metrics.TasksTotal.Inc()
 	metrics.TasksActive.Inc()
 	defer metrics.TasksActive.Dec()
-	logger.V(0).Info("starting worker", "taskID", id, "description", description)
 
 	messagesChan := make(chan string)
 	actionACK := make(chan bool, 1)
@@ -77,7 +72,7 @@ func (r *Runner) worker(ctx context.Context, logger logr.Logger, id string, desc
 	defer close(actionSyn)
 	repo := r.Repository
 	sessionRecord := repository.Record{
-		Id:          id,
+		Id:          taskID,
 		Description: description,
 		State:       "running",
 		Messages:    []string{},
@@ -87,10 +82,10 @@ func (r *Runner) worker(ctx context.Context, logger logr.Logger, id string, desc
 			Details: nil,
 		}}
 
-	err := repo.Create(id, sessionRecord)
+	err := repo.Create(taskID, sessionRecord)
 	if err != nil {
 		// TODO how to handle unable to create record; ie network error, persistence error, etc?
-		logger.V(0).Error(err, "creating record failed")
+		logger.V(0).Error(err, "task complete", "complete", true)
 		return
 	}
 
@@ -98,10 +93,9 @@ func (r *Runner) worker(ctx context.Context, logger logr.Logger, id string, desc
 		for {
 			select {
 			case msg := <-messagesChan:
-				logger.V(0).Info("STATUS MESSAGE", "statusMsg", msg)
-				currStatus, _ := repo.Get(id)
+				currStatus, _ := repo.Get(taskID)
 				sessionRecord.Messages = append(currStatus.Messages, msg)
-				_ = repo.Update(id, sessionRecord)
+				_ = repo.Update(taskID, sessionRecord)
 			case <-actionSyn:
 				actionACK <- true
 				return
@@ -116,8 +110,9 @@ func (r *Runner) worker(ctx context.Context, logger logr.Logger, id string, desc
 	<-actionACK
 	sessionRecord.State = "complete"
 	sessionRecord.Complete = true
+	var finalErr error
 	if err != nil {
-		logger.V(0).Info("error running action", "err", err.Error())
+		finalErr = multierror.Append(finalErr, err)
 		sessionRecord.Result = "action failed"
 		re, ok := err.(*repository.Error)
 		if ok {
@@ -130,19 +125,21 @@ func (r *Runner) worker(ctx context.Context, logger logr.Logger, id string, desc
 			sessionRecord.Error = foundErr.StructuredError()
 		}
 	}
-	errI := repo.Update(id, sessionRecord)
-	if errI != nil {
-		// TODO handle unable to update record; ie network error, persistence error, etc
-		logger.V(0).Error(err, "updating record failed")
-		return
+	// TODO handle unable to update record; ie network error, persistence error, etc
+	if err := repo.Update(taskID, sessionRecord); err != nil {
+		finalErr = multierror.Append(finalErr, err)
+	}
+
+	if finalErr != nil {
+		logger.V(0).Error(finalErr, "task complete", "complete", true)
+	} else {
+		logger.V(0).Info("task complete", "complete", true)
 	}
 }
 
 // Status returns the status record of a task
-func (r *Runner) Status(ctx context.Context, id string) (record repository.Record, err error) {
-	l := r.Log.GetContextLogger(ctx)
-	l.V(0).Info("getting task record", "taskID", id)
-	record, err = r.Repository.Get(id)
+func (r *Runner) Status(ctx context.Context, taskID string) (record repository.Record, err error) {
+	record, err = r.Repository.Get(taskID)
 	if err != nil {
 		switch t := err.(type) {
 		case *net.OpError:

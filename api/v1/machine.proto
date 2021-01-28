@@ -29,8 +29,8 @@ message PowerRequest {
     v1.Authn authn = 1;
     v1.Vendor vendor = 2;
     PowerAction power_action = 3 [(validator.field) = {is_in_enum : true}];
-    int32 soft_timeout = 4 [(validator.field) = {int_gt: 0}];
-    int32 off_duration = 5 [(validator.field) = {int_gt: 0}];
+    int32 soft_timeout = 4 [(validator.field) = {int_gt: -1}];
+    int32 off_duration = 5 [(validator.field) = {int_gt: -1}];
 }
 
 message PowerResponse {

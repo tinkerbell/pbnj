@@ -169,6 +169,7 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	// the order here is the order in which these connections/operations will be tried
 
 	connections := map[string]interface{}{
+		"bmclib2":  &bmclibClient{log: m.Log, user: user, password: password, host: host},
 		"bmclib":   &bmclibBMC{user: user, password: password, host: host, log: m.Log},
 		"ipmitool": &ipmiBMC{user: user, password: password, host: host, log: m.Log},
 		"redfish":  &redfishBMC{user: user, password: password, host: host, log: m.Log},
@@ -199,7 +200,6 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	result, err = oob.SetPower(ctx, action, pwrActions)
 	if err != nil {
 		m.SendStatusMessage("error with " + base + ": " + err.Error())
-		m.Log.V(0).Info("error with "+base, "error", err.Error())
 		return result, err
 	}
 	m.SendStatusMessage(base + " complete")

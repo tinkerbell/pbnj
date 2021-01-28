@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	"github.com/onsi/gomega"
 	"github.com/packethost/pkg/log/logr"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
@@ -82,13 +81,21 @@ func TestConfigNetworkSource(t *testing.T) {
 		name        string
 		req         *v1.NetworkSourceRequest
 		message     string
-		expectedErr bool
+		expectedErr error
 	}{
 		{
 			name: "status good",
 			req: &v1.NetworkSourceRequest{
 				Authn: &v1.Authn{
-					Authn: nil,
+					Authn: &v1.Authn_DirectAuthn{
+						DirectAuthn: &v1.DirectAuthn{
+							Host: &v1.Host{
+								Host: "127.0.0.1",
+							},
+							Username: "ADMIN",
+							Password: "ADMIN",
+						},
+					},
 				},
 				Vendor: &v1.Vendor{
 					Name: "",
@@ -96,22 +103,19 @@ func TestConfigNetworkSource(t *testing.T) {
 				NetworkSource: 0,
 			},
 			message:     "good",
-			expectedErr: false,
+			expectedErr: errors.New("not implemented"),
 		},
 	}
 
 	for _, tc := range testCases {
 		testCase := tc
 		t.Run(testCase.name, func(t *testing.T) {
-			g := gomega.NewGomegaWithT(t)
 			response, err := bmcService.NetworkSource(ctx, testCase.req)
-			t.Log("Got : ", response)
-
-			if testCase.expectedErr {
-				g.Expect(response).ToNot(gomega.BeNil(), "Result should be nil")
-				g.Expect(err).ToNot(gomega.BeNil(), "Result should be nil")
-			} else {
-				g.Expect(response.TaskId).To(gomega.Equal(testCase.message))
+			if response != nil {
+				t.Fatalf("reponse should be nil, got: %v", response)
+			}
+			if diff := cmp.Diff(tc.expectedErr.Error(), err.Error()); diff != "" {
+				t.Fatal(diff)
 			}
 		})
 	}

@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 
+	"github.com/rs/xid"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/task"
@@ -20,34 +21,49 @@ type MachineService struct {
 func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (*v1.DeviceResponse, error) {
 	// TODO figure out how not to have to do this, but still keep the logging abstraction clean?
 	l := m.Log.GetContextLogger(ctx)
-	l.V(0).Info("setting boot device", "device", in.BootDevice.String())
+	taskID := xid.New().String()
+	l = l.WithValues("taskID", taskID)
 
-	taskID, err := m.TaskRunner.Execute(
-		ctx,
-		"setting boot device",
-		func(s chan string) (string, error) {
-			mbd, err := machine.NewBootDeviceSetter(
-				machine.WithDeviceRequest(in),
-				machine.WithLogger(l),
-				machine.WithStatusMessage(s),
-			)
-			if err != nil {
-				return "", err
-			}
-			taskCtx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
-			_ = cancel
-			return mbd.BootDeviceSet(taskCtx, in.BootDevice.String(), in.Persistent, in.EfiBoot)
-		})
+	l.V(0).Info(
+		"start BootDevice request",
+		"username", in.Authn.GetDirectAuthn().GetUsername(),
+		"vendor", in.Vendor.GetName(),
+		"bootDevice", in.BootDevice.String(),
+		"persistent", in.Persistent,
+		"efiBoot", in.EfiBoot,
+	)
 
-	return &v1.DeviceResponse{
-		TaskId: taskID,
-	}, err
+	var execFunc = func(s chan string) (string, error) {
+		mbd, err := machine.NewBootDeviceSetter(
+			machine.WithDeviceRequest(in),
+			machine.WithLogger(l),
+			machine.WithStatusMessage(s),
+		)
+		if err != nil {
+			return "", err
+		}
+		taskCtx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+		_ = cancel
+		return mbd.BootDeviceSet(taskCtx, in.BootDevice.String(), in.Persistent, in.EfiBoot)
+	}
+	m.TaskRunner.Execute(ctx, "setting boot device", taskID, execFunc)
+
+	return &v1.DeviceResponse{TaskId: taskID}, nil
 }
 
 // Power does a power action against a BMC
 func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.PowerResponse, error) {
 	l := m.Log.GetContextLogger(ctx)
-	l.V(0).Info("power request")
+	taskID := xid.New().String()
+	l = l.WithValues("taskID", taskID)
+	l.V(0).Info(
+		"start Power request",
+		"username", in.Authn.GetDirectAuthn().GetUsername(),
+		"vendor", in.Vendor.GetName(),
+		"powerAction", in.GetPowerAction().String(),
+		"softTimeout", in.SoftTimeout,
+		"OffDuration", in.OffDuration,
+	)
 
 	var execFunc = func(s chan string) (string, error) {
 		mp, err := machine.NewPowerSetter(
@@ -62,9 +78,7 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 		_ = cancel
 		return mp.PowerSet(taskCtx, in.PowerAction.String())
 	}
-	taskID, err := m.TaskRunner.Execute(ctx, "power action: "+in.GetPowerAction().String(), execFunc)
+	m.TaskRunner.Execute(ctx, "power action: "+in.GetPowerAction().String(), taskID, execFunc)
 
-	return &v1.PowerResponse{
-		TaskId: taskID,
-	}, err
+	return &v1.PowerResponse{TaskId: taskID}, nil
 }

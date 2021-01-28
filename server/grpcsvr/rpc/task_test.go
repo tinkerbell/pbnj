@@ -10,6 +10,7 @@ import (
 	"github.com/packethost/pkg/log/logr"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
+	"github.com/rs/xid"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/pkg/zaplog"
@@ -37,12 +38,11 @@ func TestTaskFound(t *testing.T) {
 		Ctx:        ctx,
 		Log:        logger,
 	}
-	taskID, err := taskRunner.Execute(ctx, "test", func(s chan string) (string, error) {
+	taskID := xid.New().String()
+	taskRunner.Execute(ctx, "test", taskID, func(s chan string) (string, error) {
 		return "doing cool stuff", defaultError // nolint
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+
 	taskReq := &v1.StatusRequest{TaskId: taskID}
 
 	taskSvc := TaskService{

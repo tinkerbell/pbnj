@@ -9,6 +9,7 @@ import (
 	"github.com/packethost/pkg/log/logr"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
+	"github.com/rs/xid"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/pkg/zaplog"
 	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
@@ -35,19 +36,18 @@ func TestRoundTrip(t *testing.T) {
 		Log:        logger,
 	}
 
-	id, err := runner.Execute(ctx, description, func(s chan string) (string, error) {
+	taskID := xid.New().String()
+	runner.Execute(ctx, description, taskID, func(s chan string) (string, error) {
 		return "didnt do anything", defaultError //nolint
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(id) != 20 {
-		t.Fatalf("expected id of length 20,  got: %v (%v)", len(id), id)
+
+	if len(taskID) != 20 {
+		t.Fatalf("expected id of length 20,  got: %v (%v)", len(taskID), taskID)
 	}
 
 	// must be min of 3 because we sleep 2 seconds in worker function to allow final status messages to be written
 	time.Sleep(500 * time.Millisecond)
-	record, err := runner.Status(ctx, id)
+	record, err := runner.Status(ctx, taskID)
 	if err != nil {
 		t.Fatal(err)
 	}
