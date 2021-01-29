@@ -71,6 +71,7 @@ var (
 					os.Exit(1)
 				}
 			}
+			grpc_prometheus.EnableHandlingTimeHistogram()
 			grpcServer := grpc.NewServer(
 				grpc_middleware.WithUnaryServerChain(
 					grpc_prometheus.UnaryServerInterceptor,
