@@ -20,7 +20,7 @@ test-ci: ## run tests for ci and codecov
 
 .PHONY: test-functional
 test-functional: ## run functional tests
-	go test -v ./test/... --tags=functional -config 'resources.yaml'
+	go run test/main.go -config test/resources.yaml
 
 .PHONY: goimports-ci
 goimports-ci: ## run goimports for ci
@@ -50,11 +50,11 @@ buf-lint:  ## run linting
 
 .PHONY: darwin
 darwin: ## complie for darwin
-	GOOS=darwin ${BUILD_ARGS} -o bin/${BINARY}-darwin-amd64 ./cmd/${BINARY}
+	GOOS=darwin ${BUILD_ARGS} -o bin/${BINARY}-darwin-amd64 main.go
 
 .PHONY: linux
 linux: ## complie for linux
-	GOOS=linux ${BUILD_ARGS} -o bin/${BINARY}-linux-amd64 ./cmd/${BINARY}
+	GOOS=linux ${BUILD_ARGS} -o bin/${BINARY}-linux-amd64 main.go
 
 .PHONY: build
 build: ## compile the binary for the native OS
