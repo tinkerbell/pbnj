@@ -119,7 +119,13 @@ func (m Action) CreateUser(ctx context.Context) error {
 	m.SendStatusMessage(msg)
 
 	connections := map[string]interface{}{
-		"bmclib": &bmclibUserManagement{user: user, password: password, host: host, creds: creds},
+		"bmclib": &bmclibUserManagement{
+			user:     user,
+			password: password,
+			host:     host,
+			log:      m.Log,
+			creds:    creds,
+		},
 	}
 
 	m.SendStatusMessage("connecting to BMC")
@@ -176,6 +182,7 @@ func (m Action) UpdateUser(ctx context.Context) error {
 			user:     user,
 			password: password,
 			host:     host,
+			log:      m.Log,
 			creds:    creds,
 		},
 	}
@@ -233,6 +240,7 @@ func (m Action) DeleteUser(ctx context.Context) error {
 			user:     user,
 			password: password,
 			host:     host,
+			log:      m.Log,
 			creds: &v1.UserCreds{
 				Username: m.DeleteUserRequest.Username,
 			},
@@ -277,7 +285,7 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 	}
 	m.SendStatusMessage("working on bmc reset")
 	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
-	client.Registry.Drivers = client.Registry.FilterForCompatible(ctx)
+	//client.Registry.Drivers = client.Registry.FilterForCompatible(ctx)
 
 	var errMsg string
 	lookup := map[string]string{

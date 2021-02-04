@@ -31,7 +31,7 @@ jobs:
     - name: upload codecov
       run: bash <(curl -s https://codecov.io/bash)
     - name: Build binaries
-      run: go build ./cmd/pbnj
+      run: go build .
     - name: Upload pbnj binary
       uses: actions/upload-artifact@v2
       with:

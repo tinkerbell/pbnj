@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -25,6 +25,11 @@ var rootCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return initConfig(cmd)
 	},
+}
+
+// NewRootCmd is used for testing to run the server
+func NewRootCmd() *cobra.Command {
+	return rootCmd
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
