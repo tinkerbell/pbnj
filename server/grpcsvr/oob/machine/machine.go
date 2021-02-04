@@ -96,7 +96,7 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
-	client.Registry.Drivers = client.Registry.FilterForCompatible(ctx)
+	//client.Registry.Drivers = client.Registry.FilterForCompatible(ctx)
 
 	m.SendStatusMessage("connecting to BMC")
 	err = client.Open(ctx)
