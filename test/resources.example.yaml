@@ -9,10 +9,10 @@ resources:
   useCases: # use cases for each RPC test
     power: # should correspond to an RPC name
     - happyTests # should correspond to the name of a structure that holds test inputs and expected outputs; see table driven tests pattern
-      sadTests # as many of this as needed can be added
+    - sadTests # as many of this as needed can be added
     device:
     - happyTests
-      sadTests
+    - sadTests
 - ip: 10.5.5.5
   username: ADMIN
   password: ADMIN
@@ -20,7 +20,7 @@ resources:
   useCases: 
     power: 
     - happyTests
-      sadTests
+    - sadTests
     device:
     - happyTests
-      sadTests
+    - sadTests

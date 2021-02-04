@@ -7,6 +7,7 @@ require (
 	github.com/bmc-toolbox/bmclib v0.4.10
 	github.com/cristalhq/jwt/v3 v3.0.9
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/fatih/color v1.7.0
 	github.com/gebn/bmc v0.0.0-20200904230046-a5643220ab2a
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-logr/logr v0.4.0
@@ -18,6 +19,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-multierror v1.1.0
 	github.com/jacobweinstock/registrar v0.3.2
+	github.com/manifoldco/promptui v0.8.0
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/onsi/gomega v1.10.4
 	github.com/packethost/pkg v0.0.0-20210106215246-8e2e62dc8f0c
