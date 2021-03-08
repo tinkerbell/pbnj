@@ -102,7 +102,7 @@ var (
 
 func init() {
 	serverCmd.PersistentFlags().StringVar(&port, "port", "50051", "grpc server port")
-	serverCmd.PersistentFlags().StringVar(&metricsAddr, "metrics-listen-addr", ":8080", "metrics server listen address")
+	serverCmd.PersistentFlags().StringVar(&metricsAddr, "metricsListenAddr", ":8080", "metrics server listen address")
 	serverCmd.PersistentFlags().BoolVar(&enableHTTP, "enableHTTP", false, "enable the HTTP server")
 	serverCmd.PersistentFlags().BoolVar(&enableAuthz, "enableAuthz", false, "enable Authz middleware. Configure with configuration file details")
 	serverCmd.PersistentFlags().StringVar(&hsKey, "hsKey", "", "HS key")
