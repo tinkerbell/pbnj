@@ -71,7 +71,7 @@ func TestRecordNotFound(t *testing.T) {
 		{
 			name:        "record of task not found",
 			req:         &v1.StatusRequest{TaskId: "123"},
-			message:     "record id not found: 123",
+			message:     "rpc error: code = NotFound desc = record id not found: 123",
 			expectedErr: true,
 		},
 	}
