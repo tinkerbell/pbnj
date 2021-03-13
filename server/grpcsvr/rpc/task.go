@@ -6,6 +6,8 @@ import (
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/task"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // TaskService for retrieving task details
@@ -22,7 +24,7 @@ func (t *TaskService) Status(ctx context.Context, in *v1.StatusRequest) (*v1.Sta
 
 	record, err := t.TaskRunner.Status(ctx, in.TaskId)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.NotFound, err.Error())
 	}
 	var errMsg *v1.Error
 	if record.Error != nil {
