@@ -33,13 +33,8 @@ func (t *TaskService) Status(ctx context.Context, in *v1.StatusRequest) (*v1.Sta
 			Message: record.Error.Message,
 			Details: record.Error.Details,
 		}
-	} else {
-		errMsg = nil
 	}
-	// TODO should i return this as error or just return the error in the response message?
-	/*if record.Error != "" {
-		return nil, errors.New(record.Error)
-	}*/
+
 	return &v1.StatusResponse{
 		Id:          record.Id,
 		Description: record.Description,
@@ -48,5 +43,5 @@ func (t *TaskService) Status(ctx context.Context, in *v1.StatusRequest) (*v1.Sta
 		Result:      record.Result,
 		Complete:    record.Complete,
 		Messages:    record.Messages,
-	}, err
+	}, nil
 }
