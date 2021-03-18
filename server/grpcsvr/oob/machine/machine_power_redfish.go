@@ -2,9 +2,12 @@ package machine
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	"github.com/stmcginnis/gofish"
 	"github.com/stmcginnis/gofish/redfish"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
@@ -195,20 +198,19 @@ func (r *redfishBMC) cycle(ctx context.Context) (result string, err error) {
 		errMsg.Message = err.Error()
 		return result, &errMsg
 	}
+
+	res, err := r.status(ctx)
+	if err != nil {
+		return "", fmt.Errorf("power cycle failed: unable to get current state")
+	}
+	if strings.ToLower(res) == "off" {
+		return "", fmt.Errorf("power cycle failed: Command not supported in present state: %v", res)
+	}
+
 	for _, system := range ss {
-		err = system.Reset(redfish.GracefulRestartResetType)
+		err = system.Reset(redfish.ForceRestartResetType)
 		if err != nil {
-			r.log.V(1).Info("warning", "msg", err.Error())
-			_, _ = r.off(ctx)
-			for wait := 1; wait < 10; wait++ {
-				status, _ := r.status(ctx)
-				if status == "off" {
-					break
-				}
-				time.Sleep(1 * time.Second)
-			}
-			_, errMsg := r.on(ctx)
-			return "cycle", errMsg
+			return "", errors.WithMessage(err, "power cycle failed")
 		}
 	}
 	return "cycle", nil
