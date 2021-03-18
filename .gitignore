@@ -1,3 +1,8 @@
-pbnj
 *.iml
 .idea*/**
+bin/
+pid
+temp.in
+test/resources.yaml
+examples/clients/ruby/lib/api/*
+!examples/clients/ruby/lib/pbnj

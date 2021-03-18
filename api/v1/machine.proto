@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+option go_package = "github.com/tinkerbell/pbnj/api/v1";
+option ruby_package = "Pbnj::Api::V1";
+
+package github.com.tinkerbell.pbnj.api.v1;
+
+import "api/v1/common.proto";
+import "github.com/mwitkow/go-proto-validators@v0.3.2/validator.proto";
+
+service Machine {
+    rpc BootDevice (DeviceRequest) returns (DeviceResponse);
+    rpc Power (PowerRequest) returns (PowerResponse);
+}
+
+message DeviceRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+    BootDevice boot_device = 3 [(validator.field) = {is_in_enum : true}];
+    bool persistent = 4;
+    bool efi_boot = 5;
+}
+
+message DeviceResponse {
+    string task_id = 1;
+}
+
+message PowerRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+    PowerAction power_action = 3 [(validator.field) = {is_in_enum : true}];
+    int32 soft_timeout = 4 [(validator.field) = {int_gt: -1}];
+    int32 off_duration = 5 [(validator.field) = {int_gt: -1}];
+}
+
+message PowerResponse {
+    string task_id = 1;
+}
+
+enum BootDevice {
+    BOOT_DEVICE_UNSPECIFIED = 0;
+    BOOT_DEVICE_NONE = 1;
+    BOOT_DEVICE_BIOS = 2;
+    BOOT_DEVICE_CDROM = 4;
+    BOOT_DEVICE_DISK = 5;
+    BOOT_DEVICE_PXE = 6;
+}
+
+enum PowerAction {
+    POWER_ACTION_UNSPECIFIED = 0;
+    POWER_ACTION_ON = 1;
+    POWER_ACTION_OFF = 2;
+    POWER_ACTION_HARDOFF = 3;
+    POWER_ACTION_CYCLE = 4;
+    POWER_ACTION_RESET = 5;
+    POWER_ACTION_STATUS = 6;
+}

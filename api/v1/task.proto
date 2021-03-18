@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+option go_package = "github.com/tinkerbell/pbnj/api/v1";
+option ruby_package = "Pbnj::Api::V1";
+
+package github.com.tinkerbell.pbnj.api.v1;
+
+import "github.com/mwitkow/go-proto-validators@v0.3.2/validator.proto";
+
+service Task {
+    rpc Status(StatusRequest) returns (StatusResponse);
+}
+
+message StatusRequest {
+    string task_id = 1 [(validator.field) = {string_not_empty : true}];
+}
+
+message StatusResponse {
+    string id = 1;
+    string description = 2;
+    Error error = 3;
+    string state = 4;
+    string result = 5;
+    bool complete = 6;
+    repeated string messages = 7;
+}
+
+message Error {
+    // A simple error code that can be easily handled by the client. The
+    // actual error code is defined by `google.rpc.Code`.
+    int32 code = 1;
+
+    // A developer-facing human-readable error message in English. It should
+    // both explain the error and offer an actionable resolution to it.
+    string message = 2;
+
+    // Additional error information that the client code can use to handle
+    // the error, such as retry delay or a help link.
+    repeated string details = 3;
+}

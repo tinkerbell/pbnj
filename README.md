@@ -1,42 +1,68 @@
 # PBNJ
 
-[![Build Status](https://github.com/tinkerbell/pbnj/workflows/For%20each%20commit%20and%20PR/badge.svg)](https://github.com/tinkerbell/pbnj/actions?query=workflow%3A%22For+each+commit+and+PR%22+branch%3Amaster)
-![](https://img.shields.io/badge/Stability-Experimental-red.svg)
+![For each commit and PR](https://github.com/tinkerbell/pbnj/workflows/For%20each%20commit%20and%20PR/badge.svg)
+![stability](https://img.shields.io/badge/Stability-Experimental-red.svg)
+
+> This repository is [Experimental](https://github.com/packethost/standards/blob/master/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style!
+> This means that support is best effort (at best!) and we strongly encourage you to NOT use this in production.
+
+## Description
 
 This service handles BMC interactions.
 
-This repository is [Experimental](https://github.com/packethost/standards/blob/master/experimental-statement.md) meaning that it's based on untested ideas or techniques and not yet established or finalized or involves a radically new and innovative style!
-This means that support is best effort (at best!) and we strongly encourage you to NOT use this in production.
+- machine and BMC power on/off/reset
+- setting next boot device
+- user management
+- setting BMC network source
 
-## Paths
+PBnJ started out as an HTTP server, listening by default on port 9090.
+This server is scheduled for deprecation and not enabled by default.
+To enable the HTTP server, you must run PBnJ with `pbnj server --enableHTTP` or `PBNJ_ENABLEHTTP=true pbnj server`.
+The gRPC PBnJ server listens by default on port 50051.
+This can be started with `pbnj server`.
+Use `pbnj server --help` for more runtime details.
 
-```
-[GIN-debug] GET    /devices/:ip/power        --> github.com/tinkerbell/pbnj/api.powerStatus (5 handlers)
-[GIN-debug] POST   /devices/:ip/power        --> github.com/tinkerbell/pbnj/api.powerAction (5 handlers)
-[GIN-debug] PATCH  /devices/:ip/boot         --> github.com/tinkerbell/pbnj/api.updateBootOptions (5 handlers)
-[GIN-debug] POST   /devices/:ip/bmc          --> github.com/tinkerbell/pbnj/api.bmcAction (5 handlers)
-[GIN-debug] PATCH  /devices/:ip/ipmi-lan     --> github.com/tinkerbell/pbnj/api.updateLANConfig (5 handlers)
-[GIN-debug] GET    /tasks/:id                --> github.com/tinkerbell/pbnj/api.taskStatus (5 handlers)
-[GIN-debug] GET    /                         --> github.com/tinkerbell/pbnj/api.ping (5 handlers)
-[GIN-debug] GET    /healthcheck              --> github.com/tinkerbell/pbnj/api.healthcheck (4 handlers)
-[GIN-debug] Listening and serving HTTP on :9090
-```
+> This dual-stack functionality is intended to ease the upgrade path and provide existing HTTP server users with user management functionality.
+> Please note that the HTTP server is deprecated and will shortly be removed.
+> If just getting starting with PBnJ, please use the gRPC server.
 
-## Build
+## Usage
 
+### Container
 
-Docker Build
-```
-docker build -f Dockerfile.dev  .
-docker run -it -p 127.0.0.1:9090:9090 <container id>
-```
+Build
 
-Local
-```
-# use go get based on what we import
-go get ./...
-go build
-./pbnj
+```bash
+make image
 ```
 
-Visit http://localhost:9090/healthcheck
+Run
+
+```bash
+# default gRPC port is 50051, default HTTP port is 9090
+make run-image
+```
+
+### Local
+
+Build
+
+```bash
+# builds the binary and puts it in ./bin/
+make build
+```
+
+Run
+
+```bash
+# default gRPC port is 50051, default HTTP port is 9090; does a `go run` of the code base
+make run-server
+```
+
+## Authorization
+
+Documentation on enabling authorization can be found [here](docs/Authorization.md).
+
+## Contributing
+
+See the contributors guide [here](CONTRIBUTING.md).

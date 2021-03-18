@@ -1,0 +1,6 @@
+FROM golang:1.15
+
+ENV GO111MODULE=on
+
+COPY scripts/protoc.sh /protoc.sh
+RUN /protoc.sh deps
