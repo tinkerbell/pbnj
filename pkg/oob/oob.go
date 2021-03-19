@@ -35,11 +35,12 @@ type BMCResetter interface {
 
 // SetPower interface function for power actions
 func SetPower(ctx context.Context, action string, m []PowerSetter) (result string, err error) {
+LOOP:
 	for _, elem := range m {
 		select {
 		case <-ctx.Done():
 			err = multierror.Append(err, ctx.Err())
-			break
+			break LOOP
 		default:
 			if elem != nil {
 				result, setErr := elem.PowerSet(ctx, action)
@@ -57,11 +58,12 @@ func SetPower(ctx context.Context, action string, m []PowerSetter) (result strin
 
 // SetBootDevice interface function for setting next boot device
 func SetBootDevice(ctx context.Context, device string, persistent, efiBoot bool, m []BootDeviceSetter) (result string, err error) {
+LOOP:
 	for _, elem := range m {
 		select {
 		case <-ctx.Done():
 			err = multierror.Append(err, ctx.Err())
-			break
+			break LOOP
 		default:
 			if elem != nil {
 				result, setErr := elem.BootDeviceSet(ctx, device, persistent, efiBoot)
@@ -79,11 +81,12 @@ func SetBootDevice(ctx context.Context, device string, persistent, efiBoot bool,
 
 // CreateUser interface function
 func CreateUser(ctx context.Context, u []BMC) (err error) {
+LOOP:
 	for _, elem := range u {
 		select {
 		case <-ctx.Done():
 			err = multierror.Append(err, ctx.Err())
-			break
+			break LOOP
 		default:
 			if elem != nil {
 				setErr := elem.CreateUser(ctx)
@@ -101,11 +104,12 @@ func CreateUser(ctx context.Context, u []BMC) (err error) {
 
 // UpdateUser interface function
 func UpdateUser(ctx context.Context, u []BMC) (err error) {
+LOOP:
 	for _, elem := range u {
 		select {
 		case <-ctx.Done():
 			err = multierror.Append(err, ctx.Err())
-			break
+			break LOOP
 		default:
 			if elem != nil {
 				setErr := elem.UpdateUser(ctx)
@@ -123,11 +127,12 @@ func UpdateUser(ctx context.Context, u []BMC) (err error) {
 
 // DeleteUser interface function
 func DeleteUser(ctx context.Context, u []BMC) (err error) {
+LOOP:
 	for _, elem := range u {
 		select {
 		case <-ctx.Done():
 			err = multierror.Append(err, ctx.Err())
-			break
+			break LOOP
 		default:
 			if elem != nil {
 				setErr := elem.DeleteUser(ctx)
@@ -145,11 +150,12 @@ func DeleteUser(ctx context.Context, u []BMC) (err error) {
 
 // ResetBMC interface function
 func ResetBMC(ctx context.Context, rType string, r []BMCResetter) (err error) {
+LOOP:
 	for _, elem := range r {
 		select {
 		case <-ctx.Done():
 			err = multierror.Append(err, ctx.Err())
-			break
+			break LOOP
 		default:
 			if elem != nil {
 				setErr := elem.BMCReset(ctx, rType)
