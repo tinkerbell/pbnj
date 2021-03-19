@@ -197,6 +197,9 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	if len(pwrActions) == 0 {
 		m.SendStatusMessage("no successful connections able to run power actions")
 	}
+	if action == v1.PowerAction_POWER_ACTION_CYCLE.String() {
+		action = v1.PowerAction_POWER_ACTION_RESET.String()
+	}
 	result, err = oob.SetPower(ctx, action, pwrActions)
 	if err != nil {
 		m.SendStatusMessage("error with " + base + ": " + err.Error())
