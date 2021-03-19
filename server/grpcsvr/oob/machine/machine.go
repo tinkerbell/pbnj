@@ -2,6 +2,7 @@ package machine
 
 import (
 	"context"
+	"strings"
 
 	"github.com/bmc-toolbox/bmclib"
 	"github.com/go-logr/logr"
@@ -198,7 +199,17 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 		m.SendStatusMessage("no successful connections able to run power actions")
 	}
 	if action == v1.PowerAction_POWER_ACTION_CYCLE.String() {
-		action = v1.PowerAction_POWER_ACTION_RESET.String()
+		// check status
+		// if powered on, do cycle
+		// if powered off, do power on
+		status, err := oob.SetPower(ctx, v1.PowerAction_POWER_ACTION_STATUS.String(), pwrActions)
+		if err != nil {
+			m.SendStatusMessage("error with " + base + ": " + err.Error())
+			return status, err
+		}
+		if strings.ToLower(status) != "on" {
+			action = v1.PowerAction_POWER_ACTION_ON.String()
+		}
 	}
 	result, err = oob.SetPower(ctx, action, pwrActions)
 	if err != nil {
