@@ -34,14 +34,11 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 	)
 
 	var execFunc = func(s chan string) (string, error) {
-		mbd, err := machine.NewBootDeviceSetter(
+		mbd := machine.NewBootDeviceSetter(
 			machine.WithDeviceRequest(in),
 			machine.WithLogger(l),
 			machine.WithStatusMessage(s),
 		)
-		if err != nil {
-			return "", err
-		}
 		taskCtx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		_ = cancel
 		return mbd.BootDeviceSet(taskCtx, in.BootDevice.String(), in.Persistent, in.EfiBoot)
@@ -66,14 +63,11 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 	)
 
 	var execFunc = func(s chan string) (string, error) {
-		mp, err := machine.NewPowerSetter(
+		mp := machine.NewPowerSetter(
 			machine.WithPowerRequest(in),
 			machine.WithLogger(l),
 			machine.WithStatusMessage(s),
 		)
-		if err != nil {
-			return "", err
-		}
 		taskCtx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		_ = cancel
 		return mp.PowerSet(taskCtx, in.PowerAction.String())

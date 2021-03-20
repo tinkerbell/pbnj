@@ -23,80 +23,45 @@ type Action struct {
 }
 
 // Option to add to an Actions
-type Option func(a *Action) error
+type Option func(a *Action)
 
 // WithLogger adds a logr to an Action struct
 func WithLogger(l logr.Logger) Option {
-	return func(a *Action) error {
-		a.Log = l
-		return nil
-	}
+	return func(a *Action) { a.Log = l }
 }
 
 // WithStatusMessage adds a status message chan to an Action struct
 func WithStatusMessage(s chan string) Option {
-	return func(a *Action) error {
-		a.StatusMessages = s
-		return nil
-	}
+	return func(a *Action) { a.StatusMessages = s }
 }
 
 // WithCreateUserRequest adds CreateUserRequest to an Action struct
 func WithCreateUserRequest(in *v1.CreateUserRequest) Option {
-	return func(a *Action) error {
-		a.CreateUserRequest = in
-		return nil
-	}
+	return func(a *Action) { a.CreateUserRequest = in }
 }
 
 // WithDeleteUserRequest adds DeleteUserRequest to an Action struct
 func WithDeleteUserRequest(in *v1.DeleteUserRequest) Option {
-	return func(a *Action) error {
-		a.DeleteUserRequest = in
-		return nil
-	}
+	return func(a *Action) { a.DeleteUserRequest = in }
 }
 
 // WithUpdateUserRequest adds UpdateUserRequest to an Action struct
 func WithUpdateUserRequest(in *v1.UpdateUserRequest) Option {
-	return func(a *Action) error {
-		a.UpdateUserRequest = in
-		return nil
-	}
+	return func(a *Action) { a.UpdateUserRequest = in }
 }
 
 // WithResetRequest adds ResetRequest to an Action struct
 func WithResetRequest(in *v1.ResetRequest) Option {
-	return func(a *Action) error {
-		a.ResetBMCRequest = in
-		return nil
-	}
+	return func(a *Action) { a.ResetBMCRequest = in }
 }
 
 // NewBMC returns an oob.BMC interface
-func NewBMC(opts ...Option) (oob.BMC, error) {
+func NewBMC(opts ...Option) *Action {
 	a := &Action{}
-
 	for _, opt := range opts {
-		err := opt(a)
-		if err != nil {
-			return nil, err
-		}
+		opt(a)
 	}
-	return a, nil
-}
-
-// NewBMCResetter returns an oob.BMCResetter interface
-func NewBMCResetter(opts ...Option) (oob.BMCResetter, error) {
-	a := &Action{}
-
-	for _, opt := range opts {
-		err := opt(a)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return a, nil
+	return a
 }
 
 // CreateUser functionality for machines
@@ -307,6 +272,7 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 		}
 	}
 	defer client.Close(ctx)
+	m.SendStatusMessage("connected to BMC")
 	ok, err = client.ResetBMC(ctx, rLookup)
 	if err != nil {
 		errMsg = err.Error()
