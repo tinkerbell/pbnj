@@ -44,14 +44,11 @@ func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetR
 	)
 
 	var execFunc = func(s chan string) (string, error) {
-		task, err := bmc.NewBMCResetter(
+		task := bmc.NewBMC(
 			bmc.WithLogger(l),
 			bmc.WithStatusMessage(s),
 			bmc.WithResetRequest(in),
 		)
-		if err != nil {
-			return "", err
-		}
 		taskCtx, cancel := context.WithTimeout(ctx, defaultTimeout)
 		// cant defer this cancel because it cancels the context before the func is run
 		// cant have cancel be _ because go vet complains.
@@ -80,14 +77,11 @@ func (b *BmcService) CreateUser(ctx context.Context, in *v1.CreateUserRequest) (
 	)
 
 	var execFunc = func(s chan string) (string, error) {
-		task, err := bmc.NewBMC(
+		task := bmc.NewBMC(
 			bmc.WithCreateUserRequest(in),
 			bmc.WithLogger(l),
 			bmc.WithStatusMessage(s),
 		)
-		if err != nil {
-			return "", err
-		}
 		taskCtx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		_ = cancel
 		return "", task.CreateUser(taskCtx)
@@ -113,14 +107,11 @@ func (b *BmcService) UpdateUser(ctx context.Context, in *v1.UpdateUserRequest) (
 	)
 
 	var execFunc = func(s chan string) (string, error) {
-		task, err := bmc.NewBMC(
+		task := bmc.NewBMC(
 			bmc.WithUpdateUserRequest(in),
 			bmc.WithLogger(l),
 			bmc.WithStatusMessage(s),
 		)
-		if err != nil {
-			return "", err
-		}
 		taskCtx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		_ = cancel
 		return "", task.UpdateUser(taskCtx)
@@ -144,14 +135,11 @@ func (b *BmcService) DeleteUser(ctx context.Context, in *v1.DeleteUserRequest) (
 	)
 
 	var execFunc = func(s chan string) (string, error) {
-		task, err := bmc.NewBMC(
+		task := bmc.NewBMC(
 			bmc.WithDeleteUserRequest(in),
 			bmc.WithLogger(l),
 			bmc.WithStatusMessage(s),
 		)
-		if err != nil {
-			return "", err
-		}
 		taskCtx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		_ = cancel
 		return "", task.DeleteUser(taskCtx)

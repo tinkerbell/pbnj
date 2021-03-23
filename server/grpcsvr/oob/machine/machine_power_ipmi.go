@@ -10,7 +10,7 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
-type ipmiBMC struct {
+type gebnConn struct {
 	log       logr.Logger
 	transport bmc.SessionlessTransport
 	conn      bmc.Session
@@ -19,19 +19,19 @@ type ipmiBMC struct {
 	host      string
 }
 
-func (b *ipmiBMC) Connect(ctx context.Context) error {
+func (c *gebnConn) Connect(ctx context.Context) error {
 	var errMsg repository.Error
-	machine, err := bmc.Dial(ctx, b.host)
+	machine, err := bmc.Dial(ctx, c.host)
 	if err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
 		errMsg.Message = err.Error()
 		return &errMsg
 	}
-	b.transport = machine
+	c.transport = machine
 
 	sess, err := machine.NewSession(ctx, &bmc.SessionOpts{
-		Username:          b.user,
-		Password:          []byte(b.password),
+		Username:          c.user,
+		Password:          []byte(c.password),
 		MaxPrivilegeLevel: ipmi.PrivilegeLevelOperator,
 	})
 	if err != nil {
@@ -39,20 +39,20 @@ func (b *ipmiBMC) Connect(ctx context.Context) error {
 		errMsg.Message = err.Error()
 		return &errMsg
 	}
-	b.conn = sess
+	c.conn = sess
 	return nil
 }
 
-func (b *ipmiBMC) Close(ctx context.Context) {
-	b.transport.Close()
-	b.conn.Close(ctx)
+func (c *gebnConn) Close(ctx context.Context) {
+	c.transport.Close()
+	c.conn.Close(ctx)
 }
 
-func (b *ipmiBMC) PowerSet(ctx context.Context, action string) (result string, err error) {
-	return doIpmiAction(ctx, action, b)
+func (c *gebnConn) PowerSet(ctx context.Context, action string) (result string, err error) {
+	return doIpmiAction(ctx, action, c)
 }
 
-func doIpmiAction(ctx context.Context, action string, pwr *ipmiBMC) (result string, err error) {
+func doIpmiAction(ctx context.Context, action string, pwr *gebnConn) (result string, err error) {
 	switch action {
 	case v1.PowerAction_POWER_ACTION_ON.String():
 		result, err = pwr.on(ctx)
@@ -80,8 +80,8 @@ func doIpmiAction(ctx context.Context, action string, pwr *ipmiBMC) (result stri
 	return result, err
 }
 
-func (b *ipmiBMC) on(ctx context.Context) (result string, err error) {
-	err = b.conn.ChassisControl(ctx, ipmi.ChassisControlPowerOn)
+func (c *gebnConn) on(ctx context.Context) (result string, err error) {
+	err = c.conn.ChassisControl(ctx, ipmi.ChassisControlPowerOn)
 	if err != nil {
 		return result, &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
@@ -91,8 +91,8 @@ func (b *ipmiBMC) on(ctx context.Context) (result string, err error) {
 	return "on", nil
 }
 
-func (b *ipmiBMC) off(ctx context.Context) (result string, err error) {
-	err = b.conn.ChassisControl(ctx, ipmi.ChassisControlSoftPowerOff)
+func (c *gebnConn) off(ctx context.Context) (result string, err error) {
+	err = c.conn.ChassisControl(ctx, ipmi.ChassisControlSoftPowerOff)
 	if err != nil {
 		return result, &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
@@ -102,9 +102,9 @@ func (b *ipmiBMC) off(ctx context.Context) (result string, err error) {
 	return "off", nil
 }
 
-func (b *ipmiBMC) status(ctx context.Context) (result string, err error) {
+func (c *gebnConn) status(ctx context.Context) (result string, err error) {
 	result = "off"
-	status, err := b.conn.GetChassisStatus(ctx)
+	status, err := c.conn.GetChassisStatus(ctx)
 	if err != nil {
 		return result, &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
@@ -117,8 +117,8 @@ func (b *ipmiBMC) status(ctx context.Context) (result string, err error) {
 	return result, nil
 }
 
-func (b *ipmiBMC) reset(ctx context.Context) (result string, err error) {
-	err = b.conn.ChassisControl(ctx, ipmi.ChassisControlHardReset)
+func (c *gebnConn) reset(ctx context.Context) (result string, err error) {
+	err = c.conn.ChassisControl(ctx, ipmi.ChassisControlHardReset)
 	if err != nil {
 		return result, &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
@@ -128,8 +128,8 @@ func (b *ipmiBMC) reset(ctx context.Context) (result string, err error) {
 	return "reset", nil
 }
 
-func (b *ipmiBMC) hardoff(ctx context.Context) (result string, err error) {
-	err = b.conn.ChassisControl(ctx, ipmi.ChassisControlPowerOff)
+func (c *gebnConn) hardoff(ctx context.Context) (result string, err error) {
+	err = c.conn.ChassisControl(ctx, ipmi.ChassisControlPowerOff)
 	if err != nil {
 		return result, &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
@@ -139,8 +139,8 @@ func (b *ipmiBMC) hardoff(ctx context.Context) (result string, err error) {
 	return "hardoff", nil
 }
 
-func (b *ipmiBMC) cycle(ctx context.Context) (result string, err error) {
-	err = b.conn.ChassisControl(ctx, ipmi.ChassisControlPowerCycle)
+func (c *gebnConn) cycle(ctx context.Context) (result string, err error) {
+	err = c.conn.ChassisControl(ctx, ipmi.ChassisControlPowerCycle)
 	if err != nil {
 		return result, &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],

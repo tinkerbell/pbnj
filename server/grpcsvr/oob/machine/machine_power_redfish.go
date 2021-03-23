@@ -14,7 +14,7 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
-type redfishBMC struct {
+type redfishConn struct {
 	log      logr.Logger
 	conn     *gofish.APIClient
 	user     string
@@ -22,7 +22,7 @@ type redfishBMC struct {
 	host     string
 }
 
-func (r *redfishBMC) Connect(ctx context.Context) error {
+func (r *redfishConn) Connect(ctx context.Context) error {
 	var errMsg repository.Error
 	config := gofish.ClientConfig{
 		Endpoint: "https://" + r.host,
@@ -41,15 +41,15 @@ func (r *redfishBMC) Connect(ctx context.Context) error {
 	return nil
 }
 
-func (r *redfishBMC) Close(ctx context.Context) {
+func (r *redfishConn) Close(ctx context.Context) {
 	r.conn.Logout()
 }
 
-func (r *redfishBMC) PowerSet(ctx context.Context, action string) (result string, err error) {
+func (r *redfishConn) PowerSet(ctx context.Context, action string) (result string, err error) {
 	return doRedfishAction(ctx, action, r)
 }
 
-func doRedfishAction(ctx context.Context, action string, pwr *redfishBMC) (result string, err error) {
+func doRedfishAction(ctx context.Context, action string, pwr *redfishConn) (result string, err error) {
 	switch action {
 	case v1.PowerAction_POWER_ACTION_ON.String():
 		result, err = pwr.on(ctx)
@@ -77,7 +77,7 @@ func doRedfishAction(ctx context.Context, action string, pwr *redfishBMC) (resul
 	return result, err
 }
 
-func (r *redfishBMC) on(ctx context.Context) (result string, err error) {
+func (r *redfishConn) on(ctx context.Context) (result string, err error) {
 	var errMsg repository.Error
 	service := r.conn.Service
 	ss, err := service.Systems()
@@ -100,7 +100,7 @@ func (r *redfishBMC) on(ctx context.Context) (result string, err error) {
 	return "on", nil
 }
 
-func (r *redfishBMC) off(ctx context.Context) (result string, err error) {
+func (r *redfishConn) off(ctx context.Context) (result string, err error) {
 	var errMsg repository.Error
 	service := r.conn.Service
 	ss, err := service.Systems()
@@ -123,7 +123,7 @@ func (r *redfishBMC) off(ctx context.Context) (result string, err error) {
 	return "off", nil
 }
 
-func (r *redfishBMC) status(ctx context.Context) (result string, err error) {
+func (r *redfishConn) status(ctx context.Context) (result string, err error) {
 	var errMsg repository.Error
 	service := r.conn.Service
 	ss, err := service.Systems()
@@ -138,7 +138,7 @@ func (r *redfishBMC) status(ctx context.Context) (result string, err error) {
 	return result, nil
 }
 
-func (r *redfishBMC) reset(ctx context.Context) (result string, err error) {
+func (r *redfishConn) reset(ctx context.Context) (result string, err error) {
 	var errMsg repository.Error
 	service := r.conn.Service
 	ss, err := service.Systems()
@@ -166,7 +166,7 @@ func (r *redfishBMC) reset(ctx context.Context) (result string, err error) {
 	return "reset", nil
 }
 
-func (r *redfishBMC) hardoff(ctx context.Context) (result string, err error) {
+func (r *redfishConn) hardoff(ctx context.Context) (result string, err error) {
 	var errMsg repository.Error
 	service := r.conn.Service
 	ss, err := service.Systems()
@@ -176,7 +176,7 @@ func (r *redfishBMC) hardoff(ctx context.Context) (result string, err error) {
 		return result, &errMsg
 	}
 	for _, system := range ss {
-		if system.PowerState == redfish.OnPowerState {
+		if system.PowerState == redfish.OffPowerState {
 			break
 		}
 		err = system.Reset(redfish.ForceOffResetType)
@@ -189,7 +189,7 @@ func (r *redfishBMC) hardoff(ctx context.Context) (result string, err error) {
 	return "hardoff", nil
 }
 
-func (r *redfishBMC) cycle(ctx context.Context) (result string, err error) {
+func (r *redfishConn) cycle(ctx context.Context) (result string, err error) {
 	var errMsg repository.Error
 	service := r.conn.Service
 	ss, err := service.Systems()

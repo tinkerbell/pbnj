@@ -5,10 +5,10 @@ import (
 
 	"github.com/bmc-toolbox/bmclib"
 	"github.com/go-logr/logr"
+	"github.com/jacobweinstock/registrar"
 	"github.com/prometheus/client_golang/prometheus"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/metrics"
-	"github.com/tinkerbell/pbnj/pkg/oob"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	common "github.com/tinkerbell/pbnj/server/grpcsvr/oob"
 )
@@ -21,62 +21,44 @@ type Action struct {
 }
 
 // Option to add to an Actions
-type Option func(a *Action) error
+type Option func(a *Action)
 
 // WithLogger adds a logr to an Action struct
 func WithLogger(l logr.Logger) Option {
-	return func(a *Action) error {
-		a.Log = l
-		return nil
-	}
+	return func(a *Action) { a.Log = l }
 }
 
 // WithStatusMessage adds a status message chan to an Action struct
 func WithStatusMessage(s chan string) Option {
-	return func(a *Action) error {
-		a.StatusMessages = s
-		return nil
-	}
+	return func(a *Action) { a.StatusMessages = s }
 }
 
 // WithDeviceRequest adds DeviceRequest to an Action struct
 func WithDeviceRequest(in *v1.DeviceRequest) Option {
-	return func(a *Action) error {
-		a.BootDeviceRequest = in
-		return nil
-	}
+	return func(a *Action) { a.BootDeviceRequest = in }
 }
 
 // WithPowerRequest adds PowerRequest to an Action struct
 func WithPowerRequest(in *v1.PowerRequest) Option {
-	return func(a *Action) error {
-		a.PowerRequest = in
-		return nil
-	}
+	return func(a *Action) { a.PowerRequest = in }
 }
 
 // NewPowerSetter returns an oob.PowerSetter interface
-func NewPowerSetter(opts ...Option) (oob.PowerSetter, error) {
+func NewPowerSetter(opts ...Option) *Action {
 	a := &Action{}
 	for _, opt := range opts {
-		err := opt(a)
-		if err != nil {
-			return nil, err
-		}
+		opt(a)
 	}
-	return a, nil
+	return a
 }
 
 // NewBootDeviceSetter returns an oob.BootDeviceSetter interface
-func NewBootDeviceSetter(opts ...Option) (oob.BootDeviceSetter, error) {
+func NewBootDeviceSetter(opts ...Option) *Action {
 	a := &Action{}
 	for _, opt := range opts {
-		err := opt(a)
-		if err != nil {
-			return nil, err
-		}
+		opt(a)
 	}
-	return a, nil
+	return a
 }
 
 // BootDeviceSet functionality for machines
@@ -166,41 +148,66 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	// the order here is the order in which these connections/operations will be tried
-
-	connections := map[string]interface{}{
-		"bmclib2":  &bmclibClient{log: m.Log, user: user, password: password, host: host},
-		"bmclib":   &bmclibBMC{user: user, password: password, host: host, log: m.Log},
-		"ipmitool": &ipmiBMC{user: user, password: password, host: host, log: m.Log},
-		"redfish":  &redfishBMC{user: user, password: password, host: host, log: m.Log},
-	}
-
-	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
-	if ecErr != nil {
+	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
+	client.Registry.Register("pureipmi", "ipmi", registrar.Features{""}, nil, &gebnConn{user: user, password: password, host: host, log: m.Log})
+	client.Registry.Register("gofish", "redfish", registrar.Features{""}, nil, &redfishConn{user: user, password: password, host: host, log: m.Log})
+	err = client.Open(ctx)
+	if err != nil {
 		m.SendStatusMessage("connecting to BMC failed")
-		return result, ecErr
+		return result, &repository.Error{
+			Code:    v1.Code_value["PERMISSION_DENIED"],
+			Message: err.Error(),
+		}
 	}
+	defer client.Close(ctx)
 	m.SendStatusMessage("connected to BMC")
 
-	var pwrActions []oob.PowerSetter
-	for _, elem := range successfulConnections {
-		conn := connections[elem]
-		switch r := conn.(type) {
-		case common.Connection:
-			defer r.Close(ctx)
-		}
-		switch r := conn.(type) {
-		case oob.PowerSetter:
-			pwrActions = append(pwrActions, r)
+	var ok bool
+	if action == v1.PowerAction_POWER_ACTION_STATUS.String() {
+		result, err = client.GetPowerState(ctx)
+		ok = true
+	} else {
+		switch action {
+		case v1.PowerAction_POWER_ACTION_ON.String():
+			result = "on"
+			ok, err = client.SetPowerState(ctx, result)
+		case v1.PowerAction_POWER_ACTION_OFF.String():
+			result = "soft"
+			ok, err = client.SetPowerState(ctx, result)
+		case v1.PowerAction_POWER_ACTION_RESET.String():
+			result = "reset"
+			ok, err = client.SetPowerState(ctx, result)
+		case v1.PowerAction_POWER_ACTION_HARDOFF.String():
+			result = "off"
+			ok, err = client.SetPowerState(ctx, result)
+		case v1.PowerAction_POWER_ACTION_CYCLE.String():
+			result = "cycle"
+			ok, err = client.SetPowerState(ctx, result)
+		case v1.PowerAction_POWER_ACTION_UNSPECIFIED.String():
+			return "", &repository.Error{
+				Code:    v1.Code_value["INVALID_ARGUMENT"],
+				Message: "UNSPECIFIED power action",
+			}
+		default:
+			return "", &repository.Error{
+				Code:    v1.Code_value["INVALID_ARGUMENT"],
+				Message: "unknown power action",
+			}
 		}
 	}
-	if len(pwrActions) == 0 {
-		m.SendStatusMessage("no successful connections able to run power actions")
-	}
-	result, err = oob.SetPower(ctx, action, pwrActions)
 	if err != nil {
 		m.SendStatusMessage("error with " + base + ": " + err.Error())
-		return result, err
+		return "", &repository.Error{
+			Code:    v1.Code_value["INTERNAL"],
+			Message: "failed power action",
+		}
+	}
+	if !ok {
+		m.SendStatusMessage("problem with " + base)
+		return "", &repository.Error{
+			Code:    v1.Code_value["INTERNAL"],
+			Message: "failed power action",
+		}
 	}
 	m.SendStatusMessage(base + " complete")
 	return result, nil
