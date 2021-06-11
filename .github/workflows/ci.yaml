@@ -22,6 +22,8 @@ jobs:
         args: -v -D errcheck --timeout=2m
     - name: go fmt
       run: go get golang.org/x/tools/cmd/goimports && goimports -d . | (! grep .)
+    - name: prepare go mod
+      run: go mod tidy
     - name: go vet
       run: go vet ./...
     - name: go test
