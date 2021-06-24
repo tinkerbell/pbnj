@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"time"
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/philippgille/gokv"
@@ -24,6 +25,7 @@ import (
 // Server options
 type Server struct {
 	repository.Actions
+	bmcTimeout time.Duration
 }
 
 // ServerOption for setting optional values
@@ -32,6 +34,11 @@ type ServerOption func(*Server)
 // WithPersistence sets the log level
 func WithPersistence(repo repository.Actions) ServerOption {
 	return func(args *Server) { args.Actions = repo }
+}
+
+// WithBmcTimeout sets the timeout for BMC calls
+func WithBmcTimeout(t time.Duration) ServerOption {
+	return func(args *Server) { args.bmcTimeout = t }
 }
 
 // RunServer registers all services and runs the server
@@ -48,7 +55,8 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 	}
 
 	defaultServer := &Server{
-		Actions: repo,
+		Actions:    repo,
+		bmcTimeout: 15 * time.Second,
 	}
 
 	for _, opt := range opts {
@@ -64,12 +72,14 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 	ms := rpc.MachineService{
 		Log:        log,
 		TaskRunner: taskRunner,
+		Timeout:    defaultServer.bmcTimeout,
 	}
 	v1.RegisterMachineServer(grpcServer, &ms)
 
 	bs := rpc.BmcService{
 		Log:        log,
 		TaskRunner: taskRunner,
+		Timeout:    defaultServer.bmcTimeout,
 	}
 	v1.RegisterBMCServer(grpcServer, &bs)
 
