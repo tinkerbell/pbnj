@@ -60,9 +60,6 @@ var (
 			}
 			defer zlog.Sync() // nolint
 
-			// Make sure that log statements internal to gRPC library are logged using the zapLogger as well.
-			grpc_zap.ReplaceGrpcLoggerV2(zlog)
-
 			authzInterceptor := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 				return handler(ctx, req)
 			}

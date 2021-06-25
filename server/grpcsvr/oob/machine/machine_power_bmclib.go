@@ -39,7 +39,7 @@ func (b *bmclibBMC) Connect(ctx context.Context) error {
 }
 
 func (b *bmclibBMC) Close(ctx context.Context) {
-	b.conn.Close()
+	b.conn.Close(ctx)
 }
 
 func (b *bmclibBMC) PowerSet(ctx context.Context, action string) (result string, err error) {
