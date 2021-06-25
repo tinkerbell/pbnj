@@ -26,6 +26,10 @@ func (t *TaskService) Status(ctx context.Context, in *v1.StatusRequest) (*v1.Sta
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
+	var c codes.Code = codes.OK
+	if record.Error.Message != "" {
+		c = codes.Unknown
+	}
 
 	return &v1.StatusResponse{
 		Id:          record.Id,
@@ -35,5 +39,5 @@ func (t *TaskService) Status(ctx context.Context, in *v1.StatusRequest) (*v1.Sta
 		Result:      record.Result,
 		Complete:    record.Complete,
 		Messages:    record.Messages,
-	}, status.Error(codes.Code(record.Error.Code), record.Error.Message)
+	}, status.Error(c, record.Error.Message)
 }
