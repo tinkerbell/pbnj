@@ -26,22 +26,14 @@ func (t *TaskService) Status(ctx context.Context, in *v1.StatusRequest) (*v1.Sta
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
-	var errMsg *v1.Error
-	if record.Error != nil {
-		errMsg = &v1.Error{
-			Code:    record.Error.Code,
-			Message: record.Error.Message,
-			Details: record.Error.Details,
-		}
-	}
 
 	return &v1.StatusResponse{
 		Id:          record.Id,
 		Description: record.Description,
-		Error:       errMsg,
+		Error:       nil,
 		State:       record.State,
 		Result:      record.Result,
 		Complete:    record.Complete,
 		Messages:    record.Messages,
-	}, nil
+	}, status.Error(codes.Code(record.Error.Code), record.Error.Message)
 }
