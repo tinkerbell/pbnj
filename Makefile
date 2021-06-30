@@ -12,11 +12,11 @@ help:
 
 .PHONY: test
 test: ## run tests
-	go test -v -covermode=count ./...
+	go test -v -covermode=count -gcflags=-l ./...
 
 .PHONY: test-ci
 test-ci: ## run tests for ci and codecov
-	go test -coverprofile=coverage.txt ./...
+	go test -coverprofile=coverage.txt -gcflags=-l ./...
 
 .PHONY: test-functional
 test-functional: ## run functional tests
@@ -34,7 +34,7 @@ goimports: ## run goimports
 
 .PHONY: cover
 cover: ## Run unit tests with coverage report
-	go test -coverprofile=cover.out ./...
+	go test -coverprofile=cover.out -gcflags=-l $$(go list ./... | grep -v 'github.com/tinkerbell/pbnj/test\|github.com/tinkerbell/pbnj/server/httpsvr\|github.com/tinkerbell/pbnj/api')
 	go tool cover -func=cover.out
 	rm -rf cover.out
 

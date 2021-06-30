@@ -2,6 +2,7 @@ package bmc
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/bmc-toolbox/bmclib"
 	"github.com/go-logr/logr"
@@ -86,8 +87,8 @@ func NewBMC(opts ...Option) (oob.BMC, error) {
 	return a, nil
 }
 
-// NewBMCResetter returns an oob.BMCResetter interface
-func NewBMCResetter(opts ...Option) (oob.BMCResetter, error) {
+// NewAction returns an oob.BMCResetter interface
+func NewAction(opts ...Option) (*Action, error) {
 	a := &Action{}
 
 	for _, opt := range opts {
@@ -319,6 +320,7 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 			Message: errMsg,
 		}
 	}
+	m.SendStatusMessage(fmt.Sprintf("%+v", client.GetMetadata()))
 	m.SendStatusMessage("bmc reset complete")
 	return err
 }

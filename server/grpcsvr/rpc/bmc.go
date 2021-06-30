@@ -43,7 +43,7 @@ func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetR
 	)
 
 	var execFunc = func(s chan string) (string, error) {
-		task, err := bmc.NewBMCResetter(
+		task, err := bmc.NewAction(
 			bmc.WithLogger(l),
 			bmc.WithStatusMessage(s),
 			bmc.WithResetRequest(in),

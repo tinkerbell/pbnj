@@ -5,9 +5,11 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+	"time"
 
 	"bou.ke/monkey"
 	"github.com/bmc-toolbox/bmclib"
+	"github.com/bmc-toolbox/bmclib/bmc"
 	"github.com/google/go-cmp/cmp"
 	"github.com/packethost/pkg/log/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
@@ -52,8 +54,6 @@ func newAction(withAuthErr bool) Action {
 }
 
 func TestBMCReset(t *testing.T) {
-	var err error
-	var b *bmclib.Client
 	m := newAction(false)
 	authErr := newAction(true)
 
@@ -75,22 +75,58 @@ func TestBMCReset(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			msgs := []string{}
+			done := make(chan bool)
+			go func() {
+			LOOP:
+				for {
+					select {
+					case sm := <-tc.actionStruct.StatusMessages:
+						msgs = append(msgs, sm)
+					case <-done:
+						break LOOP
+					}
+				}
+			}()
+			t.Cleanup(func() { done <- true })
+			var b *bmclib.Client
 			monkey.PatchInstanceMethod(reflect.TypeOf(b), "Open", func(_ *bmclib.Client, _ context.Context) (err error) {
+				return nil
+			})
+			monkey.PatchInstanceMethod(reflect.TypeOf(b), "Close", func(_ *bmclib.Client, _ context.Context) (err error) {
 				return nil
 			})
 			monkey.PatchInstanceMethod(reflect.TypeOf(b), "ResetBMC", func(_ *bmclib.Client, _ context.Context, _ string) (ok bool, err error) {
 				return tc.ok, tc.err
 			})
-			err = tc.actionStruct.BMCReset(context.Background(), tc.resetType)
+			monkey.PatchInstanceMethod(reflect.TypeOf(b), "GetMetadata", func(_ *bmclib.Client) (md bmc.Metadata) {
+				return bmc.Metadata{
+					SuccessfulProvider:   "redfish",
+					ProvidersAttempted:   []string{"ipmitool", "redfish"},
+					SuccessfulOpenConns:  []string{"ipmitool", "redfish"},
+					SuccessfulCloseConns: []string{},
+				}
+			})
+			err := tc.actionStruct.BMCReset(context.Background(), tc.resetType)
 			if err != nil {
 				if tc.wantErr != nil {
-					diff := cmp.Diff(err.Error(), tc.wantErr.Error())
-					if diff != "" {
+					if diff := cmp.Diff(err.Error(), tc.wantErr.Error()); diff != "" {
 						t.Fatal(diff)
 					}
+				} else {
+					t.Fatal("expected non nil err, got nil")
+				}
+			} else {
+				wantMD := []string{
+					"working on bmc reset",
+					"{SuccessfulProvider:redfish ProvidersAttempted:[ipmitool redfish] SuccessfulOpenConns:[ipmitool redfish] SuccessfulCloseConns:[]}",
+					"bmc reset complete",
+				}
+				time.Sleep(time.Second)
+				if diff := cmp.Diff(msgs, wantMD); diff != "" {
+					t.Fatal(diff)
 				}
 			}
-
 		})
 	}
 }

@@ -56,47 +56,6 @@ func (o *OOBTester) DeleteUser(ctx context.Context) (err error) {
 	return nil
 }
 
-func TestMachinePower(t *testing.T) {
-	testCases := []struct {
-		name       string
-		action     string
-		makeFail   bool
-		err        error
-		ctxTimeout time.Duration
-	}{
-		{name: "success", action: "status", err: nil},
-		{name: "Power method fails", action: "status", makeFail: true, err: &multierror.Error{Errors: []error{errors.New("power failed"), errors.New("power state failed")}}},
-		{name: "error context timeout", action: "status", makeFail: true, err: &multierror.Error{Errors: []error{errors.New("context deadline exceeded"), errors.New("power state failed")}}, ctxTimeout: 1 * time.Nanosecond},
-	}
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			testImplementation := OOBTester{MakeFail: tc.makeFail}
-			expectedResult := "power action complete: " + tc.action
-			if tc.ctxTimeout == 0 {
-				tc.ctxTimeout = time.Second * 3
-			}
-			ctx, cancel := context.WithTimeout(context.Background(), tc.ctxTimeout)
-			defer cancel()
-			result, err := SetPower(ctx, tc.action, []PowerSetter{&testImplementation})
-			if err != nil {
-				diff := cmp.Diff(tc.err.Error(), err.Error())
-				if diff != "" {
-					t.Fatal(diff)
-				}
-
-			} else {
-				diff := cmp.Diff(expectedResult, result)
-				if diff != "" {
-					t.Fatal(diff)
-				}
-			}
-
-		})
-	}
-}
-
 func TestMachineBootDevice(t *testing.T) {
 	testCases := []struct {
 		name       string
@@ -134,39 +93,6 @@ func TestMachineBootDevice(t *testing.T) {
 				}
 			}
 
-		})
-	}
-}
-
-func TestBMCReset(t *testing.T) {
-	testCases := []struct {
-		name       string
-		resetType  string
-		makeFail   bool
-		err        error
-		ctxTimeout time.Duration
-	}{
-		{name: "success", resetType: "cold", err: nil},
-		{name: "BMC reset fails", resetType: "cold", makeFail: true, err: &multierror.Error{Errors: []error{errors.New("failed: BMC reset"), errors.New("BMC reset failed")}}},
-		{name: "error context timeout", resetType: "cold", makeFail: true, err: &multierror.Error{Errors: []error{errors.New("context deadline exceeded"), errors.New("BMC reset failed")}}, ctxTimeout: 1 * time.Nanosecond},
-	}
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			testImplementation := OOBTester{MakeFail: tc.makeFail}
-			if tc.ctxTimeout == 0 {
-				tc.ctxTimeout = time.Second * 3
-			}
-			ctx, cancel := context.WithTimeout(context.Background(), tc.ctxTimeout)
-			defer cancel()
-			err := ResetBMC(ctx, tc.resetType, []BMCResetter{&testImplementation})
-			if err != nil {
-				diff := cmp.Diff(tc.err.Error(), err.Error())
-				if diff != "" {
-					t.Fatal(diff)
-				}
-			}
 		})
 	}
 }

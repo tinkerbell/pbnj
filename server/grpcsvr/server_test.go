@@ -47,7 +47,7 @@ func TestRunServer(t *testing.T) {
 
 	g := new(errgroup.Group)
 	g.Go(func() error {
-		return RunServer(ctx, log, grpcServer, strconv.Itoa(port), httpServer, WithPersistence(repo))
+		return RunServer(ctx, log, grpcServer, strconv.Itoa(port), httpServer, WithPersistence(repo), WithBmcTimeout(time.Second*10))
 	})
 
 	time.Sleep(500 * time.Millisecond)

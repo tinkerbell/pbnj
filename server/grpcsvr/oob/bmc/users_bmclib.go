@@ -41,7 +41,7 @@ func (b *bmclibUserManagement) Connect(ctx context.Context) error {
 }
 
 func (b *bmclibUserManagement) Close(ctx context.Context) {
-	b.conn.Close()
+	b.conn.Close(ctx)
 }
 
 func (b *bmclibUserManagement) CreateUser(ctx context.Context) error {
