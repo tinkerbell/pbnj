@@ -72,7 +72,7 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 	)
 
 	var execFunc = func(s chan string) (string, error) {
-		mp, err := machine.NewPowerSetter(
+		mp, err := machine.NewAction(
 			machine.WithPowerRequest(in),
 			machine.WithLogger(l),
 			machine.WithStatusMessage(s),

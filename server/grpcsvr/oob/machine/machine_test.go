@@ -9,7 +9,6 @@ import (
 	"bou.ke/monkey"
 	"github.com/bmc-toolbox/bmclib"
 	"github.com/google/go-cmp/cmp"
-	"github.com/jacobweinstock/registrar"
 	"github.com/packethost/pkg/log/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/repository"
@@ -79,8 +78,11 @@ func TestBootDevice(t *testing.T) {
 			monkey.PatchInstanceMethod(reflect.TypeOf(b), "Open", func(_ *bmclib.Client, _ context.Context) (err error) {
 				return nil
 			})
-			monkey.PatchInstanceMethod(reflect.TypeOf(&registrar.Registry{}), "FilterForCompatible", func(_ *registrar.Registry, _ context.Context) (drvs registrar.Drivers) {
+			/*monkey.PatchInstanceMethod(reflect.TypeOf(&registrar.Registry{}), "FilterForCompatible", func(_ *registrar.Registry, _ context.Context) (drvs registrar.Drivers) {
 				return b.Registry.Drivers
+			})*/
+			monkey.PatchInstanceMethod(reflect.TypeOf(b), "Close", func(_ *bmclib.Client, _ context.Context) (err error) {
+				return nil
 			})
 			monkey.PatchInstanceMethod(reflect.TypeOf(b), "SetBootDevice", func(_ *bmclib.Client, _ context.Context, _ string, _ bool, _ bool) (ok bool, err error) {
 				return tc.ok, tc.err

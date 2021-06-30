@@ -18,7 +18,7 @@ type bmclibBMC struct {
 	host     string
 }
 
-func (b *bmclibBMC) Connect(ctx context.Context) error {
+func (b *bmclibBMC) Open(ctx context.Context) error {
 	connection, err := discover.ScanAndConnect(b.host, b.user, b.password, discover.WithLogger(b.log), discover.WithContext(ctx))
 	if err != nil {
 		return &repository.Error{
@@ -38,33 +38,43 @@ func (b *bmclibBMC) Connect(ctx context.Context) error {
 	return b.conn.CheckCredentials()
 }
 
-func (b *bmclibBMC) Close(ctx context.Context) {
-	b.conn.Close()
+func (b *bmclibBMC) Close(ctx context.Context) error {
+	return b.conn.Close(ctx)
 }
 
-func (b *bmclibBMC) PowerSet(ctx context.Context, action string) (result string, err error) {
-	return doBmclibAction(ctx, action, b)
+func (b *bmclibBMC) PowerSet(ctx context.Context, action string) (result bool, err error) {
+	_, err = doBmclibAction(ctx, action, b)
+	if err != nil {
+		result = false
+	} else {
+		result = true
+	}
+
+	return result, err
+}
+
+func (b *bmclibBMC) PowerStateGet(ctx context.Context) (result string, err error) {
+	return doBmclibAction(ctx, "status", b)
+}
+
+func (b *bmclibBMC) Name() string {
+	return "bmclib.legacy"
 }
 
 func doBmclibAction(ctx context.Context, action string, pwr *bmclibBMC) (result string, err error) {
 	switch action {
-	case v1.PowerAction_POWER_ACTION_ON.String():
+	case "on":
 		result, err = pwr.on(ctx)
-	case v1.PowerAction_POWER_ACTION_OFF.String():
+	case "soft":
 		result, err = pwr.off(ctx)
-	case v1.PowerAction_POWER_ACTION_STATUS.String():
+	case "status":
 		result, err = pwr.status(ctx)
-	case v1.PowerAction_POWER_ACTION_RESET.String():
+	case "reset":
 		result, err = pwr.reset(ctx)
-	case v1.PowerAction_POWER_ACTION_HARDOFF.String():
+	case "off":
 		result, err = pwr.hardoff(ctx)
-	case v1.PowerAction_POWER_ACTION_CYCLE.String():
+	case "cycle":
 		result, err = pwr.cycle(ctx)
-	case v1.PowerAction_POWER_ACTION_UNSPECIFIED.String():
-		return result, &repository.Error{
-			Code:    v1.Code_value["INVALID_ARGUMENT"],
-			Message: "UNSPECIFIED power action",
-		}
 	default:
 		return result, &repository.Error{
 			Code:    v1.Code_value["INVALID_ARGUMENT"],

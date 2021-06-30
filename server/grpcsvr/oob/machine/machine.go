@@ -2,6 +2,8 @@ package machine
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/bmc-toolbox/bmclib"
 	"github.com/go-logr/logr"
@@ -55,8 +57,8 @@ func WithPowerRequest(in *v1.PowerRequest) Option {
 	}
 }
 
-// NewPowerSetter returns an oob.PowerSetter interface
-func NewPowerSetter(opts ...Option) (oob.PowerSetter, error) {
+// NewAction returns a new Action
+func NewAction(opts ...Option) (*Action, error) {
 	a := &Action{}
 	for _, opt := range opts {
 		err := opt(a)
@@ -166,42 +168,67 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	// the order here is the order in which these connections/operations will be tried
-
-	connections := map[string]interface{}{
-		"bmclib2":  &bmclibClient{log: m.Log, user: user, password: password, host: host},
-		"bmclib":   &bmclibBMC{user: user, password: password, host: host, log: m.Log},
-		"ipmitool": &ipmiBMC{user: user, password: password, host: host, log: m.Log},
-		"redfish":  &redfishBMC{user: user, password: password, host: host, log: m.Log},
+	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
+	two := &bmclibBMC{user: user, password: password, host: host, log: m.Log}
+	client.Registry.Register("bmclib.legacy", "", nil, "", two)
+	client.Registry.Drivers = client.Registry.For("bmclib.legacy")
+	err = client.Open(ctx)
+	if err != nil {
+		return "", &repository.Error{
+			Code:    v1.Code_value["PERMISSION_DENIED"],
+			Message: err.Error(),
+		}
 	}
-
-	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
-	if ecErr != nil {
-		m.SendStatusMessage("connecting to BMC failed")
-		return result, ecErr
-	}
+	defer client.Close(ctx)
 	m.SendStatusMessage("connected to BMC")
 
-	var pwrActions []oob.PowerSetter
-	for _, elem := range successfulConnections {
-		conn := connections[elem]
-		switch r := conn.(type) {
-		case common.Connection:
-			defer r.Close(ctx)
-		}
-		switch r := conn.(type) {
-		case oob.PowerSetter:
-			pwrActions = append(pwrActions, r)
+	var ok bool
+	var errMsg string
+	if action == v1.PowerAction_POWER_ACTION_STATUS.String() {
+		result, err = client.GetPowerState(ctx)
+	} else {
+		ok, err = client.SetPowerState(ctx, lookupPower(action))
+		if !ok {
+			errMsg = "power set failed"
+		} else {
+			result = action
 		}
 	}
-	if len(pwrActions) == 0 {
-		m.SendStatusMessage("no successful connections able to run power actions")
-	}
-	result, err = oob.SetPower(ctx, action, pwrActions)
+
 	if err != nil {
-		m.SendStatusMessage("error with " + base + ": " + err.Error())
-		return result, err
+		errMsg = err.Error()
 	}
+	if errMsg != "" {
+		err := &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: errMsg,
+		}
+		return "", err
+	}
+	s := strings.ReplaceAll(strings.ReplaceAll(fmt.Sprintf("%+v\n", client.GetMetadata()), "}", ""), "{", "")
+	s = strings.TrimSuffix(s, "\n")
+	m.SendStatusMessage(s)
 	m.SendStatusMessage(base + " complete")
 	return result, nil
+}
+
+func lookupPower(p string) string {
+	var o string
+	switch p {
+	case v1.PowerAction_POWER_ACTION_ON.String():
+		o = "on"
+	case v1.PowerAction_POWER_ACTION_HARDOFF.String():
+		o = "off"
+	case v1.PowerAction_POWER_ACTION_OFF.String():
+		o = "soft"
+	case v1.PowerAction_POWER_ACTION_RESET.String():
+		o = "reset"
+	case v1.PowerAction_POWER_ACTION_CYCLE.String():
+		o = "cycle"
+	case v1.PowerAction_POWER_ACTION_UNSPECIFIED.String():
+		o = "unknown"
+	default:
+		o = "unknown"
+	}
+	return o
 }
