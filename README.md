@@ -16,7 +16,7 @@ This service handles BMC interactions.
 - setting BMC network source
 
 PBnJ started out as an HTTP server, listening by default on port 9090.
-This server is scheduled for deprecation and not enabled by default.
+This HTTP server (not the gRPC server) is scheduled for deprecation and not enabled by default.
 To enable the HTTP server, you must run PBnJ with `pbnj server --enableHTTP` or `PBNJ_ENABLEHTTP=true pbnj server`.
 The gRPC PBnJ server listens by default on port 50051.
 This can be started with `pbnj server`.
