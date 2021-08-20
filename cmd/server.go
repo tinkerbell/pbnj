@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	jwt "github.com/cristalhq/jwt/v3"
 	jwt_helper "github.com/dgrijalva/jwt-go"
@@ -37,6 +38,8 @@ var (
 	enableAuthz bool
 	hsKey       string
 	rsPubKey    string
+	// bmcTimeout is how long a BMC call/interaction is allow to run before it is cancelled.
+	bmcTimeout time.Duration
 	// serverCmd represents the server command
 	serverCmd = &cobra.Command{
 		Use:   "server",
@@ -92,7 +95,7 @@ var (
 				go httpsvr.RunHTTPServer()
 			}
 
-			if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger), grpcServer, port, httpServer); err != nil {
+			if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger), grpcServer, port, httpServer, grpcsvr.WithBmcTimeout(bmcTimeout)); err != nil {
 				logger.Error(err, "error running server")
 				os.Exit(1)
 			}
@@ -107,6 +110,7 @@ func init() {
 	serverCmd.PersistentFlags().BoolVar(&enableAuthz, "enableAuthz", false, "enable Authz middleware. Configure with configuration file details")
 	serverCmd.PersistentFlags().StringVar(&hsKey, "hsKey", "", "HS key")
 	serverCmd.PersistentFlags().StringVar(&rsPubKey, "rsPubKey", "", "RS public key")
+	serverCmd.PersistentFlags().DurationVar(&bmcTimeout, "bmcTimeout", (15 * time.Second), "Timeout for BMC calls")
 	rootCmd.AddCommand(serverCmd)
 }
 

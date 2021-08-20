@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"time"
 
 	"github.com/rs/xid"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
@@ -12,7 +13,12 @@ import (
 
 // MachineService for doing power and device actions
 type MachineService struct {
-	Log        logging.Logger
+	Log logging.Logger
+	// Timeout is how long a task should be run
+	// before it is cancelled. This is for use in a
+	// TaskRunner.Execute function that runs all BMC
+	// interactions in the background.
+	Timeout    time.Duration
 	TaskRunner task.Task
 	v1.UnimplementedMachineServer
 }
@@ -42,7 +48,7 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 		if err != nil {
 			return "", err
 		}
-		taskCtx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+		taskCtx, cancel := context.WithTimeout(context.Background(), m.Timeout)
 		_ = cancel
 		return mbd.BootDeviceSet(taskCtx, in.BootDevice.String(), in.Persistent, in.EfiBoot)
 	}
@@ -74,7 +80,7 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 		if err != nil {
 			return "", err
 		}
-		taskCtx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+		taskCtx, cancel := context.WithTimeout(context.Background(), m.Timeout)
 		_ = cancel
 		return mp.PowerSet(taskCtx, in.PowerAction.String())
 	}
