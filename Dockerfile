@@ -15,8 +15,7 @@ ARG IPMITOOL_COMMIT=b5ce925744851b58193ad3ee18957ce88f6efc26
 ARG GRPC_HEALTH_PROBE_VERSION=v0.3.4
 
 WORKDIR /tmp
-RUN apk add --update --upgrade --no-cache --virtual \
-        build-deps=0 \
+RUN apk add --update --upgrade --no-cache --virtual build-deps \
         alpine-sdk=1.0-r0 \
         autoconf=2.69-r2 \
         automake=1.16.1-r0 \
@@ -25,12 +24,11 @@ RUN apk add --update --upgrade --no-cache --virtual \
         ncurses-dev=6.1_p20180818-r1 \
         openssl-dev=1.0.2u-r0 \
         readline-dev=7.0.003-r0 \
-        pbnj-runtime-deps=20210828.182213 \
+    && apk add --update --upgrade --no-cache --virtual run-deps \
 	    ca-certificates=20191127-r2 \
         libcrypto1.0=1.0.2u-r0 \
         musl=1.1.19-r11 \
         readline=7.0.003-r0 \
-    && apk del build-deps \
     && git clone -b master ${IPMITOOL_REPO}
 
 WORKDIR /tmp/ipmitool
@@ -44,7 +42,8 @@ RUN git checkout ${IPMITOOL_COMMIT} \
         --enable-intf-lanplus \
         --enable-intf-open \
     && make \
-    && make install
+    && make install \
+    && apk del build-deps
 
 WORKDIR /tmp
 RUN rm -rf /tmp/ipmitool \
