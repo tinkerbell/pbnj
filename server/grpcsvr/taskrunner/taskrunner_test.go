@@ -51,7 +51,8 @@ func TestRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if record.Complete {
+
+	if !record.Complete {
 		t.Fatalf("expected task to be complete, got: %+v", record)
 	}
 }
