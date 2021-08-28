@@ -42,7 +42,7 @@ func TestRunServer(t *testing.T) {
 	repo := &persistence.GoKV{Store: s, Ctx: ctx}
 
 	grpcServer := grpc.NewServer()
-	httpServer := http.NewHTTPServer(fmt.Sprintf(":%d", port+1))
+	httpServer := http.NewServer(fmt.Sprintf(":%d", port+1))
 	httpServer.WithLogger(l)
 
 	g := new(errgroup.Group)
@@ -73,7 +73,7 @@ func TestRunServerSignals(t *testing.T) {
 	max := 40045
 	port := rand.Intn(max-min+1) + min
 	grpcServer := grpc.NewServer()
-	httpServer := http.NewHTTPServer(fmt.Sprintf(":%d", port+1))
+	httpServer := http.NewServer(fmt.Sprintf(":%d", port+1))
 	httpServer.WithLogger(l)
 
 	g := new(errgroup.Group)
@@ -113,12 +113,11 @@ func TestRunServerPortInUse(t *testing.T) {
 	}
 
 	grpcServer := grpc.NewServer()
-	httpServer := http.NewHTTPServer(fmt.Sprintf(":%d", port+1))
+	httpServer := http.NewServer(fmt.Sprintf(":%d", port+1))
 	httpServer.WithLogger(l)
 
 	err = RunServer(ctx, log, grpcServer, strconv.Itoa(port), httpServer)
 	if err.Error() != "listen tcp :40039: bind: address already in use" {
 		t.Fatal(err)
 	}
-
 }

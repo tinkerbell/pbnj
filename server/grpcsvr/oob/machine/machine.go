@@ -13,17 +13,23 @@ import (
 	common "github.com/tinkerbell/pbnj/server/grpcsvr/oob"
 )
 
-// Action for making power actions on BMCs, implements oob.Machine interface
+const (
+	Reset = "reset"
+	On    = "on"
+	Off   = "off"
+)
+
+// Action for making power actions on BMCs, implements oob.Machine interface.
 type Action struct {
 	common.Accessory
 	PowerRequest      *v1.PowerRequest
 	BootDeviceRequest *v1.DeviceRequest
 }
 
-// Option to add to an Actions
+// Option to add to an Actions.
 type Option func(a *Action) error
 
-// WithLogger adds a logr to an Action struct
+// WithLogger adds a logr to an Action struct.
 func WithLogger(l logr.Logger) Option {
 	return func(a *Action) error {
 		a.Log = l
@@ -31,7 +37,7 @@ func WithLogger(l logr.Logger) Option {
 	}
 }
 
-// WithStatusMessage adds a status message chan to an Action struct
+// WithStatusMessage adds a status message chan to an Action struct.
 func WithStatusMessage(s chan string) Option {
 	return func(a *Action) error {
 		a.StatusMessages = s
@@ -39,7 +45,7 @@ func WithStatusMessage(s chan string) Option {
 	}
 }
 
-// WithDeviceRequest adds DeviceRequest to an Action struct
+// WithDeviceRequest adds DeviceRequest to an Action struct.
 func WithDeviceRequest(in *v1.DeviceRequest) Option {
 	return func(a *Action) error {
 		a.BootDeviceRequest = in
@@ -47,7 +53,7 @@ func WithDeviceRequest(in *v1.DeviceRequest) Option {
 	}
 }
 
-// WithPowerRequest adds PowerRequest to an Action struct
+// WithPowerRequest adds PowerRequest to an Action struct.
 func WithPowerRequest(in *v1.PowerRequest) Option {
 	return func(a *Action) error {
 		a.PowerRequest = in
@@ -55,7 +61,7 @@ func WithPowerRequest(in *v1.PowerRequest) Option {
 	}
 }
 
-// NewPowerSetter returns an oob.PowerSetter interface
+// NewPowerSetter returns an oob.PowerSetter interface.
 func NewPowerSetter(opts ...Option) (oob.PowerSetter, error) {
 	a := &Action{}
 	for _, opt := range opts {
@@ -67,7 +73,7 @@ func NewPowerSetter(opts ...Option) (oob.PowerSetter, error) {
 	return a, nil
 }
 
-// NewBootDeviceSetter returns an oob.BootDeviceSetter interface
+// NewBootDeviceSetter returns an oob.BootDeviceSetter interface.
 func NewBootDeviceSetter(opts ...Option) (oob.BootDeviceSetter, error) {
 	a := &Action{}
 	for _, opt := range opts {
@@ -79,7 +85,7 @@ func NewBootDeviceSetter(opts ...Option) (oob.BootDeviceSetter, error) {
 	return a, nil
 }
 
-// BootDeviceSet functionality for machines
+// BootDeviceSet functionality for machines.
 func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, efiBoot bool) (result string, err error) {
 	labels := prometheus.Labels{
 		"service": "machine",
@@ -96,7 +102,7 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
-	//client.Registry.Drivers = client.Registry.FilterForCompatible(ctx)
+	// client.Registry.Drivers = client.Registry.FilterForCompatible(ctx)
 
 	m.SendStatusMessage("connecting to BMC")
 	err = client.Open(ctx)
@@ -149,7 +155,7 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	return result, nil
 }
 
-// PowerSet functionality for machines
+// PowerSet functionality for machines.
 func (m Action) PowerSet(ctx context.Context, action string) (result string, err error) {
 	labels := prometheus.Labels{
 		"service": "machine",
@@ -185,12 +191,11 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	var pwrActions []oob.PowerSetter
 	for _, elem := range successfulConnections {
 		conn := connections[elem]
-		switch r := conn.(type) {
-		case common.Connection:
-			defer r.Close(ctx)
+		if r, ok := conn.(common.Connection); ok {
+			defer r.Close(ctx) //nolint:revive // defer inside of a loop is OK here due to limited depth
 		}
-		switch r := conn.(type) {
-		case oob.PowerSetter:
+
+		if r, ok := conn.(oob.PowerSetter); ok {
 			pwrActions = append(pwrActions, r)
 		}
 	}

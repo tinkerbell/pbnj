@@ -24,8 +24,7 @@ func updateBootOptions(c *gin.Context) {
 	defer func() { _ = driver.Close() }()
 
 	if err := driver.SetBootOptions(opts); err != nil {
-		c.Error(err) // nolint
-		c.AbortWithStatus(http.StatusInternalServerError)
+		internalServerError(c, err)
 		return
 	}
 

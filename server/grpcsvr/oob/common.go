@@ -10,24 +10,24 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
-// Connection methods open/close
+// Connection methods open/close.
 type Connection interface {
 	Connect(context.Context) error
 	Close(context.Context)
 }
 
-// Accessory for all BMC actions
+// Accessory for all BMC actions.
 type Accessory struct {
 	Log            logr.Logger
 	StatusMessages chan string
 }
 
-// Connect to a BMC interface function
+// Connect to a BMC interface function.
 func Connect(ctx context.Context, conn Connection) error {
 	return conn.Connect(ctx)
 }
 
-// Close a BMC interface function
+// Close a BMC interface function.
 func Close(ctx context.Context, conn Connection) {
 	conn.Close(ctx)
 }
@@ -71,7 +71,7 @@ func EstablishConnections(ctx context.Context, bmcs map[string]interface{}) (suc
 	return successfulConnections, nil
 }
 
-// ParseAuth will return host, user, passwd from auth struct
+// ParseAuth will return host, user, passwd from auth struct.
 func (a *Accessory) ParseAuth(auth *v1.Authn) (host string, username string, passwd string, err error) {
 	var errMsg repository.Error
 	if auth == nil || auth.Authn == nil || auth.GetDirectAuthn() == nil {
@@ -89,7 +89,7 @@ func (a *Accessory) ParseAuth(auth *v1.Authn) (host string, username string, pas
 	return host, username, passwd, nil
 }
 
-// SendStatusMessage will send a message to a string chan
+// SendStatusMessage will send a message to a string chan.
 func (a *Accessory) SendStatusMessage(msg string) {
 	select {
 	case a.StatusMessages <- msg:

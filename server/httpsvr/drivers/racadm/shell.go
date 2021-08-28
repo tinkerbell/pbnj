@@ -14,7 +14,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-// Shell represents an open remote shell
+// Shell represents an open remote shell.
 type Shell struct {
 	Address string
 	tx      *evlog.Tx
@@ -30,12 +30,14 @@ func (s *Shell) debugEvent(event string, fields ...interface{}) {
 	}, fields...)
 	s.tx.Debug(event, fields...)
 }
+
 func (s *Shell) errorEvent(event string, fields ...interface{}) {
 	fields = append([]interface{}{
 		"device", s.Address,
 	}, fields...)
 	s.tx.Error(event, fields...)
 }
+
 func (s *Shell) infoEvent(event string, fields ...interface{}) {
 	fields = append([]interface{}{
 		"device", s.Address,
@@ -43,7 +45,7 @@ func (s *Shell) infoEvent(event string, fields ...interface{}) {
 	s.tx.Info(event, fields...)
 }
 
-func (opts Options) AuthKeyboardInteractive(user, instruction string, questions []string, echos []bool) ([]string, error) {
+func (opts Options) AuthKeyboardInteractive(_, _ string, questions []string, _ []bool) ([]string, error) {
 	answers := make([]string, len(questions))
 	for i := range answers {
 		answers[i] = opts.Password
@@ -52,7 +54,7 @@ func (opts Options) AuthKeyboardInteractive(user, instruction string, questions 
 	return answers, nil
 }
 
-// Shell starts a remote shell
+// Shell starts a remote shell.
 func (opts Options) Shell(ctx context.Context) (*Shell, error) {
 	s := &Shell{
 		Address: opts.Address,
@@ -79,12 +81,12 @@ func (opts Options) Shell(ctx context.Context) (*Shell, error) {
 	return s, nil
 }
 
-// Close stops the remote shell
+// Close stops the remote shell.
 func (s *Shell) Close() error {
 	return s.client.Close()
 }
 
-// Run executes a command on the remote shell
+// Run executes a command on the remote shell.
 func (s *Shell) Run(cmd string) error {
 	var err error
 	defer s.tx.Trace("run_racadm_cmd", "device", s.Address, "cmd", cmd).Stop(&err)
@@ -108,14 +110,14 @@ func (s *Shell) Run(cmd string) error {
 	}
 
 	s.infoEvent("output", "out", out)
-	if strings.HasPrefix("ERROR: ", out) {
+	if strings.HasPrefix(out, "ERROR: ") {
 		return errors.New(out)
 	}
 
 	return err
 }
 
-// Output executes a command on the remote shell and returns any output
+// Output executes a command on the remote shell and returns any output.
 func (s *Shell) Output(cmd string) (string, error) {
 	var err error
 	defer s.tx.Trace("run_racadm_cmd", "device", s.Address, "cmd", cmd).Stop(&err)

@@ -9,12 +9,12 @@ import (
 	"strconv"
 )
 
-var DEFAULT_CIPHER = os.Getenv("IPMITOOL_DEFAULT_CIPHER")
+var cipherFromEnv = os.Getenv("IPMITOOL_DEFAULT_CIPHER")
 
-// ExecutablePath path to ipmitool
+// ExecutablePath path to ipmitool.
 const ExecutablePath = "ipmitool"
 
-// Options are the options ipmitool accepts
+// Options are the options ipmitool accepts.
 type Options struct {
 	Address  string
 	Username string
@@ -26,7 +26,7 @@ type Options struct {
 	RetransSecs   int
 }
 
-// NewOptions returns an Options struct with the values provided set
+// NewOptions returns an Options struct with the values provided set.
 func NewOptions(addr, user, pass string, cipher int) Options {
 	return Options{
 		Address:       addr,
@@ -60,8 +60,8 @@ func (o *Options) buildCommand(subcommand ...string) *exec.Cmd {
 
 	if o.Cipher > -1 {
 		args = append(args, "-C", strconv.Itoa(o.Cipher))
-	} else if DEFAULT_CIPHER != "" {
-		args = append(args, "-C", DEFAULT_CIPHER)
+	} else if cipherFromEnv != "" {
+		args = append(args, "-C", cipherFromEnv)
 	}
 
 	if o.Attempts > 0 {

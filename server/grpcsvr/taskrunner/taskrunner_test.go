@@ -38,7 +38,7 @@ func TestRoundTrip(t *testing.T) {
 
 	taskID := xid.New().String()
 	runner.Execute(ctx, description, taskID, func(s chan string) (string, error) {
-		return "didnt do anything", defaultError //nolint
+		return "didnt do anything", defaultError
 	})
 
 	if len(taskID) != 20 {
@@ -51,7 +51,7 @@ func TestRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if record.Complete != true {
+	if record.Complete {
 		t.Fatalf("expected task to be complete, got: %+v", record)
 	}
 }

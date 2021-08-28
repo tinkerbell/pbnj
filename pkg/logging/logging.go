@@ -6,7 +6,7 @@ import (
 	"github.com/go-logr/logr"
 )
 
-// Logger represent common interface for logging function
+// Logger represent common interface for logging function.
 type Logger interface {
 	logr.Logger
 	GetContextLogger(ctx context.Context) logr.Logger

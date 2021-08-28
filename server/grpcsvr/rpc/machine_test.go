@@ -89,7 +89,6 @@ func TestDevice(t *testing.T) {
 				if diff != "" {
 					t.Fatal(diff)
 				}
-
 			} else {
 				g.Expect(response.TaskId).Should(gomega.HaveLen(20))
 			}
@@ -195,11 +194,9 @@ func TestPower(t *testing.T) {
 				if diff != "" {
 					t.Fatal(diff)
 				}
-
 			} else {
 				g.Expect(response.TaskId).Should(gomega.HaveLen(20))
 			}
-
 		})
 	}
 }

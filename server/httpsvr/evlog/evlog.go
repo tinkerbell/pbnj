@@ -10,17 +10,17 @@ import (
 	"github.com/tinkerbell/pbnj/server/httpsvr/reqid"
 )
 
-// Log embeds a Logger
+// Log embeds a Logger.
 type Log struct {
 	logger log.Logger
 }
 
-// New instantiates a new Log
+// New instantiates a new Log.
 func New(logger log.Logger) *Log {
 	return &Log{logger: logger.AddCallerSkip(1)}
 }
 
-// TxFromContext returns a new Tx, using the id from the provided context
+// TxFromContext returns a new Tx, using the id from the provided context.
 func (l *Log) TxFromContext(ctx context.Context) *Tx {
 	return &Tx{l: l, ID: reqid.FromContext(ctx)}
 }

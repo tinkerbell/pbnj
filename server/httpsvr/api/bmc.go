@@ -26,8 +26,7 @@ func bmcAction(c *gin.Context) {
 	defer func() { _ = driver.Close() }()
 
 	if err := driver.BMC(req.Action); err != nil {
-		c.Error(err) // nolint
-		internalServerError(c)
+		internalServerError(c, err)
 		return
 	}
 	c.Writer.WriteHeader(http.StatusNoContent)

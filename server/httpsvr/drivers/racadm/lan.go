@@ -6,7 +6,6 @@ package racadm
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/tinkerbell/pbnj/server/httpsvr/interfaces/bmc"
 )
 
@@ -17,11 +16,11 @@ var lanIPSources = map[bmc.IPSource]string{
 
 // idrac.ipv4
 
-// SetIPSource sets ip configuration method
+// SetIPSource sets ip configuration method.
 func (s *Shell) SetIPSource(source bmc.IPSource) error {
 	arg, ok := lanIPSources[source]
 	if !ok {
-		return errors.New(fmt.Sprintf("ip source %q not supported by racadm driver", source))
+		return fmt.Errorf("ip source %q not supported by racadm driver", source)
 	}
 
 	return s.Run("racadm set idrac.ipv4.dhcpenable" + " " + arg)

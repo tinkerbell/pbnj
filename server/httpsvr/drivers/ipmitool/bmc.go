@@ -27,7 +27,7 @@ var bmcActions = map[bmc.Action]string{
 	bmc.WarmReset: "reset warm",
 }
 
-// BMC runs actions on the BMC
+// BMC runs actions on the BMC.
 func (s *Shell) BMC(action bmc.Action) error {
 	arg, ok := bmcActions[action]
 	if !ok {

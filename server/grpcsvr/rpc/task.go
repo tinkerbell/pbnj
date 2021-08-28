@@ -10,14 +10,14 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// TaskService for retrieving task details
+// TaskService for retrieving task details.
 type TaskService struct {
 	Log        logging.Logger
 	TaskRunner task.Task
 	v1.UnimplementedTaskServer
 }
 
-// Status returns a task record
+// Status returns a task record.
 func (t *TaskService) Status(ctx context.Context, in *v1.StatusRequest) (*v1.StatusResponse, error) {
 	l := t.Log.GetContextLogger(ctx)
 	l.V(0).Info("start Status request", "taskID", in.TaskId)
@@ -36,7 +36,7 @@ func (t *TaskService) Status(ctx context.Context, in *v1.StatusRequest) (*v1.Sta
 	}
 
 	return &v1.StatusResponse{
-		Id:          record.Id,
+		Id:          record.ID,
 		Description: record.Description,
 		Error:       errMsg,
 		State:       record.State,

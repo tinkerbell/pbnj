@@ -10,11 +10,11 @@ import (
 )
 
 var (
-	// ErrConnect mimics the ipmitool response when a connection can not be established
+	// ErrConnect mimics the ipmitool response when a connection can not be established.
 	ErrConnect = defineError("Unable to establish IPMI v2 / RMCP+ session")
-	// ErrStatus mimics the ipmitool response when it is unable to get chasis power status
+	// ErrStatus mimics the ipmitool response when it is unable to get chasis power status.
 	ErrStatus = defineError("Unable to get Chassis Power Status")
-	// ErrChannelCipherSuites mimics the ipmitool response when it there is a cypher suites mismatch
+	// ErrChannelCipherSuites mimics the ipmitool response when it there is a cypher suites mismatch.
 	ErrChannelCipherSuites = defineError("Unable to Get Channel Cipher Suites")
 )
 

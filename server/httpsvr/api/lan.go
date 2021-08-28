@@ -26,8 +26,7 @@ func updateLANConfig(c *gin.Context) {
 	defer func() { _ = driver.Close() }()
 
 	if err := driver.SetIPSource(req.IPSource); err != nil {
-		c.Error(err) // nolint
-		internalServerError(c)
+		internalServerError(c, err)
 		return
 	}
 

@@ -22,7 +22,7 @@ type redfishBMC struct {
 	host     string
 }
 
-func (r *redfishBMC) Connect(ctx context.Context) error {
+func (r *redfishBMC) Connect(_ context.Context) error {
 	var errMsg repository.Error
 	config := gofish.ClientConfig{
 		Endpoint: "https://" + r.host,
@@ -41,7 +41,7 @@ func (r *redfishBMC) Connect(ctx context.Context) error {
 	return nil
 }
 
-func (r *redfishBMC) Close(ctx context.Context) {
+func (r *redfishBMC) Close(_ context.Context) {
 	r.conn.Logout()
 }
 
@@ -77,7 +77,7 @@ func doRedfishAction(ctx context.Context, action string, pwr *redfishBMC) (resul
 	return result, err
 }
 
-func (r *redfishBMC) on(ctx context.Context) (result string, err error) {
+func (r *redfishBMC) on(_ context.Context) (result string, err error) {
 	var errMsg repository.Error
 	service := r.conn.Service
 	ss, err := service.Systems()
@@ -97,10 +97,10 @@ func (r *redfishBMC) on(ctx context.Context) (result string, err error) {
 			return result, &errMsg
 		}
 	}
-	return "on", nil
+	return On, nil
 }
 
-func (r *redfishBMC) off(ctx context.Context) (result string, err error) {
+func (r *redfishBMC) off(_ context.Context) (result string, err error) {
 	var errMsg repository.Error
 	service := r.conn.Service
 	ss, err := service.Systems()
@@ -120,10 +120,10 @@ func (r *redfishBMC) off(ctx context.Context) (result string, err error) {
 			return result, &errMsg
 		}
 	}
-	return "off", nil
+	return Off, nil
 }
 
-func (r *redfishBMC) status(ctx context.Context) (result string, err error) {
+func (r *redfishBMC) status(_ context.Context) (result string, err error) {
 	var errMsg repository.Error
 	service := r.conn.Service
 	ss, err := service.Systems()
@@ -160,13 +160,13 @@ func (r *redfishBMC) reset(ctx context.Context) (result string, err error) {
 				time.Sleep(1 * time.Second)
 			}
 			_, errMsg := r.on(ctx)
-			return "reset", errMsg
+			return Reset, errMsg
 		}
 	}
-	return "reset", nil
+	return Reset, nil
 }
 
-func (r *redfishBMC) hardoff(ctx context.Context) (result string, err error) {
+func (r *redfishBMC) hardoff(_ context.Context) (result string, err error) {
 	var errMsg repository.Error
 	service := r.conn.Service
 	ss, err := service.Systems()

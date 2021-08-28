@@ -17,9 +17,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	maxRequestAge = 15 * time.Minute
-)
+var maxRequestAge = 15 * time.Minute
 
 func authorize(c *gin.Context) {
 	authHeader := c.Request.Header.Get("Authorization")

@@ -6,6 +6,7 @@ package redfish
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 
@@ -24,7 +25,10 @@ var (
 )
 
 func director(req *http.Request) {
-	ctx := req.Context().Value(redfishCTX).(*gin.Context)
+	ctx, ok := req.Context().Value(redfishCTX).(*gin.Context)
+	if !ok {
+		panic(fmt.Errorf("type assertion failed: %v", redfishCTX))
+	}
 
 	req.URL.Scheme = "https"
 	if req.Header.Get("X-REDFISH-SCHEME") == "http" {
@@ -42,7 +46,7 @@ func director(req *http.Request) {
 }
 
 // redfishProxy is a handler for the ANY /redfish/* endpoint
-// Proxies /device/{ip}/redfish/{path} to {ip}/redfish/{path}
+// Proxies /device/{ip}/redfish/{path} to {ip}/redfish/{path}.
 func Proxy(c *gin.Context) {
 	proxy := proxyTLS
 	if c.Request.Header.Get("X-REDFISH-TLS-VERIFY") == "false" {

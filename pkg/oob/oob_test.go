@@ -14,42 +14,42 @@ type OOBTester struct {
 	MakeFail bool
 }
 
-func (o *OOBTester) PowerSet(ctx context.Context, action string) (result string, err error) {
+func (o *OOBTester) PowerSet(_ context.Context, action string) (result string, err error) {
 	if o.MakeFail {
 		return result, errors.New("power failed")
 	}
 	return "power action complete: " + action, nil
 }
 
-func (o *OOBTester) BootDeviceSet(ctx context.Context, device string, persistent, efiBoot bool) (result string, err error) {
+func (o *OOBTester) BootDeviceSet(_ context.Context, device string, _, _ bool) (result string, err error) {
 	if o.MakeFail {
 		return result, errors.New("boot device failed")
 	}
 	return "boot device set: " + device, nil
 }
 
-func (o *OOBTester) BMCReset(ctx context.Context, rType string) (err error) {
+func (o *OOBTester) BMCReset(_ context.Context, _ string) (err error) {
 	if o.MakeFail {
 		return errors.New("failed: BMC reset")
 	}
 	return nil
 }
 
-func (o *OOBTester) CreateUser(ctx context.Context) (err error) {
+func (o *OOBTester) CreateUser(_ context.Context) (err error) {
 	if o.MakeFail {
 		return errors.New("create user failed")
 	}
 	return nil
 }
 
-func (o *OOBTester) UpdateUser(ctx context.Context) (err error) {
+func (o *OOBTester) UpdateUser(_ context.Context) (err error) {
 	if o.MakeFail {
 		return errors.New("update user failed")
 	}
 	return nil
 }
 
-func (o *OOBTester) DeleteUser(ctx context.Context) (err error) {
+func (o *OOBTester) DeleteUser(_ context.Context) (err error) {
 	if o.MakeFail {
 		return errors.New("delete user failed")
 	}
@@ -85,14 +85,12 @@ func TestMachinePower(t *testing.T) {
 				if diff != "" {
 					t.Fatal(diff)
 				}
-
 			} else {
 				diff := cmp.Diff(expectedResult, result)
 				if diff != "" {
 					t.Fatal(diff)
 				}
 			}
-
 		})
 	}
 }
@@ -126,14 +124,12 @@ func TestMachineBootDevice(t *testing.T) {
 				if diff != "" {
 					t.Fatal(diff)
 				}
-
 			} else {
 				diff := cmp.Diff(expectedResult, result)
 				if diff != "" {
 					t.Fatal(diff)
 				}
 			}
-
 		})
 	}
 }

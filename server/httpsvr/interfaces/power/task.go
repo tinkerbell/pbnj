@@ -13,7 +13,7 @@ import (
 	"github.com/tinkerbell/pbnj/server/httpsvr/reqid"
 )
 
-// TaskTimeout is the default timeout for tasks
+// TaskTimeout is the default timeout for tasks.
 const TaskTimeout = 3 * time.Minute
 
 var tasks struct {
@@ -21,7 +21,7 @@ var tasks struct {
 	m map[string]*Task
 }
 
-// FindTask fetches the Taskf for the provided id
+// FindTask fetches the Taskf for the provided id.
 func FindTask(id string) *Task {
 	tasks.Lock()
 	defer tasks.Unlock()
@@ -32,7 +32,7 @@ func FindTask(id string) *Task {
 	return tasks.m[id]
 }
 
-// DeleteTask deletes the Task with the corresponding id
+// DeleteTask deletes the Task with the corresponding id.
 func DeleteTask(id string) {
 	tasks.Lock()
 	defer tasks.Unlock()
@@ -43,7 +43,7 @@ func DeleteTask(id string) {
 	delete(tasks.m, id)
 }
 
-// CleanupTasks deletes expired tasks
+// CleanupTasks deletes expired tasks.
 func CleanupTasks(expiration time.Duration) {
 	var (
 		ids   []string
@@ -70,7 +70,7 @@ func CleanupTasks(expiration time.Duration) {
 	}
 }
 
-// StartTask starts a new task
+// StartTask starts a new task.
 func StartTask(ctx context.Context, id string, op Operation, driver Driver, opts Options) *Task {
 	t := newTask(id, op)
 	if t == nil {
@@ -81,7 +81,7 @@ func StartTask(ctx context.Context, id string, op Operation, driver Driver, opts
 	return t
 }
 
-// Task represents a task
+// Task represents a task.
 type Task struct {
 	id     string
 	op     Operation
@@ -111,17 +111,17 @@ func newTask(id string, op Operation) *Task {
 	return t
 }
 
-// Done returns a channel that will remain blocked while the task is in progress
+// Done returns a channel that will remain blocked while the task is in progress.
 func (t *Task) Done() <-chan struct{} {
 	return t.done
 }
 
-// Err returns the first non-nil error encountered by Task
+// Err returns the first non-nil error encountered by Task.
 func (t *Task) Err() error {
 	return errors.WithMessage(t.err, "task error")
 }
 
-// ID returns the task id
+// ID returns the task id.
 func (t *Task) ID() string {
 	return t.id
 }
@@ -129,32 +129,35 @@ func (t *Task) ID() string {
 func (t *Task) run(ctx context.Context, driver Driver, opts Options) {
 	ctx, cancel := context.WithTimeout(ctx, TaskTimeout)
 	defer cancel()
-	defer t.cleanup(driver)
+
+	// cleanup
+	defer func() {
+		t.end = time.Now()
+
+		if iface := recover(); iface != nil {
+			var err error
+			switch iface := iface.(type) {
+			case error:
+				err = iface
+			default:
+				err = errors.Errorf("%v", iface)
+			}
+			err = errors.WithMessage(err, "panic recovered")
+
+			t.err = err
+		}
+
+		t.status = driver.LastStatus()
+		err := driver.Close()
+		if !opts.IgnoreRunError && t.err != nil {
+			t.err = err
+		}
+
+		close(t.done)
+	}()
 
 	err := t.op(ctx, driver, opts)
 	if !opts.IgnoreRunError {
 		t.err = err
 	}
-}
-
-func (t *Task) cleanup(driver Driver) {
-	t.end = time.Now()
-
-	if iface := recover(); iface != nil {
-		var err error
-		switch iface := iface.(type) {
-		case error:
-			err = iface
-		default:
-			err = errors.Errorf("%v", iface)
-		}
-		err = errors.WithMessage(err, "panic recovered")
-
-		t.err = err
-	}
-
-	t.status = driver.LastStatus()
-	_ = driver.Close()
-
-	close(t.done)
 }

@@ -14,7 +14,7 @@ import (
 )
 
 // UnaryLogRequestID returns a new unary server interceptors that adds zap.Logger with requestID to the context.
-func UnaryLogRequestID(logger *zap.Logger, requestIDKey, requestIDLogKey string) grpc.UnaryServerInterceptor {
+func UnaryLogRequestID(_ *zap.Logger, requestIDKey, requestIDLogKey string) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		t := grpc_ctxtags.Extract(ctx)
 

@@ -7,18 +7,18 @@ import (
 	"github.com/hashicorp/go-multierror"
 )
 
-// PowerSetter management methods
+// PowerSetter management methods.
 type PowerSetter interface {
 	// Power get status and sets power states like on/off/etc
 	PowerSet(ctx context.Context, action string) (result string, err error)
 }
 
-// BootDeviceSetter takes care of resetting a BMC
+// BootDeviceSetter takes care of resetting a BMC.
 type BootDeviceSetter interface {
 	BootDeviceSet(ctx context.Context, device string, persistent, efiBoot bool) (result string, err error)
 }
 
-// BMC management methods
+// BMC management methods.
 type BMC interface {
 	// NetworkSource() (result string, err repository.Error)
 	CreateUser(context.Context) error
@@ -26,14 +26,14 @@ type BMC interface {
 	DeleteUser(context.Context) error
 }
 
-// BMCResetter options
+// BMCResetter options.
 type BMCResetter interface {
 	// BMCReset resets the management console without rebooting the BMC (warm) or
 	// Reboots the BMC (cold)
 	BMCReset(ctx context.Context, rType string) error
 }
 
-// SetPower interface function for power actions
+// SetPower interface function for power actions.
 func SetPower(ctx context.Context, action string, m []PowerSetter) (result string, err error) {
 	for _, elem := range m {
 		select {
@@ -55,7 +55,7 @@ func SetPower(ctx context.Context, action string, m []PowerSetter) (result strin
 	return result, multierror.Append(err, errors.New("power state failed"))
 }
 
-// SetBootDevice interface function for setting next boot device
+// SetBootDevice interface function for setting next boot device.
 func SetBootDevice(ctx context.Context, device string, persistent, efiBoot bool, m []BootDeviceSetter) (result string, err error) {
 	for _, elem := range m {
 		select {
@@ -77,7 +77,7 @@ func SetBootDevice(ctx context.Context, device string, persistent, efiBoot bool,
 	return result, multierror.Append(err, errors.New("set boot device failed"))
 }
 
-// CreateUser interface function
+// CreateUser interface function.
 func CreateUser(ctx context.Context, u []BMC) (err error) {
 	for _, elem := range u {
 		select {
@@ -99,7 +99,7 @@ func CreateUser(ctx context.Context, u []BMC) (err error) {
 	return multierror.Append(err, errors.New("create user failed"))
 }
 
-// UpdateUser interface function
+// UpdateUser interface function.
 func UpdateUser(ctx context.Context, u []BMC) (err error) {
 	for _, elem := range u {
 		select {
@@ -121,7 +121,7 @@ func UpdateUser(ctx context.Context, u []BMC) (err error) {
 	return multierror.Append(err, errors.New("update user failed"))
 }
 
-// DeleteUser interface function
+// DeleteUser interface function.
 func DeleteUser(ctx context.Context, u []BMC) (err error) {
 	for _, elem := range u {
 		select {
@@ -143,7 +143,7 @@ func DeleteUser(ctx context.Context, u []BMC) (err error) {
 	return multierror.Append(err, errors.New("delete user failed"))
 }
 
-// ResetBMC interface function
+// ResetBMC interface function.
 func ResetBMC(ctx context.Context, rType string, r []BMCResetter) (err error) {
 	for _, elem := range r {
 		select {

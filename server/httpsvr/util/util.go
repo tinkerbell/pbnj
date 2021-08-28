@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// FindDriver finds the driver type given a manufacturer, defaulting to ipmitool
+// FindDriver finds the driver type given a manufacturer, defaulting to ipmitool.
 func FindDriver(c *gin.Context) string {
 	manufacturer := c.Request.Header.Get("X-DEVICE-MANUFACTURER")
 	if manufacturer == "dell" {

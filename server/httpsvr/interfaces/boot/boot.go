@@ -15,17 +15,17 @@ var (
 	factories = make(map[string]DriverFactory)
 )
 
-// Device describe bootable devices
+// Device describe bootable devices.
 type Device string
 
 const (
-	// DefaultDevice is the default boot device
+	// DefaultDevice is the default boot device.
 	DefaultDevice = Device("default")
-	// ForcePXE is used to configure pxe as the boot device
+	// ForcePXE is used to configure pxe as the boot device.
 	ForcePXE = Device("pxe")
-	// ForceDisk is used to configure disk as the boot device
+	// ForceDisk is used to configure disk as the boot device.
 	ForceDisk = Device("disk")
-	// ForceBIOS is used to configure bios as the boot device
+	// ForceBIOS is used to configure bios as the boot device.
 	ForceBIOS = Device("bios")
 )
 
@@ -33,17 +33,17 @@ func SetupLogging(l log.Logger) {
 	logger = l.Package("boot")
 }
 
-// Driver is the interface to control boot
+// Driver is the interface to control boot.
 type Driver interface {
 	SetBootOptions(Options) error
 
 	Close() error
 }
 
-// DriverFactory is used to instantiate a new Driver
+// DriverFactory is used to instantiate a new Driver.
 type DriverFactory func(context.Context, DriverOptions) (Driver, error)
 
-// DriverOptions contain the basic options needed to connect to device
+// DriverOptions contain the basic options needed to connect to device.
 type DriverOptions struct {
 	Address  string
 	Username string
@@ -52,7 +52,7 @@ type DriverOptions struct {
 	Cipher   int
 }
 
-// Options contain values relevant for boot actions
+// Options contain values relevant for boot actions.
 type Options struct {
 	// Device is the boot device to force.
 	Device Device `json:"device" binding:"required"`
@@ -64,7 +64,7 @@ type Options struct {
 	EFI bool `json:"efi,omitempty"`
 }
 
-// NewDriver instantiates a new driver by calling the registered factory function
+// NewDriver instantiates a new driver by calling the registered factory function.
 func NewDriver(ctx context.Context, name string, opts DriverOptions) (Driver, error) {
 	factory, ok := factories[name]
 	if !ok {
@@ -73,7 +73,7 @@ func NewDriver(ctx context.Context, name string, opts DriverOptions) (Driver, er
 	return factory(ctx, opts)
 }
 
-// RegisterDriver is called by implementations in order to register their factory function for each device they can control
+// RegisterDriver is called by implementations in order to register their factory function for each device they can control.
 func RegisterDriver(factory DriverFactory, driver string) {
 	if _, ok := factories[driver]; ok {
 		logger.Panicf("boot driver %q already registered!", driver)

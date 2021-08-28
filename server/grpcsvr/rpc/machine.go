@@ -11,7 +11,7 @@ import (
 	"github.com/tinkerbell/pbnj/server/grpcsvr/oob/machine"
 )
 
-// MachineService for doing power and device actions
+// MachineService for doing power and device actions.
 type MachineService struct {
 	Log logging.Logger
 	// Timeout is how long a task should be run
@@ -23,7 +23,7 @@ type MachineService struct {
 	v1.UnimplementedMachineServer
 }
 
-// BootDevice sets the next boot device of a machine
+// BootDevice sets the next boot device of a machine.
 func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (*v1.DeviceResponse, error) {
 	// TODO figure out how not to have to do this, but still keep the logging abstraction clean?
 	l := m.Log.GetContextLogger(ctx)
@@ -39,7 +39,7 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 		"efiBoot", in.EfiBoot,
 	)
 
-	var execFunc = func(s chan string) (string, error) {
+	execFunc := func(s chan string) (string, error) {
 		mbd, err := machine.NewBootDeviceSetter(
 			machine.WithDeviceRequest(in),
 			machine.WithLogger(l),
@@ -57,7 +57,7 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 	return &v1.DeviceResponse{TaskId: taskID}, nil
 }
 
-// Power does a power action against a BMC
+// Power does a power action against a BMC.
 func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.PowerResponse, error) {
 	l := m.Log.GetContextLogger(ctx)
 	taskID := xid.New().String()
@@ -71,7 +71,7 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 		"OffDuration", in.OffDuration,
 	)
 
-	var execFunc = func(s chan string) (string, error) {
+	execFunc := func(s chan string) (string, error) {
 		mp, err := machine.NewPowerSetter(
 			machine.WithPowerRequest(in),
 			machine.WithLogger(l),

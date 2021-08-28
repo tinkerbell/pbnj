@@ -38,7 +38,7 @@ func cleanup() {
 	}
 }
 
-// RunHTTPServer runs PBnJ v1 HTTP server
+// RunHTTPServer runs PBnJ v1 HTTP server.
 func RunHTTPServer() {
 	flag.Parse()
 
@@ -46,7 +46,14 @@ func RunHTTPServer() {
 	if err != nil {
 		panic(err)
 	}
-	defer sync() // nolint
+
+	logger = logger.Package("main")
+	defer func() {
+		err := sync()
+		if err != nil {
+			logger.Errorf("logger sync failed: %v", err)
+		}
+	}()
 
 	api.SetupLogging(logger)
 	ipmitool.SetupLogging(logger)
@@ -55,7 +62,6 @@ func RunHTTPServer() {
 	reqid.SetupLogging(logger)
 	go cleanup()
 
-	logger = logger.Package("main")
 	if err := api.Serve(listenAddr, GitRev); err != nil {
 		logger.Fatalw("error serving api", "error", err)
 	}

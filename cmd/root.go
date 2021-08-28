@@ -17,7 +17,7 @@ var (
 	prefix   = "pbnj"
 )
 
-// rootCmd represents the base command when called without any subcommands
+// rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "pbnj",
 	Short: "PBnJ does all your power, boot and jelly goodness for your BMCs",
@@ -27,7 +27,7 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-// NewRootCmd is used for testing to run the server
+// NewRootCmd is used for testing to run the server.
 func NewRootCmd() *cobra.Command {
 	return rootCmd
 }
@@ -65,7 +65,7 @@ func initConfig(cmd *cobra.Command) error {
 	return nil
 }
 
-// Bind each cobra flag to its associated viper configuration (config file and environment variable)
+// Bind each cobra flag to its associated viper configuration (config file and environment variable).
 func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {
 		// Environment variables can't have dashes in them, so bind them to their equivalent

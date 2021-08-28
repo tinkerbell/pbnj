@@ -20,15 +20,13 @@ type id string
 // It is unexported; clients use reqid.NewContext and reqid.FromContext instead of using this key directly.
 const key = id("reqid")
 
-var (
-	logger log.Logger
-)
+var logger log.Logger
 
 func SetupLogging(l log.Logger) {
 	logger = l.Package("reqid")
 }
 
-// WithID returns a new Context that carries value id
+// WithID returns a new Context that carries value id.
 func WithID(ctx context.Context, id string) context.Context {
 	return context.WithValue(ctx, key, id)
 }
@@ -58,7 +56,7 @@ func FromContext(ctx context.Context) string {
 	return ""
 }
 
-// New creates a new id
+// New creates a new id.
 func New() string {
 	buf := make([]byte, 16)
 	if _, err := rand.Read(buf); err != nil {

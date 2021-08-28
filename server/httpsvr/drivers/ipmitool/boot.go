@@ -30,7 +30,7 @@ var devices = map[boot.Device]string{
 	boot.ForceBIOS:     "bios",
 }
 
-// SetBootOptions sets boot options
+// SetBootOptions sets boot options.
 func (s *Shell) SetBootOptions(opts boot.Options) error {
 	device, ok := devices[opts.Device]
 	if !ok {

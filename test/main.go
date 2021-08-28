@@ -29,7 +29,11 @@ var (
 func main() {
 	fmt.Println("PBnJ Functional Testing")
 	flag.Parse()
-	cfgData.Config(*cfg)
+	if err := cfgData.Config(*cfg); err != nil {
+		fmt.Fprintf(os.Stderr, "config error: %v", err)
+		os.Exit(1)
+	}
+
 	if cfgData.Server.Port == "" && cfgData.Server.URL == "" {
 		// start a local internal server
 		go func() {
@@ -47,7 +51,7 @@ func main() {
 	runner.RunTests(logger, cfgData)
 }
 
-// Returns an int >= min, < max
+// Returns an int >= min, < max.
 func randomInt(min, max int) string {
 	rand.Seed(time.Now().UnixNano())
 	return strconv.Itoa(rand.Intn(max-min+1) + min)
