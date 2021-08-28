@@ -15,19 +15,14 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: '1.15.5'
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v2
-      with:
-        version: v1.32
-        args: -v -D errcheck --timeout=2m
     - name: go fmt
       run: go get golang.org/x/tools/cmd/goimports && goimports -d . | (! grep .)
     - name: prepare go mod
       run: go mod tidy
-    - name: go vet
-      run: go vet ./...
     - name: go test
       run: go test -v ./...    
+    - name: lint
+      run: make lint
     - name: go test coverage
       run: go test -coverprofile=coverage.txt ./...
     - name: upload codecov
