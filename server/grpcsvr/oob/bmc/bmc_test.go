@@ -90,7 +90,6 @@ func TestBMCReset(t *testing.T) {
 					}
 				}
 			}
-
 		})
 	}
 }
