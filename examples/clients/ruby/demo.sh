@@ -4,8 +4,9 @@
 function setup() {
     gem install grpc grpc-tools > /dev/null 2>&1
     apt update > /dev/null 2>&1; apt -y install jq > /dev/null 2>&1
-    for proto in $(ls ../../../api/v1/*.proto); do
-        grpc_tools_ruby_protoc -I ../../.. --ruby_out=./lib --grpc_out=./lib $proto 
+
+    for proto in ../../../api/v1/*.proto; do
+        grpc_tools_ruby_protoc -I ../../.. --ruby_out=./lib --grpc_out=./lib "${proto}" 
     done
 }
 
@@ -35,4 +36,4 @@ end_progress
 echo -ne "done\n"
 
 echo -e "calling PBnJ endpoint"
-ruby main.rb $1 $2 $3 | jq
+ruby main.rb "$1" "$2" "$3" | jq

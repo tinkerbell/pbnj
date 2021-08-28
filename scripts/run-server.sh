@@ -11,8 +11,8 @@
 trap ctrl_c INT
 
 function ctrl_c() {
-    kill ${RUN_PID}
-    kill $(<pid)
+    kill "${RUN_PID}"
+    kill "$(<pid)"
     rm -rf temp.in pid
     exit 0
 }

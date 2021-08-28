@@ -7,16 +7,23 @@ set -euo pipefail
 exec 1>&2
 
 host=${HOST:-http://localhost:9090}
-access_id=$ACCESS_ID
-access_secret=$ACCESS_SECRET
+# shellcheck disable=SC2153 # unset variable comes from environment
+access_id="${ACCESS_ID}"
+# shellcheck disable=SC2153 # unset variable comes from environment
+access_secret="${ACCESS_SECRET}"
+# shellcheck disable=SC2153 # unset variable comes from environment
+user="${DEVICE_USERNAME}"
+# shellcheck disable=SC2153 # unset variable comes from environment
+pass="${DEVICE_PASSWORD}"
+
 content_type=application/json
-uri=/devices/$1/power
-user=$DEVICE_USERNAME
-pass=$DEVICE_PASSWORD
-manufacturer=${DEVICE_MANUFACTURER:-supermicro}
+uri="/devices/$1/power"
+manufacturer="${DEVICE_MANUFACTURER:-supermicro}"
 
 d=$(TZ=GMT date "+%a, %d %b %Y %T %Z")
-sig=$(echo -n "GET,$content_type,,$uri,$d" | openssl dgst -sha1 -binary -hmac $access_secret | base64)
+sig=$(echo -n "GET,$content_type,,$uri,$d" | openssl dgst -sha1 -binary -hmac "${access_secret}" | base64)
+
+# shellcheck disable=SC2015 # if and/else expression is correct
 curl -fs \
 	-H "X-IPMI-Username: $user" \
 	-H "X-IPMI-Password: $pass" \
