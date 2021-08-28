@@ -15,42 +15,41 @@ ARG IPMITOOL_COMMIT=b5ce925744851b58193ad3ee18957ce88f6efc26
 ARG GRPC_HEALTH_PROBE_VERSION=v0.3.4
 
 WORKDIR /tmp
-RUN apk add --update --upgrade --no-cache --virtual build-deps \
-        alpine-sdk \
-        autoconf \
-        automake \
-        git \
-        libtool \
-        ncurses-dev \
-        openssl-dev \
-        readline-dev \
-        && \
-    apk add --update --upgrade --no-cache --virtual pbnj-runtime-deps \
-	ca-certificates \
-        libcrypto1.0 \
-        musl \
-        readline \
-        && \
-    git clone -b master ${IPMITOOL_REPO} && \
-    cd ipmitool && \
-    git checkout ${IPMITOOL_COMMIT} && \
-    ./bootstrap && \
-    ./configure \
+RUN apk add --update --upgrade --no-cache --virtual \
+        build-deps=0 \
+        alpine-sdk=1.0-r0 \
+        autoconf=2.69-r2 \
+        automake=1.16.1-r0 \
+        git=2.18.4-r0 \
+        libtool=2.4.6-r5 \
+        ncurses-dev=6.1_p20180818-r1 \
+        openssl-dev=1.0.2u-r0 \
+        readline-dev=7.0.003-r0 \
+        pbnj-runtime-deps=20210828.182213 \
+	    ca-certificates=20191127-r2 \
+        libcrypto1.0=1.0.2u-r0 \
+        musl=1.1.19-r11 \
+        readline=7.0.003-r0 \
+    && apk del build-deps \
+    && git clone -b master ${IPMITOOL_REPO}
+
+WORKDIR /tmp/ipmitool
+RUN git checkout ${IPMITOOL_COMMIT} \
+    && ./bootstrap \
+    && ./configure \
         --prefix=/usr/local \
         --enable-ipmievd \
         --enable-ipmishell \
         --enable-intf-lan \
         --enable-intf-lanplus \
         --enable-intf-open \
-        && \
-    make && \
-    make install && \
-    cd $OLDPWD && \
-    rm -rf /tmp/ipmitool && \
-    apk del build-deps
+    && make \
+    && make install
 
-RUN wget -O/tmp/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 && \
-		chmod +x /tmp/grpc_health_probe
+WORKDIR /tmp
+RUN rm -rf /tmp/ipmitool \
+    && wget -O/tmp/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 \
+    && chmod +x /tmp/grpc_health_probe
 
 ENV GIN_MODE release 
 USER pbnj
