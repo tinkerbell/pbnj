@@ -18,7 +18,7 @@ var (
 	factories = make(map[string]DriverFactory)
 )
 
-// Action is the type for available actions
+// Action is the type for available actions.
 type Action string
 
 func SetupLogging(l log.Logger) {
@@ -27,19 +27,19 @@ func SetupLogging(l log.Logger) {
 }
 
 const (
-	// NoAction is a Nop
+	// NoAction is a Nop.
 	NoAction = Action("")
-	// TurnOn will power up the device
+	// TurnOn will power up the device.
 	TurnOn = Action("turn_on")
-	// SoftOff will perform a soft-shutdown (usually through OS via ACPI)
+	// SoftOff will perform a soft-shutdown (usually through OS via ACPI).
 	SoftOff = Action("soft_off")
-	// HardOff will power off the device without informing the OS
+	// HardOff will power off the device without informing the OS.
 	HardOff = Action("hard_off")
-	// Reset will perform a hard reset without informing the OS
+	// Reset will perform a hard reset without informing the OS.
 	Reset = Action("reset")
 )
 
-// Driver is the interface to control power
+// Driver is the interface to control power.
 type Driver interface {
 	PowerStatus() (Status, error)
 	Power(action Action) error
@@ -49,10 +49,10 @@ type Driver interface {
 	Close() error
 }
 
-// DriverFactory is used to instantiate a new Driver
+// DriverFactory is used to instantiate a new Driver.
 type DriverFactory func(context.Context, DriverOptions) (Driver, error)
 
-// DriverOptions contain the basic options needed to connect to device
+// DriverOptions contain the basic options needed to connect to device.
 type DriverOptions struct {
 	Address  string
 	Username string
@@ -61,7 +61,7 @@ type DriverOptions struct {
 	Cipher   int
 }
 
-// Options contain time values relevant for power actions
+// Options contain time values relevant for power actions.
 type Options struct {
 	SoftTimeout    time.Duration
 	OffTimeout     time.Duration
@@ -70,7 +70,7 @@ type Options struct {
 	IgnoreRunError bool
 }
 
-// DefaultOptions are the default times for power actions
+// DefaultOptions are the default times for power actions.
 var DefaultOptions = Options{
 	SoftTimeout:    30 * time.Second,
 	OffDuration:    3 * time.Second,
@@ -79,19 +79,19 @@ var DefaultOptions = Options{
 	IgnoreRunError: false,
 }
 
-// Status is the type for reporting power status
+// Status is the type for reporting power status.
 type Status string
 
 const (
-	// AnyStatus is a fallback for unknown status
+	// AnyStatus is a fallback for unknown status.
 	AnyStatus = Status("")
-	// Off is returned when the device is powered off
+	// Off is returned when the device is powered off.
 	Off = Status("off")
-	// On is returned when the device is powered on
+	// On is returned when the device is powered on.
 	On = Status("on")
 )
 
-// NewDriver instantiates a new driver by calling the registered factory function
+// NewDriver instantiates a new driver by calling the registered factory function.
 func NewDriver(ctx context.Context, name string, opts DriverOptions) (Driver, error) {
 	factory, ok := factories[name]
 	if !ok {
@@ -100,7 +100,7 @@ func NewDriver(ctx context.Context, name string, opts DriverOptions) (Driver, er
 	return factory(ctx, opts)
 }
 
-// RegisterDriver is called by implementations in order to register their factory function for each device they can control
+// RegisterDriver is called by implementations in order to register their factory function for each device they can control.
 func RegisterDriver(factory DriverFactory, driver string) {
 	if _, ok := factories[driver]; ok {
 		logger.Panicf("power driver %q already registered!", driver)

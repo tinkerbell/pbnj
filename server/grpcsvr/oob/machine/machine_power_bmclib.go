@@ -38,7 +38,7 @@ func (b *bmclibBMC) Connect(ctx context.Context) error {
 	return b.conn.CheckCredentials()
 }
 
-func (b *bmclibBMC) Close(ctx context.Context) {
+func (b *bmclibBMC) Close(_ context.Context) {
 	b.conn.Close()
 }
 
@@ -74,7 +74,7 @@ func doBmclibAction(ctx context.Context, action string, pwr *bmclibBMC) (result 
 	return result, err
 }
 
-func (b *bmclibBMC) on(ctx context.Context) (result string, err error) {
+func (b *bmclibBMC) on(_ context.Context) (result string, err error) {
 	ok, err := b.conn.PowerOn()
 	if err != nil {
 		return result, &repository.Error{
@@ -88,10 +88,10 @@ func (b *bmclibBMC) on(ctx context.Context) (result string, err error) {
 			Message: "error powering on",
 		}
 	}
-	return "on", nil
+	return On, nil
 }
 
-func (b *bmclibBMC) off(ctx context.Context) (result string, err error) {
+func (b *bmclibBMC) off(_ context.Context) (result string, err error) {
 	ok, err := b.conn.PowerOff()
 	if err != nil {
 		return result, &repository.Error{
@@ -105,10 +105,10 @@ func (b *bmclibBMC) off(ctx context.Context) (result string, err error) {
 			Message: "error powering off",
 		}
 	}
-	return "off", nil
+	return Off, nil
 }
 
-func (b *bmclibBMC) status(ctx context.Context) (result string, err error) {
+func (b *bmclibBMC) status(_ context.Context) (result string, err error) {
 	result, err = b.conn.PowerState()
 	if err != nil {
 		return result, &repository.Error{
@@ -119,7 +119,7 @@ func (b *bmclibBMC) status(ctx context.Context) (result string, err error) {
 	return result, nil
 }
 
-func (b *bmclibBMC) reset(ctx context.Context) (result string, err error) {
+func (b *bmclibBMC) reset(_ context.Context) (result string, err error) {
 	ok, err := b.conn.PowerCycle()
 	if err != nil {
 		return result, &repository.Error{
@@ -133,10 +133,10 @@ func (b *bmclibBMC) reset(ctx context.Context) (result string, err error) {
 			Message: "error with power reset",
 		}
 	}
-	return "reset", nil
+	return Reset, nil
 }
 
-func (b *bmclibBMC) hardoff(ctx context.Context) (result string, err error) {
+func (b *bmclibBMC) hardoff(_ context.Context) (result string, err error) {
 	ok, err := b.conn.PowerOff()
 	if err != nil {
 		return result, &repository.Error{
@@ -153,7 +153,7 @@ func (b *bmclibBMC) hardoff(ctx context.Context) (result string, err error) {
 	return "hardoff", nil
 }
 
-func (b *bmclibBMC) cycle(ctx context.Context) (result string, err error) {
+func (b *bmclibBMC) cycle(_ context.Context) (result string, err error) {
 	ok, err := b.conn.PowerCycle()
 	if err != nil {
 		return result, &repository.Error{

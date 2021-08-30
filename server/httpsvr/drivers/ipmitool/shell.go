@@ -23,7 +23,7 @@ var (
 	prompt   = `ipmitool> `
 )
 
-// Shell represents an open remote shell
+// Shell represents an open remote shell.
 type Shell struct {
 	Address string
 	tx      *evlog.Tx
@@ -49,18 +49,21 @@ func (s *Shell) debugEvent(event string, fields ...interface{}) {
 	}, fields...)
 	s.tx.Debug(event, fields...)
 }
+
 func (s *Shell) errorEvent(event string, fields ...interface{}) {
 	fields = append([]interface{}{
 		"device", s.Address,
 	}, fields...)
 	s.tx.Error(event, fields...)
 }
+
 func (s *Shell) infoEvent(event string, fields ...interface{}) {
 	fields = append([]interface{}{
 		"device", s.Address,
 	}, fields...)
 	s.tx.Info(event, fields...)
 }
+
 func (s *Shell) noticeEvent(event string, fields ...interface{}) {
 	fields = append([]interface{}{
 		"device", s.Address,
@@ -68,12 +71,12 @@ func (s *Shell) noticeEvent(event string, fields ...interface{}) {
 	s.tx.Notice(event, fields...)
 }
 
-// Shell starts a remote shell
-func (opts Options) Shell(ctx context.Context) (*Shell, error) {
-	cmd := opts.buildCommand("shell")
+// Shell starts a remote shell.
+func (o Options) Shell(ctx context.Context) (*Shell, error) {
+	cmd := o.buildCommand("shell")
 
 	s := &Shell{
-		Address: opts.Address,
+		Address: o.Address,
 		tx:      elog.TxFromContext(ctx),
 	}
 	s.stdin, _ = cmd.StdinPipe()
@@ -100,16 +103,16 @@ func (opts Options) Shell(ctx context.Context) (*Shell, error) {
 		return nil, errors.WithMessage(err, "error waiting for shell prompt")
 	}
 	// TODO(betawaffle): Add a finalizer to ensure we don't leak?
-	// TODO(mmlb): finalizers are not guranteed to be invoked, figure out a different way to ensure no leaks
+	// TODO(mmlb): finalizers are not guaranteed to be invoked, figure out a different way to ensure no leaks
 	return s, nil
 }
 
-// Close stops the remote shell
+// Close stops the remote shell.
 func (s *Shell) Close() error {
 	return s.Run("quit")
 }
 
-// Run executes a command on the remote shell
+// Run executes a command on the remote shell.
 func (s *Shell) Run(cmd string) (err error) {
 	s.mu.Lock()
 	s.last = cmd
@@ -127,7 +130,7 @@ func (s *Shell) Run(cmd string) (err error) {
 	return s.waitForPrompt()
 }
 
-// LastStatus returns the previous power status
+// LastStatus returns the previous power status.
 func (s *Shell) LastStatus() power.Status {
 	s.mu.Lock()
 	status := s.status
@@ -225,7 +228,7 @@ func (s *Shell) takeErr() error {
 	}
 	switch len(err.Errors) {
 	case 1:
-		if err.Errors[0] == ErrChannelCipherSuites {
+		if errors.Is(err.Errors[0], ErrChannelCipherSuites) {
 			// ignore cipher suites error, ipmitool sends this even though it successfully downgrades
 			return nil
 		}

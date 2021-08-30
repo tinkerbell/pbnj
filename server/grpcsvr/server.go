@@ -22,27 +22,27 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-// Server options
+// Server options.
 type Server struct {
 	repository.Actions
 	bmcTimeout time.Duration
 }
 
-// ServerOption for setting optional values
+// ServerOption for setting optional values.
 type ServerOption func(*Server)
 
-// WithPersistence sets the log level
+// WithPersistence sets the log level.
 func WithPersistence(repo repository.Actions) ServerOption {
 	return func(args *Server) { args.Actions = repo }
 }
 
-// WithBmcTimeout sets the timeout for BMC calls
+// WithBmcTimeout sets the timeout for BMC calls.
 func WithBmcTimeout(t time.Duration) ServerOption {
 	return func(args *Server) { args.bmcTimeout = t }
 }
 
-// RunServer registers all services and runs the server
-func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server, port string, httpServer *http.HTTPServer, opts ...ServerOption) error {
+// RunServer registers all services and runs the server.
+func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server, port string, httpServer *http.Server, opts ...ServerOption) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -105,7 +105,7 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 		err := httpServer.Run()
 		if err != nil {
 			log.V(0).Error(err, "failed to serve http")
-			os.Exit(1)
+			os.Exit(1) //nolint:revive // removing deep-exit requires a significant refactor
 		}
 	}()
 

@@ -36,7 +36,7 @@ var dell2Devices = map[string]boot.Device{
 	"BIOS":   boot.ForceBIOS,
 }
 
-// SetBootOptions sets boot options
+// SetBootOptions sets boot options.
 func (s *Shell) SetBootOptions(opts boot.Options) error {
 	device, ok := devices[opts.Device]
 	if !ok {
@@ -50,15 +50,16 @@ func (s *Shell) SetBootOptions(opts boot.Options) error {
 	}
 
 	cmd := "racadm set idrac.serverboot.firstbootdevice" + " " + device
-	err := s.Run(cmd)
-	if err != nil {
+
+	if err := s.Run(cmd); err != nil {
 		return errors.WithMessage(err, "failure setting idrac.serverboot.firstbootdevice")
 	}
+
 	cmd = "racadm set idrac.serverboot.bootonce" + " " + bootonce
 	return s.Run(cmd)
 }
 
-// BootOptions returns the configured boot options
+// BootOptions returns the configured boot options.
 func (s *Shell) BootOptions() (boot.Device, bool, error) {
 	devLine, err := s.Output("racadm get idrac.serverboot.firstbootdevice")
 	if err != nil {

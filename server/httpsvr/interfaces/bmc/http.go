@@ -11,7 +11,7 @@ import (
 	"github.com/tinkerbell/pbnj/server/httpsvr/util"
 )
 
-// NewDriverFromGinContext creates a new Driver using info in the http request
+// NewDriverFromGinContext creates a new Driver using info in the http request.
 func NewDriverFromGinContext(c *gin.Context) Driver {
 	driverType := util.FindDriver(c)
 	driverOpts := DriverOptions{

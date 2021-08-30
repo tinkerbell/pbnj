@@ -5,20 +5,21 @@ package power
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
 )
 
 const (
-	// PollingInterval specifies how often to poll for power action
+	// PollingInterval specifies how often to poll for power action.
 	PollingInterval = 250 * time.Millisecond
 )
 
-// Operation specifies which operations are available
+// Operation specifies which operations are available.
 type Operation func(context.Context, Driver, Options) error
 
-// OperationBySlug lists the names of available operations
+// OperationBySlug lists the names of available operations.
 var OperationBySlug = map[string]Operation{
 	"cycle":    doCycle,
 	"reset":    doReset,
@@ -31,7 +32,7 @@ var OperationBySlug = map[string]Operation{
 	"turn_on":  doTurnOn,
 }
 
-// UnmarshalText unmarshals an Operation from a textual representation
+// UnmarshalText unmarshals an Operation from a textual representation.
 func (o *Operation) UnmarshalText(text []byte) error {
 	if v, ok := OperationBySlug[string(text)]; ok {
 		*o = v
@@ -80,7 +81,7 @@ func doHardOff(ctx context.Context, driver Driver, opts Options) (err error) {
 	return doAction(ctx, driver, HardOff, opts.OffTimeout, Off)
 }
 
-func doReset(ctx context.Context, driver Driver, opts Options) (err error) {
+func doReset(ctx context.Context, driver Driver, _ Options) (err error) {
 	defer elog.TxFromContext(ctx).Trace("power_reset").Stop(&err)
 
 	return driver.Power(Reset)
@@ -95,12 +96,11 @@ func doSoftOff(ctx context.Context, driver Driver, opts Options) (err error) {
 func doTurnOff(ctx context.Context, driver Driver, opts Options) (err error) {
 	defer elog.TxFromContext(ctx).Trace("power_turn_off").Stop(&err)
 
-	if err := doSoftOff(ctx, driver, opts); err != context.DeadlineExceeded {
-		if err != nil {
-			return errors.WithMessage(err, "error initiating soft off")
+	if err := doSoftOff(ctx, driver, opts); err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return err
 		}
-
-		return err
+		return errors.WithMessage(err, "error initiating soft off")
 	}
 
 	if isDone(ctx) {
@@ -163,20 +163,21 @@ func waitFor(ctx context.Context, driver Driver, target Status) (err error) {
 		doSleep(ctx, 9*time.Second)
 	case On:
 		doSleep(ctx, 10*time.Second)
+	default:
+		return fmt.Errorf("unexpected target: %v", target)
 	}
 
 	ticker := time.NewTicker(PollingInterval) // Throttle calls to the driver.
 	defer ticker.Stop()
 
 poll:
-	var delay = 500 * time.Millisecond
+	delay := 500 * time.Millisecond
 	err = attemPowerStatus(ctx, driver, delay)
 	if err != nil {
 		return err
 	}
 
-	switch target {
-	case AnyStatus, driver.LastStatus():
+	if target == AnyStatus || target == driver.LastStatus() {
 		return nil
 	}
 

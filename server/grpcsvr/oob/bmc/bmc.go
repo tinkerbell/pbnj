@@ -2,6 +2,7 @@ package bmc
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/bmc-toolbox/bmclib"
 	"github.com/go-logr/logr"
@@ -13,7 +14,7 @@ import (
 	common "github.com/tinkerbell/pbnj/server/grpcsvr/oob"
 )
 
-// Action for making bmc actions on BMCs, implements oob.User interface
+// Action for making bmc actions on BMCs, implements oob.User interface.
 type Action struct {
 	common.Accessory
 	CreateUserRequest *v1.CreateUserRequest
@@ -22,10 +23,10 @@ type Action struct {
 	ResetBMCRequest   *v1.ResetRequest
 }
 
-// Option to add to an Actions
+// Option to add to an Actions.
 type Option func(a *Action) error
 
-// WithLogger adds a logr to an Action struct
+// WithLogger adds a logr to an Action struct.
 func WithLogger(l logr.Logger) Option {
 	return func(a *Action) error {
 		a.Log = l
@@ -33,7 +34,7 @@ func WithLogger(l logr.Logger) Option {
 	}
 }
 
-// WithStatusMessage adds a status message chan to an Action struct
+// WithStatusMessage adds a status message chan to an Action struct.
 func WithStatusMessage(s chan string) Option {
 	return func(a *Action) error {
 		a.StatusMessages = s
@@ -41,7 +42,7 @@ func WithStatusMessage(s chan string) Option {
 	}
 }
 
-// WithCreateUserRequest adds CreateUserRequest to an Action struct
+// WithCreateUserRequest adds CreateUserRequest to an Action struct.
 func WithCreateUserRequest(in *v1.CreateUserRequest) Option {
 	return func(a *Action) error {
 		a.CreateUserRequest = in
@@ -49,7 +50,7 @@ func WithCreateUserRequest(in *v1.CreateUserRequest) Option {
 	}
 }
 
-// WithDeleteUserRequest adds DeleteUserRequest to an Action struct
+// WithDeleteUserRequest adds DeleteUserRequest to an Action struct.
 func WithDeleteUserRequest(in *v1.DeleteUserRequest) Option {
 	return func(a *Action) error {
 		a.DeleteUserRequest = in
@@ -57,7 +58,7 @@ func WithDeleteUserRequest(in *v1.DeleteUserRequest) Option {
 	}
 }
 
-// WithUpdateUserRequest adds UpdateUserRequest to an Action struct
+// WithUpdateUserRequest adds UpdateUserRequest to an Action struct.
 func WithUpdateUserRequest(in *v1.UpdateUserRequest) Option {
 	return func(a *Action) error {
 		a.UpdateUserRequest = in
@@ -65,7 +66,7 @@ func WithUpdateUserRequest(in *v1.UpdateUserRequest) Option {
 	}
 }
 
-// WithResetRequest adds ResetRequest to an Action struct
+// WithResetRequest adds ResetRequest to an Action struct.
 func WithResetRequest(in *v1.ResetRequest) Option {
 	return func(a *Action) error {
 		a.ResetBMCRequest = in
@@ -73,7 +74,7 @@ func WithResetRequest(in *v1.ResetRequest) Option {
 	}
 }
 
-// NewBMC returns an oob.BMC interface
+// NewBMC returns an oob.BMC interface.
 func NewBMC(opts ...Option) (oob.BMC, error) {
 	a := &Action{}
 
@@ -86,7 +87,7 @@ func NewBMC(opts ...Option) (oob.BMC, error) {
 	return a, nil
 }
 
-// NewBMCResetter returns an oob.BMCResetter interface
+// NewBMCResetter returns an oob.BMCResetter interface.
 func NewBMCResetter(opts ...Option) (oob.BMCResetter, error) {
 	a := &Action{}
 
@@ -99,185 +100,127 @@ func NewBMCResetter(opts ...Option) (oob.BMCResetter, error) {
 	return a, nil
 }
 
-// CreateUser functionality for machines
+// setupConnection connects to the BMC, returning BMC management methods.
+func (m Action) setupConnection(ctx context.Context, u *bmclibUserManagement) ([]oob.BMC, error) {
+	connections := map[string]interface{}{"bmclib": u}
+
+	m.SendStatusMessage("connecting to BMC")
+	successfulConnections, err := common.EstablishConnections(ctx, connections)
+	if err != nil {
+		m.SendStatusMessage("connecting to BMC failed")
+		return nil, err
+	}
+
+	m.SendStatusMessage("connected to BMC")
+
+	var actions []oob.BMC
+	for _, elem := range successfulConnections {
+		conn := connections[elem]
+
+		if r, ok := conn.(common.Connection); ok {
+			defer r.Close(ctx) // nolint:revive // defer in a loop is OK here, as loop length is limited
+		}
+
+		if r, ok := conn.(oob.BMC); ok {
+			actions = append(actions, r)
+		}
+	}
+
+	return actions, nil
+}
+
+// CreateUser functionality for machines.
 func (m Action) CreateUser(ctx context.Context) error {
-	labels := prometheus.Labels{
-		"service": "bmc",
-		"action":  "create_user",
-	}
-	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
+	timer := prometheus.NewTimer(metrics.ActionDuration.With(prometheus.Labels{"service": "bmc", "action": "create_user"}))
 	defer timer.ObserveDuration()
 
-	var err error
-	host, user, password, parseErr := m.ParseAuth(m.CreateUserRequest.Authn)
-	if parseErr != nil {
-		return parseErr
+	host, user, password, err := m.ParseAuth(m.CreateUserRequest.Authn)
+	if err != nil {
+		return err
 	}
+
 	creds := m.CreateUserRequest.GetUserCreds()
-	base := "creating user: " + creds.GetUsername()
-	msg := "working on " + base
-	m.SendStatusMessage(msg)
+	status := fmt.Sprintf("updating user %q", creds.GetUsername())
+	m.SendStatusMessage(status)
 
-	connections := map[string]interface{}{
-		"bmclib": &bmclibUserManagement{
-			user:     user,
-			password: password,
-			host:     host,
-			log:      m.Log,
-			creds:    creds,
-		},
-	}
-
-	m.SendStatusMessage("connecting to BMC")
-	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
-	if ecErr != nil {
-		m.SendStatusMessage("connecting to BMC failed")
-		return ecErr
-	}
-	m.SendStatusMessage("connected to BMC")
-
-	var userAction []oob.BMC
-	for _, elem := range successfulConnections {
-		conn := connections[elem]
-		switch r := conn.(type) {
-		case common.Connection:
-			defer r.Close(ctx)
-		}
-		switch r := conn.(type) {
-		case oob.BMC:
-			userAction = append(userAction, r)
-		}
-	}
-	err = oob.CreateUser(ctx, userAction)
+	actions, err := m.setupConnection(ctx, &bmclibUserManagement{user: user, password: password, host: host, log: m.Log, creds: creds})
 	if err != nil {
-		m.SendStatusMessage("error with " + base + ": " + err.Error())
-		m.Log.V(0).Info("error with "+base, "error", err.Error())
+		m.SendStatusMessage("connection setup failed")
 		return err
 	}
-	m.SendStatusMessage(base + " complete")
+
+	err = oob.CreateUser(ctx, actions)
+	if err != nil {
+		m.SendStatusMessage(fmt.Sprintf("error %s: %v", status, err))
+		m.Log.V(0).Info(fmt.Sprintf("error %s: %v", status, err))
+		return err
+	}
+
+	m.SendStatusMessage(status + " complete")
 	return nil
 }
 
-// UpdateUser functionality for machines
+// UpdateUser functionality for machines.
 func (m Action) UpdateUser(ctx context.Context) error {
-	labels := prometheus.Labels{
-		"service": "bmc",
-		"action":  "update_user",
-	}
-	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
+	timer := prometheus.NewTimer(metrics.ActionDuration.With(prometheus.Labels{"service": "bmc", "action": "update_user"}))
 	defer timer.ObserveDuration()
 
-	var err error
-	host, user, password, parseErr := m.ParseAuth(m.UpdateUserRequest.Authn)
-	if parseErr != nil {
-		return parseErr
-	}
-	creds := m.UpdateUserRequest.GetUserCreds()
-	base := "updating user: " + creds.GetUsername()
-	msg := "working on " + base
-	m.SendStatusMessage(msg)
-
-	connections := map[string]interface{}{
-		"bmclib": &bmclibUserManagement{
-			user:     user,
-			password: password,
-			host:     host,
-			log:      m.Log,
-			creds:    creds,
-		},
-	}
-
-	m.SendStatusMessage("connecting to BMC")
-	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
-	if ecErr != nil {
-		m.SendStatusMessage("connecting to BMC failed")
-		return ecErr
-	}
-	m.SendStatusMessage("connected to BMC")
-
-	var userAction []oob.BMC
-	for _, elem := range successfulConnections {
-		conn := connections[elem]
-		switch r := conn.(type) {
-		case common.Connection:
-			defer r.Close(ctx)
-		}
-		switch r := conn.(type) {
-		case oob.BMC:
-			userAction = append(userAction, r)
-		}
-	}
-	err = oob.UpdateUser(ctx, userAction)
+	host, user, password, err := m.ParseAuth(m.UpdateUserRequest.Authn)
 	if err != nil {
-		m.SendStatusMessage("error with " + base + ": " + err.Error())
-		m.Log.V(0).Info("error with "+base, "error", err.Error())
 		return err
 	}
-	m.SendStatusMessage(base + " complete")
+
+	creds := m.UpdateUserRequest.GetUserCreds()
+	status := fmt.Sprintf("updating user %q", creds.GetUsername())
+	m.SendStatusMessage(status)
+
+	actions, err := m.setupConnection(ctx, &bmclibUserManagement{user: user, password: password, host: host, log: m.Log, creds: creds})
+	if err != nil {
+		m.SendStatusMessage("connection setup failed")
+		return err
+	}
+
+	if err = oob.UpdateUser(ctx, actions); err != nil {
+		m.SendStatusMessage(fmt.Sprintf("error %s: %v", status, err))
+		m.Log.V(0).Info(fmt.Sprintf("error %s: %v", status, err))
+		return err
+	}
+
+	m.SendStatusMessage(status + " complete")
 	return nil
 }
 
-// DeleteUser functionality for machines
+// DeleteUser functionality for machines.
 func (m Action) DeleteUser(ctx context.Context) error {
-	labels := prometheus.Labels{
-		"service": "bmc",
-		"action":  "delete_user",
-	}
-	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
+	timer := prometheus.NewTimer(metrics.ActionDuration.With(prometheus.Labels{"service": "bmc", "action": "Delete_user"}))
 	defer timer.ObserveDuration()
 
-	var deleteErr error
-	host, user, password, parseErr := m.ParseAuth(m.DeleteUserRequest.Authn)
-	if parseErr != nil {
-		return parseErr
-	}
-	base := "deleting user: " + m.DeleteUserRequest.Username
-	msg := "working on " + base
-	m.SendStatusMessage(msg)
-
-	connections := map[string]interface{}{
-		"bmclib": &bmclibUserManagement{
-			user:     user,
-			password: password,
-			host:     host,
-			log:      m.Log,
-			creds: &v1.UserCreds{
-				Username: m.DeleteUserRequest.Username,
-			},
-		},
+	host, user, password, err := m.ParseAuth(m.DeleteUserRequest.Authn)
+	if err != nil {
+		return err
 	}
 
-	m.SendStatusMessage("connecting to BMC")
-	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
-	if ecErr != nil {
-		m.SendStatusMessage("connecting to BMC failed")
-		return ecErr
-	}
-	m.SendStatusMessage("connected to BMC")
+	creds := &v1.UserCreds{Username: m.DeleteUserRequest.Username}
+	status := fmt.Sprintf("deleting user %q", creds.GetUsername())
+	m.SendStatusMessage(status)
 
-	var deleteUsers []oob.BMC
-	for _, elem := range successfulConnections {
-		conn := connections[elem]
-		switch r := conn.(type) {
-		case common.Connection:
-			defer r.Close(ctx)
-		}
-		switch r := conn.(type) {
-		case oob.BMC:
-			deleteUsers = append(deleteUsers, r)
-		}
+	actions, err := m.setupConnection(ctx, &bmclibUserManagement{user: user, password: password, host: host, log: m.Log, creds: creds})
+	if err != nil {
+		m.SendStatusMessage("connectiion setup failed")
+		return err
 	}
-	deleteErr = oob.DeleteUser(ctx, deleteUsers)
-	if deleteErr != nil {
-		m.SendStatusMessage("error with " + base + ": " + deleteErr.Error())
-		m.Log.V(0).Info("error with "+base, "error", deleteErr.Error())
-		return deleteErr
+
+	if err = oob.DeleteUser(ctx, actions); err != nil {
+		m.SendStatusMessage(fmt.Sprintf("error %s: %v", status, err))
+		m.Log.V(0).Info(fmt.Sprintf("error %s: %v", status, err))
+		return err
 	}
-	m.SendStatusMessage(base + " complete")
+
+	m.SendStatusMessage(status + " complete")
 	return nil
 }
 
-// BMCReset functionality for machines
+// BMCReset functionality for machines.
 func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 	host, user, password, parseErr := m.ParseAuth(m.ResetBMCRequest.Authn)
 	if parseErr != nil {
@@ -285,7 +228,7 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 	}
 	m.SendStatusMessage("working on bmc reset")
 	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
-	//client.Registry.Drivers = client.Registry.FilterForCompatible(ctx)
+	// client.Registry.Drivers = client.Registry.FilterForCompatible(ctx)
 
 	var errMsg string
 	lookup := map[string]string{

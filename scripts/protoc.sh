@@ -13,12 +13,12 @@ PROTOS_LOC=api/v1
 PROTOC_VERSION=3.13.0
 
 function installDeps {
-    if ! which protoc 2>&1 >/dev/null; then
+    if ! which protoc &>/dev/null; then
         echo 'Installing protoc...' >&2
-        if ! which unzip 2>&1 >/dev/null; then
-            if which apt 2>&1 >/dev/null; then
+        if ! which unzip &>/dev/null; then
+            if which apt &>/dev/null; then
                 apt update; apt install -y zip
-            elif which yum 2>&1 >/dev/null; then
+            elif which yum &>/dev/null; then
                 yum -y install zip
             else
                 echo 'Unknown package manager' >&2
@@ -44,12 +44,12 @@ if [[ "$1" == "deps" ]]; then
     installDeps
     exit 0
 fi
-pbs=$(find ${PROTOS_LOC} -type f -name '*.proto'| xargs | tr " " ",")
+pbs=$(find ${PROTOS_LOC} -type f -name '*.proto' -print0 | xargs -0 | tr " " ",")
 
 echo -n "Generating code from protocol buffers (${pbs})..."
-protoc -I . -I $(go env GOMODCACHE) --go_out=. --go_opt=module=${REPO} ${PROTOS_LOC}/*.proto
-protoc -I . -I $(go env GOMODCACHE) --govalidators_out=. --go-grpc_out=. --go-grpc_opt=module=${REPO} ${PROTOS_LOC}/*.proto
+protoc -I . -I "$(go env GOMODCACHE)" --go_out=. --go_opt=module=${REPO} ${PROTOS_LOC}/*.proto
+protoc -I . -I "$(go env GOMODCACHE)" --govalidators_out=. --go-grpc_out=. --go-grpc_opt=module=${REPO} ${PROTOS_LOC}/*.proto
 mv ${REPO}/${PROTOS_LOC}/*.go ${PROTOS_LOC}/
 rm -rf github.com
-$(go env GOPATH)/bin/goimports -w . || true
+"$(go env GOPATH)/bin/goimports" -w . || true
 echo "done"

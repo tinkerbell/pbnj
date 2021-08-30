@@ -12,17 +12,17 @@ import (
 )
 
 var (
-	// ErrBadAccessID indicate an invalid access id
+	// ErrBadAccessID indicate an invalid access id.
 	ErrBadAccessID = errors.New("invalid access id")
-	// ErrBadAuthorization indicates an invalid authorization header
+	// ErrBadAuthorization indicates an invalid authorization header.
 	ErrBadAuthorization = errors.New("invalid authorization header")
-	// ErrBadDate indicates an invalid date header
+	// ErrBadDate indicates an invalid date header.
 	ErrBadDate = errors.New("invalid date header")
-	// ErrBadSignature indicates an invalid request signature
+	// ErrBadSignature indicates an invalid request signature.
 	ErrBadSignature = errors.New("invalid request signature")
-	// ErrNotSigned indicates an unsigned request
+	// ErrNotSigned indicates an unsigned request.
 	ErrNotSigned = errors.New("request not signed")
-	// ErrTooOld indicates an expired signature
+	// ErrTooOld indicates an expired signature.
 	ErrTooOld = errors.New("request too old")
 )
 
@@ -53,10 +53,8 @@ func badRequest(c *gin.Context, errs ...error) {
 	c.AbortWithStatus(http.StatusBadRequest)
 }
 
-func internalServerError(c *gin.Context, errs ...error) {
-	for _, err := range errs {
-		_ = c.Error(err)
-	}
+func internalServerError(c *gin.Context, err error) {
+	_ = c.Error(err)
 	c.AbortWithStatus(http.StatusInternalServerError)
 }
 

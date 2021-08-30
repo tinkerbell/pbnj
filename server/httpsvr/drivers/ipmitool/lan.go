@@ -14,7 +14,7 @@ var lanIPSources = map[bmc.IPSource]string{
 	bmc.StaticIP:   "static",
 }
 
-// SetIPSource sets ip configuration method
+// SetIPSource sets ip configuration method.
 func (s *Shell) SetIPSource(source bmc.IPSource) error {
 	arg, ok := lanIPSources[source]
 	if !ok {

@@ -20,7 +20,7 @@ func TestAllMethods(t *testing.T) {
 	defer s.Close()
 	repo := &GoKV{Store: s, Ctx: ctx}
 	record := repository.Record{
-		Id:          id,
+		ID:          id,
 		Description: "test record",
 		Error:       nil,
 		State:       "running",
@@ -28,7 +28,7 @@ func TestAllMethods(t *testing.T) {
 		Complete:    false,
 	}
 	expected := repository.Record{
-		Id:          id,
+		ID:          id,
 		Description: "test record",
 		Error:       nil,
 		State:       "running",
@@ -36,7 +36,7 @@ func TestAllMethods(t *testing.T) {
 		Complete:    false,
 	}
 	expectedUpdated := repository.Record{
-		Id:          id,
+		ID:          id,
 		Description: "test record",
 		Error:       nil,
 		State:       "complete",
@@ -78,7 +78,6 @@ func TestAllMethods(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 }
 
 func TestGetRecordNotFound(t *testing.T) {

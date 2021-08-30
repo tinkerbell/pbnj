@@ -40,11 +40,11 @@ func (b *bmclibUserManagement) Connect(ctx context.Context) error {
 	return b.conn.CheckCredentials()
 }
 
-func (b *bmclibUserManagement) Close(ctx context.Context) {
+func (b *bmclibUserManagement) Close(_ context.Context) {
 	b.conn.Close()
 }
 
-func (b *bmclibUserManagement) CreateUser(ctx context.Context) error {
+func (b *bmclibUserManagement) CreateUser(_ context.Context) error {
 	users := []*cfgresources.User{
 		{
 			Name:     b.creds.Username,
@@ -53,17 +53,18 @@ func (b *bmclibUserManagement) CreateUser(ctx context.Context) error {
 			Enable:   true,
 		},
 	}
-	err := b.conn.User(users)
-	if err != nil {
+
+	if err := b.conn.User(users); err != nil {
 		return &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
 			Message: err.Error(),
 		}
 	}
+
 	return nil
 }
 
-func (b *bmclibUserManagement) UpdateUser(ctx context.Context) error {
+func (b *bmclibUserManagement) UpdateUser(_ context.Context) error {
 	users := []*cfgresources.User{
 		{
 			Name:     b.creds.Username,
@@ -72,17 +73,18 @@ func (b *bmclibUserManagement) UpdateUser(ctx context.Context) error {
 			Enable:   true,
 		},
 	}
-	err := b.conn.User(users)
-	if err != nil {
+
+	if err := b.conn.User(users); err != nil {
 		return &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
 			Message: err.Error(),
 		}
 	}
+
 	return nil
 }
 
-func (b *bmclibUserManagement) DeleteUser(ctx context.Context) error {
+func (b *bmclibUserManagement) DeleteUser(_ context.Context) error {
 	users := []*cfgresources.User{
 		{
 			Name:     b.creds.Username,
@@ -91,13 +93,14 @@ func (b *bmclibUserManagement) DeleteUser(ctx context.Context) error {
 			Enable:   false,
 		},
 	}
-	err := b.conn.User(users)
-	if err != nil {
+
+	if err := b.conn.User(users); err != nil {
 		return &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
 			Message: err.Error(),
 		}
 	}
+
 	return nil
 }
 

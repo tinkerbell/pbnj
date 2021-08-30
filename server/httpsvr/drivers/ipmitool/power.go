@@ -29,7 +29,7 @@ var powerActions = map[power.Action]string{
 	power.Reset:    "reset",
 }
 
-// Power sets the power state
+// Power sets the power state.
 func (s *Shell) Power(action power.Action) error {
 	arg, ok := powerActions[action]
 	if !ok {
@@ -43,7 +43,7 @@ func (s *Shell) Power(action power.Action) error {
 	return s.Run("power " + arg)
 }
 
-// PowerStatus returns the power state
+// PowerStatus returns the power state.
 func (s *Shell) PowerStatus() (power.Status, error) {
 	err := s.Run("power status")
 	return s.LastStatus(), errors.WithMessage(err, "error retrieving ipmi power status")

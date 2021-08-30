@@ -61,15 +61,14 @@ func setup() {
 	}
 	_, err := exec.LookPath("ipmitool")
 	if err != nil {
-		err := ioutil.WriteFile(tempIPMITool, []byte{}, 0777)
+		err := ioutil.WriteFile(tempIPMITool, []byte{}, 0o777)
 		if err != nil {
 			fmt.Println("didnt find ipmitool in PATH and couldnt create one in /tmp")
-			os.Exit(3)
+			os.Exit(3) //nolint:revive // deep-exit here is OK
 		}
 		path := os.Getenv("PATH")
 		os.Setenv("PATH", fmt.Sprintf("%v:/tmp", path))
 	}
-
 }
 
 func teardown() {
@@ -112,7 +111,7 @@ func TestConfigNetworkSource(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			response, err := bmcService.NetworkSource(ctx, testCase.req)
 			if response != nil {
-				t.Fatalf("reponse should be nil, got: %v", response)
+				t.Fatalf("response should be nil, got: %v", response)
 			}
 			if diff := cmp.Diff(tc.expectedErr.Error(), err.Error()); diff != "" {
 				t.Fatal(diff)
@@ -152,6 +151,7 @@ func newResetRequest(authErr bool) *v1.ResetRequest {
 		ResetKind: 0,
 	}
 }
+
 func TestReset(t *testing.T) {
 	testCases := []struct {
 		name        string
@@ -172,10 +172,8 @@ func TestReset(t *testing.T) {
 				if diff != "" {
 					t.Fatal(diff)
 				}
-			} else {
-				if response.TaskId == "" {
-					t.Fatal("expected taskId, got:", response.TaskId)
-				}
+			} else if response.TaskId == "" {
+				t.Fatal("expected taskId, got:", response.TaskId)
 			}
 		})
 	}
@@ -216,6 +214,7 @@ func newCreateUserRequest(authErr bool) *v1.CreateUserRequest {
 		},
 	}
 }
+
 func TestCreateUser(t *testing.T) {
 	testCases := []struct {
 		name        string
@@ -236,10 +235,8 @@ func TestCreateUser(t *testing.T) {
 				if diff != "" {
 					t.Fatal(diff)
 				}
-			} else {
-				if response.TaskId == "" {
-					t.Fatal("expected taskId, got:", response.TaskId)
-				}
+			} else if response.TaskId == "" {
+				t.Fatal("expected taskId, got:", response.TaskId)
 			}
 		})
 	}
@@ -280,6 +277,7 @@ func newUpdateUserRequest(authErr bool) *v1.UpdateUserRequest {
 		},
 	}
 }
+
 func TestUpdateUser(t *testing.T) {
 	testCases := []struct {
 		name        string
@@ -300,10 +298,8 @@ func TestUpdateUser(t *testing.T) {
 				if diff != "" {
 					t.Fatal(diff)
 				}
-			} else {
-				if response.TaskId == "" {
-					t.Fatal("expected taskId, got:", response.TaskId)
-				}
+			} else if response.TaskId == "" {
+				t.Fatal("expected taskId, got:", response.TaskId)
 			}
 		})
 	}
@@ -340,6 +336,7 @@ func newDeleteUserRequest(authErr bool) *v1.DeleteUserRequest {
 		Username: "blah",
 	}
 }
+
 func TestDeleteUser(t *testing.T) {
 	testCases := []struct {
 		name        string
@@ -360,10 +357,8 @@ func TestDeleteUser(t *testing.T) {
 				if diff != "" {
 					t.Fatal(diff)
 				}
-			} else {
-				if response.TaskId == "" {
-					t.Fatal("expected taskId, got:", response.TaskId)
-				}
+			} else if response.TaskId == "" {
+				t.Fatal("expected taskId, got:", response.TaskId)
 			}
 		})
 	}

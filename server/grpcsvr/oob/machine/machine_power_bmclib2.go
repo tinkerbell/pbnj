@@ -20,7 +20,7 @@ type bmclibClient struct {
 
 func (b *bmclibClient) Connect(ctx context.Context) error {
 	b.conn = bmclib.NewClient(b.host, "623", b.user, b.password, bmclib.WithLogger(b.log))
-	//b.conn.Registry.Drivers = b.conn.Registry.FilterForCompatible(ctx)
+	// b.conn.Registry.Drivers = b.conn.Registry.FilterForCompatible(ctx)
 	return b.conn.Open(ctx)
 }
 

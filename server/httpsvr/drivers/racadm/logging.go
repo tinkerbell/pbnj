@@ -4,6 +4,6 @@
 package racadm
 
 const (
-	// VerboseDebug enables verbose/debug logging
+	// VerboseDebug enables verbose/debug logging.
 	VerboseDebug = false
 )

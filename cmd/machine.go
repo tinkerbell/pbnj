@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// machineCmd represents the server command
+// machineCmd represents the server command.
 var machineCmd = &cobra.Command{
 	Use:   "machine",
 	Short: "Run PBnJ client machine actions",
@@ -31,7 +31,12 @@ var machineCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(1)
 		}
-		defer zlog.Sync() // nolint
+
+		defer func() {
+			if err := zlog.Sync(); err != nil {
+				fmt.Fprintf(os.Stderr, "zlog sync failed: %v", err)
+			}
+		}()
 
 		opts = append(opts, grpc.WithInsecure())
 		conn, err := grpc.Dial("localhost:"+port, opts...)
@@ -66,7 +71,6 @@ var machineCmd = &cobra.Command{
 		}
 
 		logger.V(0).Info("resp", "resp", []interface{}{resp})
-
 	},
 }
 

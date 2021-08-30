@@ -35,7 +35,7 @@ type testResource struct {
 
 type dataObject map[string]testResource
 
-// RunTests actions against BMCs
+// RunTests actions against BMCs.
 func RunTests(t logr.Logger, cfgData ConfigFile) {
 	resources := createTestData(cfgData.Data)
 	for _, rs := range resources {
@@ -133,7 +133,6 @@ func RunTests(t logr.Logger, cfgData ConfigFile) {
 			}
 		COMPLETE:
 			fmt.Printf("============ %v: completed test: %v ============\n", successful, stepName.Want.Description)
-
 		}
 		fmt.Println()
 		fmt.Println("========", "End of tests against:", rs.Host, "========")
@@ -258,50 +257,6 @@ func runBMCCreateUserClient(in testResource, action *v1.CreateUserRequest, s Ser
 		},
 	}
 	resp, err := v1Client.BMCCreateUser(ctx, client, taskClient, inRequest)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
-}
-
-func runBMCUpdateUserClient(in testResource, action *v1.UpdateUserRequest, s Server) (*v1.StatusResponse, error) { // nolint
-	var opts []grpc.DialOption
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	opts = append(opts, grpc.WithInsecure())
-	conn, err := grpc.Dial(s.URL+":"+s.Port, opts...)
-	if err != nil {
-		return nil, err
-	}
-	defer conn.Close()
-	client := v1.NewBMCClient(conn)
-	taskClient := v1.NewTaskClient(conn)
-
-	inRequest := &v1.UpdateUserRequest{
-		Authn: &v1.Authn{
-			Authn: &v1.Authn_DirectAuthn{
-				DirectAuthn: &v1.DirectAuthn{
-					Host: &v1.Host{
-						Host: in.Host,
-					},
-					Username: in.Username,
-					Password: in.Password,
-				},
-			},
-		},
-		Vendor: &v1.Vendor{
-			Name: in.Vendor,
-		},
-		UserCreds: &v1.UserCreds{
-			Username: action.UserCreds.Username,
-			Password: action.UserCreds.Password,
-			UserRole: action.UserCreds.UserRole,
-		},
-	}
-	resp, err := v1Client.BMCUpdateUser(ctx, client, taskClient, inRequest)
 	if err != nil {
 		return nil, err
 	}

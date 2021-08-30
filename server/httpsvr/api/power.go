@@ -75,13 +75,13 @@ func powerStatus(c *gin.Context) {
 	}
 	defer func() { _ = driver.Close() }()
 
-	if status, err := driver.PowerStatus(); err != nil {
-		c.Error(err) // nolint
-		internalServerError(c)
+	status, err := driver.PowerStatus()
+	if err != nil {
+		internalServerError(c, err)
 		return
-	} else {
-		renderPowerStatus(c, status)
 	}
+
+	renderPowerStatus(c, status)
 }
 
 func renderTaskStarted(c *gin.Context, t *power.Task) {

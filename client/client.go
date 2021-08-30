@@ -7,7 +7,7 @@ import (
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 )
 
-// MachinePower executes a power action against the server and retrieves status
+// MachinePower executes a power action against the server and retrieves status.
 func MachinePower(ctx context.Context, client v1.MachineClient, taskClient v1.TaskClient, request *v1.PowerRequest) (*v1.StatusResponse, error) {
 	var statusResp *v1.StatusResponse
 	response, err := client.Power(ctx, request)
@@ -25,10 +25,9 @@ func MachinePower(ctx context.Context, client v1.MachineClient, taskClient v1.Ta
 		time.Sleep(1 * time.Second)
 	}
 	return statusResp, nil
-
 }
 
-// MachineBootDev sets the next boot device for a machine
+// MachineBootDev sets the next boot device for a machine.
 func MachineBootDev(ctx context.Context, client v1.MachineClient, taskClient v1.TaskClient, request *v1.DeviceRequest) (*v1.StatusResponse, error) {
 	var statusResp *v1.StatusResponse
 	response, err := client.BootDevice(ctx, request)
@@ -48,7 +47,7 @@ func MachineBootDev(ctx context.Context, client v1.MachineClient, taskClient v1.
 	return statusResp, nil
 }
 
-// BMCCreateUser creates a BMC user
+// BMCCreateUser creates a BMC user.
 func BMCCreateUser(ctx context.Context, client v1.BMCClient, taskClient v1.TaskClient, request *v1.CreateUserRequest) (*v1.StatusResponse, error) {
 	var statusResp *v1.StatusResponse
 	response, err := client.CreateUser(ctx, request)
@@ -68,7 +67,7 @@ func BMCCreateUser(ctx context.Context, client v1.BMCClient, taskClient v1.TaskC
 	return statusResp, nil
 }
 
-// BMCUpdateUser updates a BMC user
+// BMCUpdateUser updates a BMC user.
 func BMCUpdateUser(ctx context.Context, client v1.BMCClient, taskClient v1.TaskClient, request *v1.UpdateUserRequest) (*v1.StatusResponse, error) {
 	var statusResp *v1.StatusResponse
 	response, err := client.UpdateUser(ctx, request)
@@ -88,7 +87,7 @@ func BMCUpdateUser(ctx context.Context, client v1.BMCClient, taskClient v1.TaskC
 	return statusResp, nil
 }
 
-// BMCDeleteUser updates a BMC user
+// BMCDeleteUser updates a BMC user.
 func BMCDeleteUser(ctx context.Context, client v1.BMCClient, taskClient v1.TaskClient, request *v1.DeleteUserRequest) (*v1.StatusResponse, error) {
 	var statusResp *v1.StatusResponse
 	response, err := client.DeleteUser(ctx, request)

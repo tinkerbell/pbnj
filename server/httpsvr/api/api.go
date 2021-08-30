@@ -37,7 +37,7 @@ func SetupLogging(l log.Logger) {
 	elog = evlog.New(logger)
 }
 
-// Serve serves http api
+// Serve serves http api.
 func Serve(addr, rev string) error {
 	gitRev = rev
 	r := gin.New()
@@ -99,12 +99,13 @@ func logging(c *gin.Context) {
 	var fields []interface{}
 	tx := elog.TxFromContext(c)
 
-	log := true
+	logThis := true
 	path := c.Request.RequestURI
 	if strings.HasPrefix(path, "/_packet") || path == "/metrics" {
-		log = false
+		logThis = false
 	}
-	if log {
+
+	if logThis {
 		start := time.Now()
 		method := c.Request.Method
 		client := c.ClientIP()
@@ -145,7 +146,7 @@ func recovery(c *gin.Context) {
 		err = errors.WithMessage(err, "panic recovered")
 
 		tx.Panic("request_panic", "error", err)
-		internalServerError(c)
+		internalServerError(c, err)
 	}()
 	c.Next()
 }

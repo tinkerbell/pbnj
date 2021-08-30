@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// Trace is used for detailed tracing of events
+// Trace is used for detailed tracing of events.
 type Trace struct {
 	tx Tx
 
@@ -19,7 +19,7 @@ type Trace struct {
 	fields []interface{}
 }
 
-// Stop records the time, along with any non-nil error
+// Stop records the time, along with any non-nil error.
 func (t *Trace) Stop(err *error) {
 	t.end = time.Now()
 

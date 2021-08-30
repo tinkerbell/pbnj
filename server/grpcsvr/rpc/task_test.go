@@ -40,7 +40,7 @@ func TestTaskFound(t *testing.T) {
 	}
 	taskID := xid.New().String()
 	taskRunner.Execute(ctx, "test", taskID, func(s chan string) (string, error) {
-		return "doing cool stuff", defaultError // nolint
+		return "doing cool stuff", defaultError
 	})
 
 	taskReq := &v1.StatusRequest{TaskId: taskID}
@@ -58,7 +58,6 @@ func TestTaskFound(t *testing.T) {
 	if taskResp.Id != taskID {
 		t.Fatalf("got: %+v", taskResp)
 	}
-
 }
 
 func TestRecordNotFound(t *testing.T) {

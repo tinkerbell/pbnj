@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// Tx is used for loggin an event
+// Tx is used for loggin an event.
 type Tx struct {
 	l      *Log
 	ID     string
@@ -16,52 +16,52 @@ type Tx struct {
 }
 
 func fields2KVP(fields []interface{}) []string {
-	var kvp = make([]string, 0, len(fields)/2)
-	for i := 0; i < len(fields); i = i + 2 {
+	kvp := make([]string, 0, len(fields)/2)
+	for i := 0; i < len(fields); i += 2 {
 		pair := fmt.Sprintf("%s=%s", fields[i], fields[i+1])
 		kvp = append(kvp, pair)
 	}
 	return kvp
 }
 
-// With returns
+// With returns.
 func (tx *Tx) With(fields ...interface{}) *Tx {
 	n := *tx
 	n.fields = fields
 	return &n
 }
 
-// Panic is a helper function to log a CRITICAL event
+// Panic is a helper function to log a CRITICAL event.
 func (tx *Tx) Panic(event string, fields ...interface{}) {
 	tx.l.logger.With(fields...).With(tx.getFields()...).With("event", event).Panic()
 }
 
-// Error is a helper function to log an error
+// Error is a helper function to log an error.
 func (tx *Tx) Error(event string, fields ...interface{}) {
 	tx.l.logger.With(fields...).With(tx.getFields()...).With("event", event).Error()
 }
 
-// Warning is a helper function to log a warning
+// Warning is a helper function to log a warning.
 func (tx *Tx) Warning(event string, fields ...interface{}) {
 	tx.l.logger.With(fields...).With(tx.getFields()...).With("event", event).Warning()
 }
 
-// Notice is a helper function to log a notice
+// Notice is a helper function to log a notice.
 func (tx *Tx) Notice(event string, fields ...interface{}) {
 	tx.l.logger.With(fields...).With(tx.getFields()...).With("event", event).Notice()
 }
 
-// Info is a helper function to log an info message
+// Info is a helper function to log an info message.
 func (tx *Tx) Info(event string, fields ...interface{}) {
 	tx.l.logger.With(fields...).With(tx.getFields()...).With("event", event).Info()
 }
 
-// Debug is a helper function to log a debug message
+// Debug is a helper function to log a debug message.
 func (tx *Tx) Debug(event string, fields ...interface{}) {
 	tx.l.logger.With(fields...).With(tx.getFields()...).With("event", event).Debug()
 }
 
-// Trace is a helper function to log a trace message
+// Trace is a helper function to log a trace message.
 func (tx *Tx) Trace(event string, fields ...interface{}) *Trace {
 	t := &Trace{
 		start:  time.Now(),

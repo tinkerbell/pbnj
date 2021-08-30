@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// clientCmd represents the server command
+// clientCmd represents the server command.
 var clientCmd = &cobra.Command{
 	Use:   "client",
 	Short: "Run PBnJ client",

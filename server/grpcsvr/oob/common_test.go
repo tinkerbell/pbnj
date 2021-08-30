@@ -109,14 +109,14 @@ type testConnect struct {
 	makeFail bool
 }
 
-func (t *testConnect) Connect(ctx context.Context) error {
+func (t *testConnect) Connect(_ context.Context) error {
 	if t.makeFail {
 		return errors.New("failed to connect")
 	}
 	return nil
 }
 
-func (t *testConnect) Close(ctx context.Context) {}
+func (t *testConnect) Close(_ context.Context) {}
 
 func TestEstablishConnections(t *testing.T) {
 	testCases := []struct {
@@ -148,7 +148,6 @@ func TestEstablishConnections(t *testing.T) {
 				if diff != "" {
 					t.Fatal(diff)
 				}
-
 			} else {
 				diff := cmp.Diff(tc.successfulConnections, result)
 				if diff != "" {
@@ -156,7 +155,6 @@ func TestEstablishConnections(t *testing.T) {
 				}
 				Close(context.Background(), tc.implementation)
 			}
-
 		})
 	}
 }

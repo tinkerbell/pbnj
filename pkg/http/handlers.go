@@ -5,21 +5,21 @@ import (
 	"net/http"
 )
 
-func (h *HTTPServer) runningTasks() int {
+func (h *Server) runningTasks() int {
 	if h.taskRunner == nil {
 		return 0
 	}
 	return h.taskRunner.ActiveWorkers()
 }
 
-func (h *HTTPServer) totalTasks() int {
+func (h *Server) totalTasks() int {
 	if h.taskRunner == nil {
 		return 0
 	}
 	return h.taskRunner.TotalWorkers()
 }
 
-func (h *HTTPServer) handleHealthcheck(w http.ResponseWriter, r *http.Request) {
+func (h *Server) handleHealthcheck(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, err := w.Write([]byte(fmt.Sprintf(`{"running_tasks": %d, "total_tasks": %d}`, h.runningTasks(), h.totalTasks())))
 	if err != nil {
@@ -27,7 +27,7 @@ func (h *HTTPServer) handleHealthcheck(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *HTTPServer) handleReady(w http.ResponseWriter, r *http.Request) {
+func (h *Server) handleReady(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, err := w.Write([]byte(`{"ready": true}`))
 	if err != nil {
@@ -35,7 +35,7 @@ func (h *HTTPServer) handleReady(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *HTTPServer) handleLive(w http.ResponseWriter, r *http.Request) {
+func (h *Server) handleLive(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_, err := w.Write([]byte(`{"live": true}`))
 	if err != nil {

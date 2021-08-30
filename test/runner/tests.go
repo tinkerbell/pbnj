@@ -11,17 +11,11 @@ var (
 	powerRequestOFF    = v1.PowerAction_POWER_ACTION_OFF
 	powerRequestSTATUS = v1.PowerAction_POWER_ACTION_STATUS
 	powerRequestCYCLE  = v1.PowerAction_POWER_ACTION_CYCLE
-	//powerRequestRESET   = v1.PowerAction_POWER_ACTION_RESET
-	//powerRequestHARDOFF = v1.PowerAction_POWER_ACTION_HARDOFF
-	//deviceRequestNONE   = v1.BootDevice_BOOT_DEVICE_NONE
-	deviceRequestBIOS = v1.BootDevice_BOOT_DEVICE_BIOS
-	//deviceRequestDISK   = v1.BootDevice_BOOT_DEVICE_DISK
-	//deviceRequestCDROM  = v1.BootDevice_BOOT_DEVICE_CDROM
-	deviceRequestPXE = v1.BootDevice_BOOT_DEVICE_PXE
-	lookup           = map[string]map[string]expected{
+	deviceRequestBIOS  = v1.BootDevice_BOOT_DEVICE_BIOS
+	deviceRequestPXE   = v1.BootDevice_BOOT_DEVICE_PXE
+	lookup             = map[string]map[string]expected{
 		"happyTests":    happyTests,
 		"userMgmtTests": userMgmtTests,
-		//"notIdentifiableTests": notIdentifiableTests,
 	}
 	happyTests = map[string]expected{
 		"1 power off": {
@@ -126,9 +120,6 @@ var (
 				Messages:    []string{"working on power POWER_ACTION_STATUS", "connected to BMC", "power POWER_ACTION_STATUS complete"},
 			},
 		},
-
-		//"power hardoff": {Action: &PowerRequest_HARDOFF, Want: notImplementedWant("HARD OFF")},
-		//"power reset":   {Action: &PowerRequest_RESET, Want: notImplementedWant("RESET")},
 	}
 	userMgmtTests = map[string]expected{
 		"1 create a user": {

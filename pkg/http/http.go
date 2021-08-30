@@ -8,24 +8,24 @@ import (
 	"github.com/tinkerbell/pbnj/server/grpcsvr/taskrunner"
 )
 
-type HTTPServer struct {
+type Server struct {
 	address    string
 	logger     logr.Logger
 	mux        *http.ServeMux
 	taskRunner *taskrunner.Runner
 }
 
-func (h *HTTPServer) WithLogger(log logr.Logger) *HTTPServer {
+func (h *Server) WithLogger(log logr.Logger) *Server {
 	h.logger = log
 	return h
 }
 
-func (h *HTTPServer) WithTaskRunner(runner *taskrunner.Runner) *HTTPServer {
+func (h *Server) WithTaskRunner(runner *taskrunner.Runner) *Server {
 	h.taskRunner = runner
 	return h
 }
 
-func (h *HTTPServer) init() {
+func (h *Server) init() {
 	h.mux = http.NewServeMux()
 	h.mux.Handle("/metrics", promhttp.Handler())
 	h.mux.HandleFunc("/healthcheck", h.handleHealthcheck)
@@ -33,12 +33,12 @@ func (h *HTTPServer) init() {
 	h.mux.HandleFunc("/_/live", h.handleLive)
 }
 
-func (h *HTTPServer) Run() error {
+func (h *Server) Run() error {
 	return http.ListenAndServe(h.address, h.mux)
 }
 
-func NewHTTPServer(addr string) *HTTPServer {
-	server := &HTTPServer{
+func NewServer(addr string) *Server {
+	server := &Server{
 		address: addr,
 	}
 	server.init()

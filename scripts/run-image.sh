@@ -8,9 +8,9 @@
 trap ctrl_c INT
 
 function ctrl_c() {
-    docker rm -f ${CONTAINER_ID}
+    docker rm -f "${CONTAINER_ID}"
     exit 0
 }
 
 CONTAINER_ID=$(docker run -d -e ACCESS_ID=1234 -e ACCESS_SECRET=1234 -e PNBJ_LOGLEVEL=debug -e PBNJ_ENABLEHTTP=true -p 9090:9090 -p 50051:50051 -p 8080:8080 pbnj:local)
-docker logs -f ${CONTAINER_ID} 2>&1 | jq -R 'fromjson? | select(type == "object")'
+docker logs -f "${CONTAINER_ID}" 2>&1 | jq -R 'fromjson? | select(type == "object")'

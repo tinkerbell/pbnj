@@ -16,7 +16,7 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
-// Runner for executing a task
+// Runner for executing a task.
 type Runner struct {
 	Repository repository.Actions
 	Ctx        context.Context
@@ -26,27 +26,27 @@ type Runner struct {
 	counterMu  sync.RWMutex
 }
 
-// ActiveWorkers returns a count of currently active worker jobs
+// ActiveWorkers returns a count of currently active worker jobs.
 func (r *Runner) ActiveWorkers() int {
 	r.counterMu.RLock()
 	defer r.counterMu.RUnlock()
 	return r.active
 }
 
-// TotalWorkers returns a count total workers executed
+// TotalWorkers returns a count total workers executed.
 func (r *Runner) TotalWorkers() int {
 	r.counterMu.RLock()
 	defer r.counterMu.RUnlock()
 	return r.total
 }
 
-// Execute a task, update repository with status
+// Execute a task, update repository with status.
 func (r *Runner) Execute(ctx context.Context, description, taskID string, action func(chan string) (string, error)) {
 	go r.worker(ctx, description, taskID, action)
 }
 
 // does the work, updates the repo record
-// TODO handle retrys, use a timeout
+// TODO handle retrys, use a timeout.
 func (r *Runner) worker(ctx context.Context, description, taskID string, action func(chan string) (string, error)) {
 	logger := r.Log.GetContextLogger(ctx)
 	logger = logger.WithValues("complete", false, "taskID", taskID, "description", description)
@@ -72,7 +72,7 @@ func (r *Runner) worker(ctx context.Context, description, taskID string, action 
 	defer close(actionSyn)
 	repo := r.Repository
 	sessionRecord := repository.Record{
-		Id:          taskID,
+		ID:          taskID,
 		Description: description,
 		State:       "running",
 		Messages:    []string{},
@@ -80,7 +80,8 @@ func (r *Runner) worker(ctx context.Context, description, taskID string, action 
 			Code:    0,
 			Message: "",
 			Details: nil,
-		}}
+		},
+	}
 
 	err := repo.Create(taskID, sessionRecord)
 	if err != nil {
@@ -94,7 +95,7 @@ func (r *Runner) worker(ctx context.Context, description, taskID string, action 
 			select {
 			case msg := <-messagesChan:
 				currStatus, _ := repo.Get(taskID)
-				sessionRecord.Messages = append(currStatus.Messages, msg)
+				sessionRecord.Messages = append(currStatus.Messages, msg) // nolint:gocritic // apparently this is the right slice
 				_ = repo.Update(taskID, sessionRecord)
 			case <-actionSyn:
 				actionACK <- true
@@ -131,14 +132,14 @@ func (r *Runner) worker(ctx context.Context, description, taskID string, action 
 	}
 
 	if finalErr != nil {
-		logger.V(0).Error(finalErr, "task complete", "complete", true)
+		logger.Error(finalErr, "task complete", "complete", true)
 	} else {
-		logger.V(0).Info("task complete", "complete", true)
+		logger.Info("task complete", "complete", true)
 	}
 }
 
-// Status returns the status record of a task
-func (r *Runner) Status(ctx context.Context, taskID string) (record repository.Record, err error) {
+// Status returns the status record of a task.
+func (r *Runner) Status(_ context.Context, taskID string) (record repository.Record, err error) {
 	record, err = r.Repository.Get(taskID)
 	if err != nil {
 		switch t := err.(type) {

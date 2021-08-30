@@ -88,7 +88,7 @@ func (b *ipmiBMC) on(ctx context.Context) (result string, err error) {
 			Message: err.Error(),
 		}
 	}
-	return "on", nil
+	return On, nil
 }
 
 func (b *ipmiBMC) off(ctx context.Context) (result string, err error) {
@@ -99,7 +99,7 @@ func (b *ipmiBMC) off(ctx context.Context) (result string, err error) {
 			Message: err.Error(),
 		}
 	}
-	return "off", nil
+	return Off, nil
 }
 
 func (b *ipmiBMC) status(ctx context.Context) (result string, err error) {
@@ -125,7 +125,7 @@ func (b *ipmiBMC) reset(ctx context.Context) (result string, err error) {
 			Message: err.Error(),
 		}
 	}
-	return "reset", nil
+	return Reset, nil
 }
 
 func (b *ipmiBMC) hardoff(ctx context.Context) (result string, err error) {

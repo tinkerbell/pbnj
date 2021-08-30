@@ -16,7 +16,7 @@ var (
 	logLevel = zap.LevelFlag("log-level", zap.InfoLevel, "Log level, one of FATAL, PANIC, DPANIC, ERROR, WARN, INFO, or DEBUG")
 )
 
-// Logger is a wrapper around zap.SugaredLogger
+// Logger is a wrapper around zap.SugaredLogger.
 type Logger struct {
 	*zap.SugaredLogger
 }

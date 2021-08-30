@@ -99,7 +99,6 @@ func TestBootDevice(t *testing.T) {
 					t.Fatal(diff)
 				}
 			}
-
 		})
 	}
 }

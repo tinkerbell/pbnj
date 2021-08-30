@@ -40,7 +40,7 @@ var (
 	rsPubKey    string
 	// bmcTimeout is how long a BMC call/interaction is allow to run before it is cancelled.
 	bmcTimeout time.Duration
-	// serverCmd represents the server command
+	// serverCmd represents the server command.
 	serverCmd = &cobra.Command{
 		Use:   "server",
 		Short: "Run PBnJ server",
@@ -58,7 +58,11 @@ var (
 				fmt.Fprintf(os.Stderr, "%v\n", err)
 				os.Exit(1)
 			}
-			defer zlog.Sync() // nolint
+			defer func() {
+				if err := zlog.Sync(); err != nil {
+					fmt.Fprintf(os.Stderr, "zlog sync failed: %v", err)
+				}
+			}()
 
 			// Make sure that log statements internal to gRPC library are logged using the zapLogger as well.
 			grpc_zap.ReplaceGrpcLoggerV2(zlog)
@@ -88,7 +92,7 @@ var (
 				),
 			)
 
-			httpServer := http.NewHTTPServer(metricsAddr)
+			httpServer := http.NewServer(metricsAddr)
 			httpServer.WithLogger(logger)
 
 			if enableHTTP {
@@ -121,21 +125,33 @@ func init() {
 func authFunc() func(ctx context.Context) (context.Context, error) {
 	opts := []authz.ConfigOption{authz.WithDisableAudienceValidation(true)}
 	var algo jwt.Algorithm
+
+	if hsKey == "" && rsPubKey == "" {
+		return func(ctx context.Context) (context.Context, error) {
+			return ctx, errors.New("authorization enabled but no symmetric or asymmetric key was provided")
+		}
+	}
+
 	if hsKey != "" {
+		if rsPubKey != "" {
+			return func(ctx context.Context) (context.Context, error) {
+				return ctx, errors.New("both an HS Key and an RS public key were provided: choose one")
+			}
+		}
+
 		algo = jwt.HS256
 		opts = append(opts, authz.WithHSKey([]byte(hsKey)))
-	} else if rsPubKey != "" {
+	}
+
+	if rsPubKey != "" {
 		algo = jwt.RS256
 		pubKey, err := jwt_helper.ParseRSAPublicKeyFromPEM([]byte(rsPubKey))
 		if err != nil {
 			return func(ctx context.Context) (context.Context, error) { return ctx, err }
 		}
 		opts = append(opts, authz.WithRSAPubKey(pubKey))
-	} else {
-		return func(ctx context.Context) (context.Context, error) {
-			return ctx, errors.New("authorization enabled but no symmetric or asymmetric key was provided")
-		}
 	}
+
 	protectedMethods := map[string][]string{
 		"/github.com.tinkerbell.pbnj.api.v1.Machine/Power":      {},
 		"/github.com.tinkerbell.pbnj.api.v1.Machine/BootDevice": {},

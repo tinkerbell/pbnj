@@ -32,7 +32,7 @@ var powerActions = map[power.Action]string{
 	power.Reset:    "hardreset",
 }
 
-// Power sets the power state
+// Power sets the power state.
 func (s *Shell) Power(action power.Action) error {
 	if action == power.NoAction {
 		return nil
@@ -47,7 +47,7 @@ func (s *Shell) Power(action power.Action) error {
 	return s.Run("racadm serveraction" + " " + arg)
 }
 
-// PowerStatus returns the power state
+// PowerStatus returns the power state.
 func (s *Shell) PowerStatus() (power.Status, error) {
 	out, err := s.Output("racadm get system.power.status")
 	if err != nil {
@@ -67,7 +67,7 @@ func (s *Shell) PowerStatus() (power.Status, error) {
 	return status, err
 }
 
-// LastStatus returns the previous power status
+// LastStatus returns the previous power status.
 func (s *Shell) LastStatus() power.Status {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
