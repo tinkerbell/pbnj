@@ -2,6 +2,7 @@ package machine
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/bmc-toolbox/bmclib"
@@ -198,6 +199,7 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	if len(pwrActions) == 0 {
 		m.SendStatusMessage("no successful connections able to run power actions")
 	}
+
 	if action == v1.PowerAction_POWER_ACTION_CYCLE.String() {
 		// check status
 		// if powered on, do cycle
@@ -211,6 +213,11 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 			action = v1.PowerAction_POWER_ACTION_ON.String()
 		}
 	}
+
+	if status, err := oob.SetPower(ctx, v1.PowerAction_POWER_ACTION_STATUS.String(), pwrActions); err != nil {
+		m.SendStatusMessage(fmt.Sprintf("%s CURRENT STATUS %s (REAL ACTION: %s)", base, status, action))
+	}
+
 	result, err = oob.SetPower(ctx, action, pwrActions)
 	if err != nil {
 		m.SendStatusMessage("error with " + base + ": " + err.Error())
