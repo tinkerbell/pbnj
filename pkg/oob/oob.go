@@ -3,7 +3,9 @@ package oob
 import (
 	"context"
 	"errors"
+	"fmt"
 
+	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-multierror"
 )
 
@@ -34,7 +36,7 @@ type BMCResetter interface {
 }
 
 // SetPower interface function for power actions
-func SetPower(ctx context.Context, action string, m []PowerSetter) (result string, err error) {
+func SetPower(log logr.Logger, ctx context.Context, action string, m []PowerSetter) (result string, err error) {
 LOOP:
 	for _, elem := range m {
 		select {
@@ -46,8 +48,11 @@ LOOP:
 				result, setErr := elem.PowerSet(ctx, action)
 				if setErr != nil {
 					err = multierror.Append(err, setErr)
+					log.Info(fmt.Sprintf("FAILED %T ACTION %s\n", elem, action))
 					continue
 				}
+
+				log.Info(fmt.Sprintf("SUCCEEDED %T ACTION %s\n", elem, action))
 				return result, nil
 			}
 			err = multierror.Append(err, errors.New("power request not executed"))

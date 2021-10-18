@@ -170,11 +170,23 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 
 	// the order here is the order in which these connections/operations will be tried
 
-	connections := map[string]interface{}{
-		"bmclib2":  &bmclibClient{log: m.Log, user: user, password: password, host: host},
-		"bmclib":   &bmclibBMC{user: user, password: password, host: host, log: m.Log},
-		"ipmitool": &ipmiBMC{user: user, password: password, host: host, log: m.Log},
-		"redfish":  &redfishBMC{user: user, password: password, host: host, log: m.Log},
+	connections := []*common.ConnItem{
+		{
+			Name: "bmclib",
+			Conn: &bmclibBMC{user: user, password: password, host: host, log: m.Log},
+		},
+		{
+			Name: "ipmitool",
+			Conn: &ipmiBMC{user: user, password: password, host: host, log: m.Log},
+		},
+		{
+			Name: "redfish",
+			Conn: &redfishBMC{user: user, password: password, host: host, log: m.Log},
+		},
+		{
+			Name: "bmclib2",
+			Conn: &bmclibClient{log: m.Log, user: user, password: password, host: host},
+		},
 	}
 
 	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
@@ -184,9 +196,15 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	}
 	m.SendStatusMessage("connected to BMC")
 
+	connsByName := make(map[string]interface{})
+
+	for _, conn := range connections {
+		connsByName[conn.Name] = conn.Conn
+	}
+
 	var pwrActions []oob.PowerSetter
 	for _, elem := range successfulConnections {
-		conn := connections[elem]
+		conn := connsByName[elem]
 		switch r := conn.(type) {
 		case common.Connection:
 			defer r.Close(ctx)
@@ -204,7 +222,7 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 		// check status
 		// if powered on, do cycle
 		// if powered off, do power on
-		status, err := oob.SetPower(ctx, v1.PowerAction_POWER_ACTION_STATUS.String(), pwrActions)
+		status, err := oob.SetPower(m.Log, ctx, v1.PowerAction_POWER_ACTION_STATUS.String(), pwrActions)
 		if err != nil {
 			m.SendStatusMessage("error with " + base + ": " + err.Error())
 			return status, err
@@ -214,11 +232,18 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 		}
 	}
 
-	if status, err := oob.SetPower(ctx, v1.PowerAction_POWER_ACTION_STATUS.String(), pwrActions); err != nil {
-		m.SendStatusMessage(fmt.Sprintf("%s CURRENT STATUS %s (REAL ACTION: %s)", base, status, action))
+	status, err := oob.SetPower(m.Log, ctx, v1.PowerAction_POWER_ACTION_STATUS.String(), pwrActions)
+	if err != nil {
+		msg := fmt.Sprintf("%s Failed to get current status: %s (REAL ACTION: %s)", base, err.Error(), action)
+		m.SendStatusMessage(msg)
+		m.Log.V(0).Info(msg)
+	} else {
+		msg := fmt.Sprintf("%s CURRENT STATUS %s (REAL ACTION: %s)", base, status, action)
+		m.SendStatusMessage(msg)
+		m.Log.V(0).Info(msg)
 	}
 
-	result, err = oob.SetPower(ctx, action, pwrActions)
+	result, err = oob.SetPower(m.Log, ctx, action, pwrActions)
 	if err != nil {
 		m.SendStatusMessage("error with " + base + ": " + err.Error())
 		return result, err

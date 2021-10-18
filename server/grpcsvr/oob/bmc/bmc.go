@@ -118,13 +118,16 @@ func (m Action) CreateUser(ctx context.Context) error {
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	connections := map[string]interface{}{
-		"bmclib": &bmclibUserManagement{
-			user:     user,
-			password: password,
-			host:     host,
-			log:      m.Log,
-			creds:    creds,
+	connections := []*common.ConnItem{
+		{
+			Name: "bmclib",
+			Conn: &bmclibUserManagement{
+				user:     user,
+				password: password,
+				host:     host,
+				log:      m.Log,
+				creds:    creds,
+			},
 		},
 	}
 
@@ -136,9 +139,15 @@ func (m Action) CreateUser(ctx context.Context) error {
 	}
 	m.SendStatusMessage("connected to BMC")
 
+	connsByName := make(map[string]interface{})
+
+	for _, conn := range connections {
+		connsByName[conn.Name] = conn.Conn
+	}
+
 	var userAction []oob.BMC
 	for _, elem := range successfulConnections {
-		conn := connections[elem]
+		conn := connsByName[elem]
 		switch r := conn.(type) {
 		case common.Connection:
 			defer r.Close(ctx)
@@ -177,13 +186,16 @@ func (m Action) UpdateUser(ctx context.Context) error {
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	connections := map[string]interface{}{
-		"bmclib": &bmclibUserManagement{
-			user:     user,
-			password: password,
-			host:     host,
-			log:      m.Log,
-			creds:    creds,
+	connections := []*common.ConnItem{
+		{
+			Name: "bmclib",
+			Conn: &bmclibUserManagement{
+				user:     user,
+				password: password,
+				host:     host,
+				log:      m.Log,
+				creds:    creds,
+			},
 		},
 	}
 
@@ -195,9 +207,15 @@ func (m Action) UpdateUser(ctx context.Context) error {
 	}
 	m.SendStatusMessage("connected to BMC")
 
+	connsByName := make(map[string]interface{})
+
+	for _, conn := range connections {
+		connsByName[conn.Name] = conn.Conn
+	}
+
 	var userAction []oob.BMC
 	for _, elem := range successfulConnections {
-		conn := connections[elem]
+		conn := connsByName[elem]
 		switch r := conn.(type) {
 		case common.Connection:
 			defer r.Close(ctx)
@@ -235,14 +253,17 @@ func (m Action) DeleteUser(ctx context.Context) error {
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	connections := map[string]interface{}{
-		"bmclib": &bmclibUserManagement{
-			user:     user,
-			password: password,
-			host:     host,
-			log:      m.Log,
-			creds: &v1.UserCreds{
-				Username: m.DeleteUserRequest.Username,
+	connections := []*common.ConnItem{
+		{
+			Name: "bmclib",
+			Conn: &bmclibUserManagement{
+				user:     user,
+				password: password,
+				host:     host,
+				log:      m.Log,
+				creds: &v1.UserCreds{
+					Username: m.DeleteUserRequest.Username,
+				},
 			},
 		},
 	}
@@ -255,9 +276,15 @@ func (m Action) DeleteUser(ctx context.Context) error {
 	}
 	m.SendStatusMessage("connected to BMC")
 
+	connsByName := make(map[string]interface{})
+
+	for _, conn := range connections {
+		connsByName[conn.Name] = conn.Conn
+	}
+
 	var deleteUsers []oob.BMC
 	for _, elem := range successfulConnections {
-		conn := connections[elem]
+		conn := connsByName[elem]
 		switch r := conn.(type) {
 		case common.Connection:
 			defer r.Close(ctx)
