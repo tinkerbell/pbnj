@@ -79,6 +79,9 @@ func TestBootDevice(t *testing.T) {
 			monkey.PatchInstanceMethod(reflect.TypeOf(b), "Open", func(_ *bmclib.Client, _ context.Context) (err error) {
 				return nil
 			})
+			monkey.PatchInstanceMethod(reflect.TypeOf(b), "Close", func(_ *bmclib.Client, _ context.Context) (err error) {
+				return nil
+			})
 			monkey.PatchInstanceMethod(reflect.TypeOf(&registrar.Registry{}), "FilterForCompatible", func(_ *registrar.Registry, _ context.Context) (drvs registrar.Drivers) {
 				return b.Registry.Drivers
 			})

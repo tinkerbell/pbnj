@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	bou.ke/monkey v1.0.2
-	github.com/bmc-toolbox/bmclib v0.4.10
+	github.com/bmc-toolbox/bmclib v0.4.13
 	github.com/cristalhq/jwt/v3 v3.0.9
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/color v1.7.0
@@ -14,11 +14,11 @@ require (
 	github.com/go-logr/zapr v0.4.0
 	github.com/go-test/deep v1.0.7
 	github.com/golang/protobuf v1.4.3
-	github.com/google/go-cmp v0.5.4
+	github.com/google/go-cmp v0.5.5
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/hashicorp/go-multierror v1.1.0
-	github.com/jacobweinstock/registrar v0.3.2
+	github.com/hashicorp/go-multierror v1.1.1
+	github.com/jacobweinstock/registrar v0.4.2
 	github.com/manifoldco/promptui v0.8.0
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/onsi/gomega v1.10.4
@@ -38,7 +38,7 @@ require (
 	github.com/zsais/go-gin-prometheus v0.1.0
 	go.uber.org/zap v1.16.0
 	goa.design/goa v2.2.5+incompatible
-	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
+	golang.org/x/crypto v0.0.0-20210317152858-513c2a44f670
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
 	google.golang.org/grpc v1.35.0
 	google.golang.org/protobuf v1.25.0

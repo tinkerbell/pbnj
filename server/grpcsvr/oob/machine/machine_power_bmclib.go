@@ -38,8 +38,8 @@ func (b *bmclibBMC) Connect(ctx context.Context) error {
 	return b.conn.CheckCredentials()
 }
 
-func (b *bmclibBMC) Close(_ context.Context) {
-	b.conn.Close()
+func (b *bmclibBMC) Close(ctx context.Context) {
+	b.conn.Close(ctx)
 }
 
 func (b *bmclibBMC) PowerSet(ctx context.Context, action string) (result string, err error) {

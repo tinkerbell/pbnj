@@ -78,6 +78,9 @@ func TestBMCReset(t *testing.T) {
 			monkey.PatchInstanceMethod(reflect.TypeOf(b), "Open", func(_ *bmclib.Client, _ context.Context) (err error) {
 				return nil
 			})
+			monkey.PatchInstanceMethod(reflect.TypeOf(b), "Close", func(_ *bmclib.Client, _ context.Context) (err error) {
+				return nil
+			})
 			monkey.PatchInstanceMethod(reflect.TypeOf(b), "ResetBMC", func(_ *bmclib.Client, _ context.Context, _ string) (ok bool, err error) {
 				return tc.ok, tc.err
 			})
