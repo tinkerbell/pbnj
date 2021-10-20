@@ -3,6 +3,7 @@ package machine
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/bmc-toolbox/bmclib"
 	"github.com/bmc-toolbox/bmclib/bmc"
@@ -228,6 +229,23 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	if pwrAction == "status" {
 		result, err = client.GetPowerState(ctx)
 	} else {
+		if action == v1.PowerAction_POWER_ACTION_CYCLE.String() {
+			// check status
+			// if powered on, do cycle
+			// if powered off, do power on
+			status, err := client.GetPowerState(ctx)
+			if err != nil {
+				log.V(0).Error(err, "failed to set power state "+base)
+				m.SendStatusMessage("error with " + base + ": " + err.Error())
+				return "", &repository.Error{
+					Code:    v1.Code_value["UNKNOWN"],
+					Message: err.Error(),
+				}
+			}
+			if strings.Contains(strings.ToLower(status), "off") {
+				pwrAction = v1.PowerAction_POWER_ACTION_ON.String()
+			}
+		}
 		ok, err = client.SetPowerState(ctx, pwrAction)
 		result = fmt.Sprintf("%v complete", base)
 	}
