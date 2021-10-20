@@ -20,11 +20,11 @@ jobs:
     - name: prepare go mod
       run: go mod tidy
     - name: go test
-      run: go test -v ./...    
+      run: make test
     - name: lint
       run: make lint
     - name: go test coverage
-      run: go test -coverprofile=coverage.txt ./...
+      run: make test-ci
     - name: upload codecov
       run: bash <(curl -s https://codecov.io/bash)
     - name: Build binaries
