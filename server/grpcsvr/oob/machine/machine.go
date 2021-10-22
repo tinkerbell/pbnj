@@ -140,14 +140,14 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	m.SendStatusMessage("connected to BMC")
 
 	ok, err := client.SetBootDevice(ctx, dev, persistent, efiBoot)
-	log = m.Log.WithValues(logMetadata(client.GetMetadata()))
+	log = m.Log.WithValues(logMetadata(client.GetMetadata())...)
 	if err != nil {
-		log.Error(err, "failed to set boot device", "device", dev)
+		log.Error(err, "failed to set boot device")
 	} else if !ok {
 		err = fmt.Errorf("setting boot device failed")
 	}
 	if err != nil {
-		log.Error(err, "error with "+base)
+		log.Error(err, fmt.Sprintf("error with %v", base))
 		m.SendStatusMessage(fmt.Sprintf("failed to set %v as boot device", dev))
 
 		return "", &repository.Error{

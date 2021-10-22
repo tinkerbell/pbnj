@@ -33,7 +33,7 @@ function installDeps {
         echo 'Protoc already installed!' >&2
     fi
     go get google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.0.1
-    go get google.golang.org/grpc@v1.32.0
+    go get google.golang.org/grpc@v1.35.0
     go get google.golang.org/protobuf/cmd/protoc-gen-go@v1.25.0
     go get github.com/mwitkow/go-proto-validators/protoc-gen-govalidators@v0.3.2
     go get golang.org/x/tools/cmd/goimports
