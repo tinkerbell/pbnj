@@ -2,14 +2,12 @@ package machine
 
 import (
 	"context"
-	"errors"
 	"reflect"
 	"testing"
 
 	"bou.ke/monkey"
 	"github.com/bmc-toolbox/bmclib"
 	"github.com/google/go-cmp/cmp"
-	"github.com/jacobweinstock/registrar"
 	"github.com/packethost/pkg/log/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/repository"
@@ -66,10 +64,7 @@ func TestBootDevice(t *testing.T) {
 		bootDevice   string
 		actionStruct Action
 	}{
-		{"reset err", false, errors.New("bad"), "", &repository.Error{Code: v1.Code_value["UNKNOWN"], Message: "bad", Details: []string{}}, v1.BootDevice_BOOT_DEVICE_PXE.String(), m},
-		{"success", true, nil, "", nil, v1.BootDevice_BOOT_DEVICE_PXE.String(), m},
-		{"reset not ok", false, nil, "", &repository.Error{Code: v1.Code_value["UNKNOWN"], Message: "setting boot device failed", Details: []string{}}, v1.BootDevice_BOOT_DEVICE_PXE.String(), m},
-		{"unknown reset request", true, nil, "", &repository.Error{Code: v1.Code_value["INVALID_ARGUMENT"], Message: "unknown boot device", Details: []string{}}, "blah", m},
+		{"unknown boot device request", true, nil, "", &repository.Error{Code: v1.Code_value["INVALID_ARGUMENT"], Message: "unknown boot device", Details: []string{}}, "blah", m},
 		{"auth parse err", true, nil, "", &repository.Error{Code: v1.Code_value["UNAUTHENTICATED"], Message: "no auth found", Details: []string{}}, v1.BootDevice_BOOT_DEVICE_PXE.String(), authErr},
 	}
 
@@ -82,12 +77,10 @@ func TestBootDevice(t *testing.T) {
 			monkey.PatchInstanceMethod(reflect.TypeOf(b), "Close", func(_ *bmclib.Client, _ context.Context) (err error) {
 				return nil
 			})
-			monkey.PatchInstanceMethod(reflect.TypeOf(&registrar.Registry{}), "FilterForCompatible", func(_ *registrar.Registry, _ context.Context) (drvs registrar.Drivers) {
-				return b.Registry.Drivers
-			})
 			monkey.PatchInstanceMethod(reflect.TypeOf(b), "SetBootDevice", func(_ *bmclib.Client, _ context.Context, _ string, _ bool, _ bool) (ok bool, err error) {
 				return tc.ok, tc.err
 			})
+
 			result, err := tc.actionStruct.BootDeviceSet(context.Background(), tc.bootDevice, false, false)
 			if err != nil {
 				if tc.wantErr != nil {

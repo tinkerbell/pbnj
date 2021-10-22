@@ -2,21 +2,16 @@ package machine
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/bmc-toolbox/bmclib"
+	"github.com/bmc-toolbox/bmclib/bmc"
 	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/metrics"
-	"github.com/tinkerbell/pbnj/pkg/oob"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	common "github.com/tinkerbell/pbnj/server/grpcsvr/oob"
-)
-
-const (
-	Reset = "reset"
-	On    = "on"
-	Off   = "off"
 )
 
 // Action for making power actions on BMCs, implements oob.Machine interface.
@@ -62,7 +57,7 @@ func WithPowerRequest(in *v1.PowerRequest) Option {
 }
 
 // NewPowerSetter returns an oob.PowerSetter interface.
-func NewPowerSetter(opts ...Option) (oob.PowerSetter, error) {
+func NewPowerSetter(opts ...Option) (*Action, error) {
 	a := &Action{}
 	for _, opt := range opts {
 		err := opt(a)
@@ -74,7 +69,7 @@ func NewPowerSetter(opts ...Option) (oob.PowerSetter, error) {
 }
 
 // NewBootDeviceSetter returns an oob.BootDeviceSetter interface.
-func NewBootDeviceSetter(opts ...Option) (oob.BootDeviceSetter, error) {
+func NewBootDeviceSetter(opts ...Option) (*Action, error) {
 	a := &Action{}
 	for _, opt := range opts {
 		err := opt(a)
@@ -93,26 +88,6 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	}
 	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
 	defer timer.ObserveDuration()
-
-	host, user, password, parseErr := m.ParseAuth(m.BootDeviceRequest.Authn)
-	if parseErr != nil {
-		return result, parseErr
-	}
-	base := "setting boot device: " + m.BootDeviceRequest.GetBootDevice().String()
-	msg := "working on " + base
-	m.SendStatusMessage(msg)
-	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
-	// client.Registry.Drivers = client.Registry.FilterForCompatible(ctx)
-
-	m.SendStatusMessage("connecting to BMC")
-	err = client.Open(ctx)
-	if err != nil {
-		return "", &repository.Error{
-			Code:    v1.Code_value["PERMISSION_DENIED"],
-			Message: err.Error(),
-		}
-	}
-	defer client.Close(ctx)
 
 	var dev string
 	switch device {
@@ -138,20 +113,50 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 		}
 	}
 
-	var errMsg string
-	ok, err := client.SetBootDevice(ctx, dev, persistent, efiBoot)
-	if err != nil {
-		errMsg = err.Error()
-	} else if !ok {
-		errMsg = "setting boot device failed"
+	host, user, password, parseErr := m.ParseAuth(m.BootDeviceRequest.Authn)
+	if parseErr != nil {
+		return result, parseErr
 	}
-	if errMsg != "" {
+	base := "setting boot device: " + m.BootDeviceRequest.GetBootDevice().String()
+	msg := "working on " + base
+	m.SendStatusMessage(msg)
+	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
+
+	m.SendStatusMessage("connecting to BMC")
+	err = client.Open(ctx)
+	if err != nil {
 		return "", &repository.Error{
-			Code:    v1.Code_value["UNKNOWN"],
-			Message: errMsg,
+			Code:    v1.Code_value["PERMISSION_DENIED"],
+			Message: err.Error(),
 		}
 	}
+	log := m.Log.WithValues("device", device, "host", host, "user", user)
+	defer func() {
+		client.Close(ctx)
+		log.Info("closed connections", logMetadata(client.GetMetadata())...)
+	}()
+	log.Info("connected to BMC", logMetadata(client.GetMetadata())...)
+	m.SendStatusMessage("connected to BMC")
+
+	ok, err := client.SetBootDevice(ctx, dev, persistent, efiBoot)
+	log = m.Log.WithValues(logMetadata(client.GetMetadata()))
+	if err != nil {
+		log.Error(err, "failed to set boot device", "device", dev)
+	} else if !ok {
+		err = fmt.Errorf("setting boot device failed")
+	}
+	if err != nil {
+		log.Error(err, "error with "+base)
+		m.SendStatusMessage(fmt.Sprintf("failed to set %v as boot device", dev))
+
+		return "", &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: err.Error(),
+		}
+	}
+	log.Info(base + " complete")
 	m.SendStatusMessage(base + " complete")
+
 	return result, nil
 }
 
@@ -164,6 +169,32 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
 	defer timer.ObserveDuration()
 
+	var pwrAction string
+	switch action {
+	case v1.PowerAction_POWER_ACTION_ON.String():
+		pwrAction = "on"
+	case v1.PowerAction_POWER_ACTION_OFF.String():
+		pwrAction = "off"
+	case v1.PowerAction_POWER_ACTION_STATUS.String():
+		pwrAction = "status"
+	case v1.PowerAction_POWER_ACTION_RESET.String():
+		pwrAction = "reset"
+	case v1.PowerAction_POWER_ACTION_HARDOFF.String():
+		pwrAction = "off"
+	case v1.PowerAction_POWER_ACTION_CYCLE.String():
+		pwrAction = "cycle"
+	case v1.PowerAction_POWER_ACTION_UNSPECIFIED.String():
+		return "", &repository.Error{
+			Code:    v1.Code_value["INVALID_ARGUMENT"],
+			Message: "UNSPECIFIED power action",
+		}
+	default:
+		return "", &repository.Error{
+			Code:    v1.Code_value["INVALID_ARGUMENT"],
+			Message: fmt.Sprintf("unknown power action: %q", action),
+		}
+	}
+
 	host, user, password, parseErr := m.ParseAuth(m.PowerRequest.Authn)
 	if parseErr != nil {
 		return result, parseErr
@@ -172,41 +203,65 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	// the order here is the order in which these connections/operations will be tried
+	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
 
-	connections := map[string]interface{}{
-		"bmclib2":  &bmclibClient{log: m.Log, user: user, password: password, host: host},
-		"bmclib":   &bmclibBMC{user: user, password: password, host: host, log: m.Log},
-		"ipmitool": &ipmiBMC{user: user, password: password, host: host, log: m.Log},
-		"redfish":  &redfishBMC{user: user, password: password, host: host, log: m.Log},
-	}
-
-	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
-	if ecErr != nil {
+	err = client.Open(ctx)
+	if err != nil {
 		m.SendStatusMessage("connecting to BMC failed")
-		return result, ecErr
+
+		return "", &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: err.Error(),
+		}
 	}
+
+	log := m.Log.WithValues("action", action, "host", host, "user", user)
+
+	defer func() {
+		client.Close(ctx)
+		log.Info("closed connections", logMetadata(client.GetMetadata())...)
+	}()
+	log.Info("connected to BMC", logMetadata(client.GetMetadata())...)
 	m.SendStatusMessage("connected to BMC")
 
-	var pwrActions []oob.PowerSetter
-	for _, elem := range successfulConnections {
-		conn := connections[elem]
-		if r, ok := conn.(common.Connection); ok {
-			defer r.Close(ctx) //nolint:revive // defer inside of a loop is OK here due to limited depth
-		}
-
-		if r, ok := conn.(oob.PowerSetter); ok {
-			pwrActions = append(pwrActions, r)
-		}
+	ok := true
+	if pwrAction == "status" {
+		result, err = client.GetPowerState(ctx)
+	} else {
+		ok, err = client.SetPowerState(ctx, pwrAction)
+		result = fmt.Sprintf("%v complete", base)
 	}
-	if len(pwrActions) == 0 {
-		m.SendStatusMessage("no successful connections able to run power actions")
-	}
-	result, err = oob.SetPower(ctx, action, pwrActions)
+	log = m.Log.WithValues(logMetadata(client.GetMetadata())...)
 	if err != nil {
+		log.Error(err, "failed to set power state "+base)
 		m.SendStatusMessage("error with " + base + ": " + err.Error())
-		return result, err
 	}
+	if !ok && err == nil {
+		log.Error(err, fmt.Sprintf("error completing power %v action", action))
+		err = fmt.Errorf("error completing power %v action", action)
+	}
+	if err != nil {
+		log.Error(err, fmt.Sprintf("error completing power %v action", action))
+
+		return "", &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: err.Error(),
+		}
+	}
+
+	log.Info(base + " complete")
 	m.SendStatusMessage(base + " complete")
+
 	return result, nil
+}
+
+func logMetadata(md bmc.Metadata) []interface{} {
+	kvs := []interface{}{
+		"ProvidersAttempted", md.ProvidersAttempted,
+		"SuccessfulOpenConns", md.SuccessfulOpenConns,
+		"SuccessfulCloseConns", md.SuccessfulCloseConns,
+		"SuccessfulProvider", md.SuccessfulProvider,
+	}
+
+	return kvs
 }

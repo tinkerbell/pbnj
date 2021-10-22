@@ -101,7 +101,7 @@ ruby-client-demo: image ## run ruby client demo
 
 .PHONY: evans
 evans: ## run evans grpc client
-	evans --path $$(go env GOMODCACHE) --path . --proto $$(find api/v1 -type f -name '*.proto'| xargs | tr " " ",") repl
+	evans --path $$(go env GOMODCACHE) --path . --proto $$(find api/v1 -type f -name '*.proto'| xargs | tr " " ",") -p "$${PBNJ_PORT:-50051}" repl
 
 # BEGIN: lint-install .
 # http://github.com/tinkerbell/lint-install
