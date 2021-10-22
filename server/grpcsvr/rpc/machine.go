@@ -30,7 +30,7 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID)
 
-	l.V(0).Info(
+	l.Info(
 		"start BootDevice request",
 		"username", in.Authn.GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),
@@ -62,7 +62,7 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 	l := m.Log.GetContextLogger(ctx)
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID)
-	l.V(0).Info(
+	l.Info(
 		"start Power request",
 		"username", in.Authn.GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),

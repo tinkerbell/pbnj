@@ -131,7 +131,7 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 			Message: err.Error(),
 		}
 	}
-	log := m.Log.WithValues("device", device, "host", host, "user", user)
+	log := m.Log.WithValues("device", dev, "host", host, "user", user)
 	defer func() {
 		client.Close(ctx)
 		log.Info("closed connections", logMetadata(client.GetMetadata())...)

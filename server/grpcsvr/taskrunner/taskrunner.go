@@ -86,7 +86,7 @@ func (r *Runner) worker(ctx context.Context, description, taskID string, action 
 	err := repo.Create(taskID, sessionRecord)
 	if err != nil {
 		// TODO how to handle unable to create record; ie network error, persistence error, etc?
-		logger.V(0).Error(err, "task complete", "complete", true)
+		logger.Error(err, "task complete", "complete", true)
 		return
 	}
 

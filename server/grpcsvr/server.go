@@ -104,7 +104,7 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 	go func() {
 		err := httpServer.Run()
 		if err != nil {
-			log.V(0).Error(err, "failed to serve http")
+			log.Error(err, "failed to serve http")
 			os.Exit(1) //nolint:revive // removing deep-exit requires a significant refactor
 		}
 	}()
@@ -114,7 +114,7 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 	signal.Notify(sigChan, os.Interrupt)
 	go func() {
 		for range sigChan {
-			log.V(0).Info("sig received, shutting down PBnJ")
+			log.Info("sig received, shutting down PBnJ")
 			grpcServer.GracefulStop()
 			<-ctx.Done()
 		}
@@ -122,10 +122,10 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 
 	go func() {
 		<-ctx.Done()
-		log.V(0).Info("ctx cancelled, shutting down PBnJ")
+		log.Info("ctx cancelled, shutting down PBnJ")
 		grpcServer.GracefulStop()
 	}()
 
-	log.V(0).Info("starting PBnJ gRPC server")
+	log.Info("starting PBnJ gRPC server")
 	return grpcServer.Serve(listen)
 }

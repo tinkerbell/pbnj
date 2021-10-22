@@ -41,7 +41,7 @@ var machineCmd = &cobra.Command{
 		opts = append(opts, grpc.WithInsecure())
 		conn, err := grpc.Dial("localhost:"+port, opts...)
 		if err != nil {
-			logger.V(0).Error(err, "fail to dial server")
+			logger.Error(err, "fail to dial server")
 			os.Exit(1)
 		}
 		defer conn.Close()
@@ -66,11 +66,11 @@ var machineCmd = &cobra.Command{
 			PowerAction: v1.PowerAction_POWER_ACTION_STATUS,
 		})
 		if err != nil {
-			logger.V(0).Error(err, "error calling")
+			logger.Error(err, "error calling")
 			os.Exit(1)
 		}
 
-		logger.V(0).Info("resp", "resp", []interface{}{resp})
+		logger.Info("resp", "resp", []interface{}{resp})
 	},
 }
 

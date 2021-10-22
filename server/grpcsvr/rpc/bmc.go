@@ -35,7 +35,7 @@ func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetR
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID)
 
-	l.V(0).Info(
+	l.Info(
 		"start Reset request",
 		"username", in.Authn.GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),
@@ -70,7 +70,7 @@ func (b *BmcService) CreateUser(ctx context.Context, in *v1.CreateUserRequest) (
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID)
 
-	l.V(0).Info(
+	l.Info(
 		"start CreateUser request",
 		"username", in.Authn.GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),
@@ -103,7 +103,7 @@ func (b *BmcService) UpdateUser(ctx context.Context, in *v1.UpdateUserRequest) (
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID)
 
-	l.V(0).Info(
+	l.Info(
 		"start UpdateUser request",
 		"username", in.Authn.GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),
@@ -135,7 +135,7 @@ func (b *BmcService) DeleteUser(ctx context.Context, in *v1.DeleteUserRequest) (
 	l := b.Log.GetContextLogger(ctx)
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID)
-	l.V(0).Info(
+	l.Info(
 		"start DeleteUser request",
 		"username", in.Authn.GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),
