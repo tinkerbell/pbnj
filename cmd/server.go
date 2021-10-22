@@ -74,7 +74,7 @@ var (
 				if hsKey != "" || rsPubKey != "" {
 					authzInterceptor = grpc_auth.UnaryServerInterceptor(authFunc())
 				} else {
-					logger.V(0).Error(errors.New("error configuring server"), "authorization enabled but no symmetric or asymmetric key was provided")
+					logger.Error(errors.New("error configuring server"), "authorization enabled but no symmetric or asymmetric key was provided")
 					os.Exit(1)
 				}
 			}

@@ -20,28 +20,29 @@ type TaskService struct {
 // Status returns a task record.
 func (t *TaskService) Status(ctx context.Context, in *v1.StatusRequest) (*v1.StatusResponse, error) {
 	l := t.Log.GetContextLogger(ctx)
-	l.V(0).Info("start Status request", "taskID", in.TaskId)
+	l.Info("start Status request", "taskID", in.TaskId)
 
 	record, err := t.TaskRunner.Status(ctx, in.TaskId)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
-	var errMsg *v1.Error
-	if record.Error != nil {
-		errMsg = &v1.Error{
-			Code:    record.Error.Code,
-			Message: record.Error.Message,
-			Details: record.Error.Details,
+
+	c := codes.OK
+	if record.Error.Message != "" {
+		if codes.Code(record.Error.Code) != codes.OK {
+			c = codes.Code(record.Error.Code)
+		} else {
+			c = codes.Unknown
 		}
 	}
 
 	return &v1.StatusResponse{
 		Id:          record.ID,
 		Description: record.Description,
-		Error:       errMsg,
+		Error:       nil,
 		State:       record.State,
 		Result:      record.Result,
 		Complete:    record.Complete,
 		Messages:    record.Messages,
-	}, nil
+	}, status.Error(c, record.Error.Message)
 }

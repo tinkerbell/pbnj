@@ -49,7 +49,7 @@ func (r *Runner) Execute(ctx context.Context, description, taskID string, action
 // TODO handle retrys, use a timeout.
 func (r *Runner) worker(ctx context.Context, description, taskID string, action func(chan string) (string, error)) {
 	logger := r.Log.GetContextLogger(ctx)
-	logger = logger.WithValues("complete", false, "taskID", taskID, "description", description)
+	logger = logger.WithValues("taskID", taskID, "description", description)
 	r.counterMu.Lock()
 	r.active++
 	r.total++
@@ -86,7 +86,7 @@ func (r *Runner) worker(ctx context.Context, description, taskID string, action 
 	err := repo.Create(taskID, sessionRecord)
 	if err != nil {
 		// TODO how to handle unable to create record; ie network error, persistence error, etc?
-		logger.V(0).Error(err, "task complete", "complete", true)
+		logger.Error(err, "task complete", "complete", true)
 		return
 	}
 

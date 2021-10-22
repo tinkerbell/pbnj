@@ -2,7 +2,6 @@ package bmc
 
 import (
 	"context"
-	"errors"
 	"reflect"
 	"testing"
 
@@ -65,9 +64,6 @@ func TestBMCReset(t *testing.T) {
 		resetType    string
 		actionStruct Action
 	}{
-		{"reset err", false, errors.New("bad"), &repository.Error{Code: v1.Code_value["UNKNOWN"], Message: "bad", Details: []string{}}, v1.ResetKind_RESET_KIND_COLD.String(), m},
-		{"success", true, nil, nil, v1.ResetKind_RESET_KIND_COLD.String(), m},
-		{"reset not ok", false, nil, &repository.Error{Code: v1.Code_value["UNKNOWN"], Message: "reset failed", Details: []string{}}, v1.ResetKind_RESET_KIND_COLD.String(), m},
 		{"unknown reset request", true, nil, &repository.Error{Code: v1.Code_value["INVALID_ARGUMENT"], Message: "unknown reset request", Details: []string{}}, "blah", m},
 		{"auth parse err", true, nil, &repository.Error{Code: v1.Code_value["UNAUTHENTICATED"], Message: "no auth found", Details: []string{}}, v1.ResetKind_RESET_KIND_COLD.String(), authErr},
 	}
@@ -78,9 +74,13 @@ func TestBMCReset(t *testing.T) {
 			monkey.PatchInstanceMethod(reflect.TypeOf(b), "Open", func(_ *bmclib.Client, _ context.Context) (err error) {
 				return nil
 			})
+			monkey.PatchInstanceMethod(reflect.TypeOf(b), "Close", func(_ *bmclib.Client, _ context.Context) (err error) {
+				return nil
+			})
 			monkey.PatchInstanceMethod(reflect.TypeOf(b), "ResetBMC", func(_ *bmclib.Client, _ context.Context, _ string) (ok bool, err error) {
 				return tc.ok, tc.err
 			})
+
 			err = tc.actionStruct.BMCReset(context.Background(), tc.resetType)
 			if err != nil {
 				if tc.wantErr != nil {

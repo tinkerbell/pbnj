@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/bmc-toolbox/bmclib"
+	"github.com/bmc-toolbox/bmclib/bmc"
 	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
@@ -88,7 +89,7 @@ func NewBMC(opts ...Option) (oob.BMC, error) {
 }
 
 // NewBMCResetter returns an oob.BMCResetter interface.
-func NewBMCResetter(opts ...Option) (oob.BMCResetter, error) {
+func NewBMCResetter(opts ...Option) (*Action, error) {
 	a := &Action{}
 
 	for _, opt := range opts {
@@ -152,7 +153,7 @@ func (m Action) CreateUser(ctx context.Context) error {
 	err = oob.CreateUser(ctx, actions)
 	if err != nil {
 		m.SendStatusMessage(fmt.Sprintf("error %s: %v", status, err))
-		m.Log.V(0).Info(fmt.Sprintf("error %s: %v", status, err))
+		m.Log.Info(fmt.Sprintf("error %s: %v", status, err))
 		return err
 	}
 
@@ -182,7 +183,7 @@ func (m Action) UpdateUser(ctx context.Context) error {
 
 	if err = oob.UpdateUser(ctx, actions); err != nil {
 		m.SendStatusMessage(fmt.Sprintf("error %s: %v", status, err))
-		m.Log.V(0).Info(fmt.Sprintf("error %s: %v", status, err))
+		m.Log.Info(fmt.Sprintf("error %s: %v", status, err))
 		return err
 	}
 
@@ -212,7 +213,7 @@ func (m Action) DeleteUser(ctx context.Context) error {
 
 	if err = oob.DeleteUser(ctx, actions); err != nil {
 		m.SendStatusMessage(fmt.Sprintf("error %s: %v", status, err))
-		m.Log.V(0).Info(fmt.Sprintf("error %s: %v", status, err))
+		m.Log.Info(fmt.Sprintf("error %s: %v", status, err))
 		return err
 	}
 
@@ -228,9 +229,7 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 	}
 	m.SendStatusMessage("working on bmc reset")
 	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
-	// client.Registry.Drivers = client.Registry.FilterForCompatible(ctx)
 
-	var errMsg string
 	lookup := map[string]string{
 		v1.ResetKind_RESET_KIND_COLD.String(): "cold",
 		v1.ResetKind_RESET_KIND_WARM.String(): "warm",
@@ -249,19 +248,41 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 			Message: err.Error(),
 		}
 	}
-	defer client.Close(ctx)
+	log := m.Log.WithValues("resetType", rLookup, "host", host, "user", user)
+	defer func() {
+		client.Close(ctx)
+		log.Info("closed connections", logMetadata(client.GetMetadata())...)
+	}()
+	log.Info("connected to BMC", logMetadata(client.GetMetadata())...)
+	m.SendStatusMessage("connected to BMC")
+
 	ok, err = client.ResetBMC(ctx, rLookup)
+	log = m.Log.WithValues(logMetadata(client.GetMetadata())...)
 	if err != nil {
-		errMsg = err.Error()
+		log.Error(err, "failed to reset BMC")
 	} else if !ok {
-		errMsg = "reset failed"
+		err = fmt.Errorf("reset failed")
 	}
-	if errMsg != "" {
-		err = &repository.Error{
+	if err != nil {
+		m.SendStatusMessage(fmt.Sprintf("failed to %v reset BMC", rLookup))
+		return &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
-			Message: errMsg,
+			Message: err.Error(),
 		}
 	}
-	m.SendStatusMessage("bmc reset complete")
-	return err
+	log.Info(fmt.Sprintf("%v reset complete", rLookup))
+	m.SendStatusMessage(fmt.Sprintf("%v bmc reset complete", rLookup))
+
+	return nil
+}
+
+func logMetadata(md bmc.Metadata) []interface{} {
+	kvs := []interface{}{
+		"ProvidersAttempted", md.ProvidersAttempted,
+		"SuccessfulOpenConns", md.SuccessfulOpenConns,
+		"SuccessfulCloseConns", md.SuccessfulCloseConns,
+		"SuccessfulProvider", md.SuccessfulProvider,
+	}
+
+	return kvs
 }

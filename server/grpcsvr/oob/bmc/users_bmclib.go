@@ -40,8 +40,8 @@ func (b *bmclibUserManagement) Connect(ctx context.Context) error {
 	return b.conn.CheckCredentials()
 }
 
-func (b *bmclibUserManagement) Close(_ context.Context) {
-	b.conn.Close()
+func (b *bmclibUserManagement) Close(ctx context.Context) {
+	b.conn.Close(ctx)
 }
 
 func (b *bmclibUserManagement) CreateUser(_ context.Context) error {
