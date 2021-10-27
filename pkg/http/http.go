@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/tinkerbell/pbnj/server/grpcsvr/taskrunner"
+	"github.com/tinkerbell/pbnj/grpc/taskrunner"
 )
 
 type Server struct {

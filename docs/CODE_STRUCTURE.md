@@ -7,14 +7,19 @@ $ tree -d -L 3
 .
 ├── api
 │   └── v1
-├── bin
 ├── client
 ├── cmd
-│   └── pbnj
 ├── docs
 ├── examples
 │   └── clients
 │       └── ruby
+├── grpc
+│   ├── oob
+│   │   ├── bmc
+│   │   └── machine
+│   ├── persistence
+│   ├── rpc
+│   └── taskrunner
 ├── pkg
 │   ├── healthcheck
 │   ├── http
@@ -25,33 +30,20 @@ $ tree -d -L 3
 │   ├── task
 │   └── zaplog
 ├── scripts
-│   └── http
-├── server
-│   ├── grpcsvr
-│   │   ├── oob
-│   │   ├── persistence
-│   │   ├── rpc
-│   │   └── taskrunner
-│   └── httpsvr
-│       ├── api
-│       ├── docs
-│       ├── drivers
-│       ├── evlog
-│       ├── interfaces
-│       ├── log
-│       ├── reqid
-│       └── util
 └── test
+    └── runner
 ```
 
 ## Table of Contents
 
-- [api/](#api/)
-- [cmd/](#cmd/)
-- [pkg/](#pkg/)
-- [scripts/](#scripts/)
-- [server/](#server/)
-- [test/](#test/)
+- [Code Structure](#code-structure)
+  - [Table of Contents](#table-of-contents)
+    - [_api/_](#api)
+    - [_cmd/_](#cmd)
+    - [_pkg/_](#pkg)
+    - [_scripts/_](#scripts)
+    - [_grpc/_](#grpc)
+    - [_test/_](#test)
 
 ### _api/_
 
@@ -86,10 +78,9 @@ The _pkg_ directory contains generic utility type Go packages for PBnJ.
 
 The _scripts_ directory contains helper scripts for things like protocol buffer code generation, container image running, and running the server locally.
 
-### _server/_
+### _grpc/_
 
-The _server_ directory contains the gRPC and HTTP server implementations of PBnJ.
-FYI, the HTTP implementation will shortly be deprecated.
+The _grpc_ directory contains the gRPC server implementations of PBnJ.
 
 ### _test/_
 
