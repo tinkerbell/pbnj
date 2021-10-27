@@ -21,7 +21,6 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/http"
 	"github.com/tinkerbell/pbnj/pkg/zaplog"
 	"github.com/tinkerbell/pbnj/server/grpcsvr"
-	"github.com/tinkerbell/pbnj/server/httpsvr"
 	"goa.design/goa/grpc/middleware"
 	"google.golang.org/grpc"
 )
@@ -34,7 +33,6 @@ const (
 var (
 	port        string
 	metricsAddr string
-	enableHTTP  bool
 	enableAuthz bool
 	hsKey       string
 	rsPubKey    string
@@ -95,10 +93,6 @@ var (
 			httpServer := http.NewServer(metricsAddr)
 			httpServer.WithLogger(logger)
 
-			if enableHTTP {
-				go httpsvr.RunHTTPServer()
-			}
-
 			if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger), grpcServer, port, httpServer, grpcsvr.WithBmcTimeout(bmcTimeout)); err != nil {
 				logger.Error(err, "error running server")
 				os.Exit(1)
@@ -110,7 +104,6 @@ var (
 func init() {
 	serverCmd.PersistentFlags().StringVar(&port, "port", "50051", "grpc server port")
 	serverCmd.PersistentFlags().StringVar(&metricsAddr, "metricsListenAddr", ":8080", "metrics server listen address")
-	serverCmd.PersistentFlags().BoolVar(&enableHTTP, "enableHTTP", false, "enable the HTTP server")
 	serverCmd.PersistentFlags().BoolVar(&enableAuthz, "enableAuthz", false, "enable Authz middleware. Configure with configuration file details")
 	serverCmd.PersistentFlags().StringVar(&hsKey, "hsKey", "", "HS key")
 	serverCmd.PersistentFlags().StringVar(&rsPubKey, "rsPubKey", "", "RS public key")
