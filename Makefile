@@ -4,7 +4,7 @@ PROTOS_LOC:=v2/protos
 BINARY:=pbnj
 OSFLAG:= $(shell go env GOHOSTOS)
 GIT_COMMIT:=$(shell git rev-parse --short HEAD)
-BUILD_ARGS:=GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags '-s -w -extldflags "-static" -X ${REPO}/server/httpsvr.GitRev=${GIT_COMMIT}'
+BUILD_ARGS:=GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags '-s -w -extldflags "-static"'
 PROTOBUF_BUILDER_IMG:=pbnj-protobuf-builder
 
 help:
