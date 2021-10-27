@@ -7,9 +7,9 @@ import (
 
 	"github.com/rs/xid"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
+	"github.com/tinkerbell/pbnj/grpc/oob/bmc"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/task"
-	"github.com/tinkerbell/pbnj/server/grpcsvr/oob/bmc"
 )
 
 // BmcService for doing BMC actions.

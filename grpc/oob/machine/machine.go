@@ -10,9 +10,9 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
+	common "github.com/tinkerbell/pbnj/grpc/oob"
 	"github.com/tinkerbell/pbnj/pkg/metrics"
 	"github.com/tinkerbell/pbnj/pkg/repository"
-	common "github.com/tinkerbell/pbnj/server/grpcsvr/oob"
 )
 
 // Action for making power actions on BMCs, implements oob.Machine interface.

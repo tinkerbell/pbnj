@@ -1,4 +1,4 @@
-package grpcsvr
+package grpc
 
 import (
 	"context"
@@ -11,13 +11,13 @@ import (
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
+	"github.com/tinkerbell/pbnj/grpc/persistence"
+	"github.com/tinkerbell/pbnj/grpc/rpc"
+	"github.com/tinkerbell/pbnj/grpc/taskrunner"
 	"github.com/tinkerbell/pbnj/pkg/healthcheck"
 	"github.com/tinkerbell/pbnj/pkg/http"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/repository"
-	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
-	"github.com/tinkerbell/pbnj/server/grpcsvr/rpc"
-	"github.com/tinkerbell/pbnj/server/grpcsvr/taskrunner"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 )

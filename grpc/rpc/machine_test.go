@@ -12,9 +12,9 @@ import (
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
+	"github.com/tinkerbell/pbnj/grpc/persistence"
+	"github.com/tinkerbell/pbnj/grpc/taskrunner"
 	"github.com/tinkerbell/pbnj/pkg/zaplog"
-	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
-	"github.com/tinkerbell/pbnj/server/grpcsvr/taskrunner"
 )
 
 func TestDevice(t *testing.T) {

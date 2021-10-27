@@ -10,9 +10,9 @@ import (
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	"github.com/rs/xid"
+	"github.com/tinkerbell/pbnj/grpc/persistence"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/pkg/zaplog"
-	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
 )
 
 func TestRoundTrip(t *testing.T) {

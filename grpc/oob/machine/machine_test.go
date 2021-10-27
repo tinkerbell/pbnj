@@ -10,8 +10,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/packethost/pkg/log/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
+	common "github.com/tinkerbell/pbnj/grpc/oob"
 	"github.com/tinkerbell/pbnj/pkg/repository"
-	common "github.com/tinkerbell/pbnj/server/grpcsvr/oob"
 )
 
 func newAction(withAuthErr bool) Action {

@@ -1,4 +1,4 @@
-package grpcsvr
+package grpc
 
 import (
 	"context"
@@ -14,9 +14,9 @@ import (
 	"github.com/packethost/pkg/log/logr"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
+	"github.com/tinkerbell/pbnj/grpc/persistence"
 	"github.com/tinkerbell/pbnj/pkg/http"
 	"github.com/tinkerbell/pbnj/pkg/zaplog"
-	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 )

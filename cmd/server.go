@@ -18,9 +18,9 @@ import (
 	"github.com/packethost/pkg/grpc/authz"
 	"github.com/packethost/pkg/log/logr"
 	"github.com/spf13/cobra"
+	grpcsvr "github.com/tinkerbell/pbnj/grpc"
 	"github.com/tinkerbell/pbnj/pkg/http"
 	"github.com/tinkerbell/pbnj/pkg/zaplog"
-	"github.com/tinkerbell/pbnj/server/grpcsvr"
 	"goa.design/goa/grpc/middleware"
 	"google.golang.org/grpc"
 )

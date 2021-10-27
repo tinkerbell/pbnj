@@ -6,9 +6,9 @@ import (
 
 	"github.com/rs/xid"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
+	"github.com/tinkerbell/pbnj/grpc/oob/machine"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/task"
-	"github.com/tinkerbell/pbnj/server/grpcsvr/oob/machine"
 )
 
 // MachineService for doing power and device actions.

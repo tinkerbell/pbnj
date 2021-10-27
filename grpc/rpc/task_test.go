@@ -12,10 +12,10 @@ import (
 	"github.com/philippgille/gokv/freecache"
 	"github.com/rs/xid"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
+	"github.com/tinkerbell/pbnj/grpc/persistence"
+	"github.com/tinkerbell/pbnj/grpc/taskrunner"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	"github.com/tinkerbell/pbnj/pkg/zaplog"
-	"github.com/tinkerbell/pbnj/server/grpcsvr/persistence"
-	"github.com/tinkerbell/pbnj/server/grpcsvr/taskrunner"
 )
 
 func TestTaskFound(t *testing.T) {
