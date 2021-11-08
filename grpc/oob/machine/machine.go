@@ -13,6 +13,10 @@ import (
 	common "github.com/tinkerbell/pbnj/grpc/oob"
 	"github.com/tinkerbell/pbnj/pkg/metrics"
 	"github.com/tinkerbell/pbnj/pkg/repository"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Action for making power actions on BMCs, implements oob.Machine interface.
@@ -90,6 +94,13 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
 	defer timer.ObserveDuration()
 
+	span := trace.SpanFromContext(ctx)
+	span.SetAttributes(
+		attribute.String("vendor", m.PowerRequest.Vendor.GetName()),
+		attribute.String("host", m.PowerRequest.Authn.GetDirectAuthn().GetHost().String()),
+		attribute.String("username", m.PowerRequest.Authn.GetDirectAuthn().GetUsername()),
+	)
+
 	var dev string
 	switch device {
 	case v1.BootDevice_BOOT_DEVICE_NONE.String():
@@ -103,11 +114,13 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	case v1.BootDevice_BOOT_DEVICE_PXE.String():
 		dev = "pxe"
 	case v1.BootDevice_BOOT_DEVICE_UNSPECIFIED.String():
+		span.SetStatus(codes.Error, "UNSPECIFIED boot device")
 		return "", &repository.Error{
 			Code:    v1.Code_value["INVALID_ARGUMENT"],
 			Message: "UNSPECIFIED boot device",
 		}
 	default:
+		span.SetStatus(codes.Error, "unknown boot device")
 		return "", &repository.Error{
 			Code:    v1.Code_value["INVALID_ARGUMENT"],
 			Message: "unknown boot device",
@@ -116,6 +129,7 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 
 	host, user, password, parseErr := m.ParseAuth(m.BootDeviceRequest.Authn)
 	if parseErr != nil {
+		span.SetStatus(codes.Error, "error parsing credentials: "+parseErr.Error())
 		return result, parseErr
 	}
 	base := "setting boot device: " + m.BootDeviceRequest.GetBootDevice().String()
@@ -126,6 +140,7 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	m.SendStatusMessage("connecting to BMC")
 	err = client.Open(ctx)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return "", &repository.Error{
 			Code:    v1.Code_value["PERMISSION_DENIED"],
 			Message: err.Error(),
@@ -139,6 +154,13 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	log.Info("connected to BMC", logMetadata(client.GetMetadata())...)
 	m.SendStatusMessage("connected to BMC")
 
+	ctx, span = otel.Tracer("pbnj").Start(ctx, "client.SetBootDevice", trace.WithAttributes(
+		attribute.String("bootDevice", m.BootDeviceRequest.GetBootDevice().String()),
+		attribute.Bool("persistent", persistent),
+		attribute.Bool("efiBoot", efiBoot),
+	))
+	defer span.End()
+
 	ok, err := client.SetBootDevice(ctx, dev, persistent, efiBoot)
 	log = m.Log.WithValues(logMetadata(client.GetMetadata())...)
 	if err != nil {
@@ -147,6 +169,7 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 		err = fmt.Errorf("setting boot device failed")
 	}
 	if err != nil {
+		span.SetStatus(codes.Error, "failed to set boot device: "+err.Error())
 		log.Error(err, fmt.Sprintf("error with %v", base))
 		m.SendStatusMessage(fmt.Sprintf("failed to set %v as boot device", dev))
 
