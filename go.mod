@@ -4,10 +4,9 @@ go 1.16
 
 require (
 	github.com/bmc-toolbox/bmclib v0.4.13
-	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/cristalhq/jwt/v3 v3.0.9
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/equinix-labs/otel-init-go v0.0.4 // indirect
+	github.com/equinix-labs/otel-init-go v0.0.4
 	github.com/fatih/color v1.7.0
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.4.0
@@ -31,11 +30,9 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
-	github.com/stretchr/testify v1.7.0 // indirect
 	go.uber.org/zap v1.16.0
 	goa.design/goa v2.2.5+incompatible
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a
-	golang.org/x/sys v0.0.0-20210423185535-09eb48e85fd7 // indirect
 	google.golang.org/grpc v1.40.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0

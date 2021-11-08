@@ -9,6 +9,7 @@ import (
 
 	jwt "github.com/cristalhq/jwt/v3"
 	jwt_helper "github.com/dgrijalva/jwt-go"
+	"github.com/equinix-labs/otel-init-go/otelinit"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
@@ -47,6 +48,9 @@ var (
 			ctx := context.Background()
 			ctx, cancel := context.WithCancel(ctx)
 			defer cancel()
+
+			ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, "pbnj")
+			defer otelShutdown(ctx)
 
 			logger, zlog, err := logr.NewPacketLogr(
 				logr.WithServiceName("github.com/tinkerbell/pbnj"),
