@@ -3,7 +3,6 @@ module github.com/tinkerbell/pbnj
 go 1.16
 
 require (
-	bou.ke/monkey v1.0.2
 	github.com/bmc-toolbox/bmclib v0.4.13
 	github.com/cristalhq/jwt/v3 v3.0.9
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
