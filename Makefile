@@ -12,11 +12,11 @@ help:
 
 .PHONY: test
 test: ## run tests
-	go test -v -covermode=count -gcflags=-l ./...
+	go test -v -covermode=count ./...
 
 .PHONY: test-ci
 test-ci: ## run tests for ci and codecov
-	go test -coverprofile=coverage.txt -gcflags=-l ./...
+	go test -coverprofile=coverage.txt ./...
 
 .PHONY: test-functional
 test-functional: ## run functional tests
@@ -34,7 +34,7 @@ goimports: ## run goimports
 
 .PHONY: cover
 cover: ## Run unit tests with coverage report
-	go test -gcflags=-l -coverprofile=cover.out ./...
+	go test -coverprofile=cover.out ./...
 	go tool cover -func=cover.out
 	rm -rf cover.out
 
