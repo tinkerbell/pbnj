@@ -303,8 +303,6 @@ github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:
 github.com/inconshreveable/mousetrap v1.0.0 h1:Z8tu5sraLXCXIcARxBp/8cbvlwVa7Z1NHg9XEKhtSvM=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/influxdata/influxdb1-client v0.0.0-20191209144304-8bf82d3c094d/go.mod h1:qj24IKcXYK6Iy9ceXlo3Tc+vtHo9lIhSX5JddghvEPo=
-github.com/jacobweinstock/bmclib v0.4.11-0.20211026200041-a5c2bc0d9629 h1:OEp2L1YB6VgeBu/8WA9feZfVV4G79rzXT/raPwl6oAk=
-github.com/jacobweinstock/bmclib v0.4.11-0.20211026200041-a5c2bc0d9629/go.mod h1:9YhAIIwp9tQtlo1LZtN5Qd89e+RfvgQ62ikbreEKOs0=
 github.com/jacobweinstock/registrar v0.4.2 h1:ifM6NNKpU3xrUIEZjwMLZZEeom5q7V8NfwDEEhdsAHo=
 github.com/jacobweinstock/registrar v0.4.2/go.mod h1:69P9dxcMVsAKUwiVRwkchq/BJyBXSFSMJcvl7PhsI2k=
 github.com/jacobweinstock/rollzap v0.1.3 h1:9nkpwYew+JiDoMWwVIEUpFyos6hdfY3gDmaj6d+Hq9M=
