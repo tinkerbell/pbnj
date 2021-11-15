@@ -13,6 +13,10 @@ import (
 	common "github.com/tinkerbell/pbnj/grpc/oob"
 	"github.com/tinkerbell/pbnj/pkg/metrics"
 	"github.com/tinkerbell/pbnj/pkg/repository"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Action for making power actions on BMCs, implements oob.Machine interface.
@@ -90,6 +94,17 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
 	defer timer.ObserveDuration()
 
+	tracer := otel.Tracer("pbnj")
+	ctx, span := tracer.Start(ctx, "client.SetBootDevice", trace.WithAttributes(
+		attribute.String("bmc.device", device),
+		attribute.Bool("bmc.persistent", persistent),
+		attribute.Bool("bmc.efiBoot", efiBoot),
+	))
+	defer span.End()
+	if v := m.BootDeviceRequest.GetVendor(); v != nil {
+		span.SetAttributes(attribute.String("bmc.vendor", v.GetName()))
+	}
+
 	var dev string
 	switch device {
 	case v1.BootDevice_BOOT_DEVICE_NONE.String():
@@ -103,11 +118,13 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	case v1.BootDevice_BOOT_DEVICE_PXE.String():
 		dev = "pxe"
 	case v1.BootDevice_BOOT_DEVICE_UNSPECIFIED.String():
+		span.SetStatus(codes.Error, "UNSPECIFIED boot device")
 		return "", &repository.Error{
 			Code:    v1.Code_value["INVALID_ARGUMENT"],
 			Message: "UNSPECIFIED boot device",
 		}
 	default:
+		span.SetStatus(codes.Error, "unknown boot device")
 		return "", &repository.Error{
 			Code:    v1.Code_value["INVALID_ARGUMENT"],
 			Message: "unknown boot device",
@@ -116,16 +133,20 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 
 	host, user, password, parseErr := m.ParseAuth(m.BootDeviceRequest.Authn)
 	if parseErr != nil {
+		span.SetStatus(codes.Error, "error parsing credentials: "+parseErr.Error())
 		return result, parseErr
 	}
+	span.SetAttributes(attribute.String("bmc.host", host), attribute.String("bmc.username", user))
 	base := "setting boot device: " + m.BootDeviceRequest.GetBootDevice().String()
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
+
 	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
 
 	m.SendStatusMessage("connecting to BMC")
 	err = client.Open(ctx)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return "", &repository.Error{
 			Code:    v1.Code_value["PERMISSION_DENIED"],
 			Message: err.Error(),
@@ -147,6 +168,7 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 		err = fmt.Errorf("setting boot device failed")
 	}
 	if err != nil {
+		span.SetStatus(codes.Error, "failed to set boot device: "+err.Error())
 		log.Error(err, fmt.Sprintf("error with %v", base))
 		m.SendStatusMessage(fmt.Sprintf("failed to set %v as boot device", dev))
 
@@ -155,6 +177,8 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 			Message: err.Error(),
 		}
 	}
+
+	span.SetStatus(codes.Ok, "")
 	log.Info(base + " complete")
 	m.SendStatusMessage(base + " complete")
 
@@ -169,6 +193,15 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	}
 	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
 	defer timer.ObserveDuration()
+
+	tracer := otel.Tracer("pbnj")
+	ctx, span := tracer.Start(ctx, "client.PowerSet", trace.WithAttributes(
+		attribute.String("bmc.powerAction", action),
+	))
+	defer span.End()
+	if v := m.BootDeviceRequest.GetVendor(); v != nil {
+		span.SetAttributes(attribute.String("bmc.vendor", v.GetName()))
+	}
 
 	var pwrAction string
 	switch action {
@@ -185,21 +218,26 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	case v1.PowerAction_POWER_ACTION_CYCLE.String():
 		pwrAction = "cycle"
 	case v1.PowerAction_POWER_ACTION_UNSPECIFIED.String():
+		span.SetStatus(codes.Error, "UNSPECIFIED power action")
 		return "", &repository.Error{
 			Code:    v1.Code_value["INVALID_ARGUMENT"],
 			Message: "UNSPECIFIED power action",
 		}
 	default:
+		msg := fmt.Sprintf("unknown power action: %q", action)
+		span.SetStatus(codes.Error, msg)
 		return "", &repository.Error{
 			Code:    v1.Code_value["INVALID_ARGUMENT"],
-			Message: fmt.Sprintf("unknown power action: %q", action),
+			Message: msg,
 		}
 	}
 
 	host, user, password, parseErr := m.ParseAuth(m.PowerRequest.Authn)
 	if parseErr != nil {
+		span.SetStatus(codes.Error, "error parsing credentials: "+parseErr.Error())
 		return result, parseErr
 	}
+	span.SetAttributes(attribute.String("bmc.host", host), attribute.String("bmc.username", user))
 	base := "power " + m.PowerRequest.GetPowerAction().String()
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
@@ -208,6 +246,7 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 
 	err = client.Open(ctx)
 	if err != nil {
+		span.SetStatus(codes.Error, "connecting to BMC failed: "+err.Error())
 		m.SendStatusMessage("connecting to BMC failed")
 
 		return "", &repository.Error{
@@ -225,24 +264,29 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	log.Info("connected to BMC", logMetadata(client.GetMetadata())...)
 	m.SendStatusMessage("connected to BMC")
 
+	// fetch the current power state that will be returned by "status"
+	// or used for control in cycle, and is always sent in traces
+	currentPowerState, err := client.GetPowerState(ctx)
+	if err != nil {
+		log.Error(err, "failed to get power state")
+		m.SendStatusMessage("error getting power state: " + err.Error())
+		return "", &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: err.Error(),
+		}
+	}
+
+	span.SetAttributes(attribute.String("currentPowerState", currentPowerState))
+
 	ok := true
 	if pwrAction == "status" {
-		result, err = client.GetPowerState(ctx)
+		result = currentPowerState
 	} else {
 		if action == v1.PowerAction_POWER_ACTION_CYCLE.String() {
 			// check status
 			// if powered on, do cycle
 			// if powered off, do power on
-			status, err := client.GetPowerState(ctx)
-			if err != nil {
-				log.V(0).Error(err, "failed to set power state "+base)
-				m.SendStatusMessage("error with " + base + ": " + err.Error())
-				return "", &repository.Error{
-					Code:    v1.Code_value["UNKNOWN"],
-					Message: err.Error(),
-				}
-			}
-			if strings.Contains(strings.ToLower(status), "off") {
+			if strings.Contains(strings.ToLower(currentPowerState), "off") {
 				pwrAction = v1.PowerAction_POWER_ACTION_ON.String()
 			}
 		}
@@ -251,14 +295,17 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	}
 	log = m.Log.WithValues(logMetadata(client.GetMetadata())...)
 	if err != nil {
+		span.SetStatus(codes.Error, "failed to set power state"+base)
 		log.Error(err, "failed to set power state "+base)
 		m.SendStatusMessage("error with " + base + ": " + err.Error())
 	}
 	if !ok && err == nil {
+		span.SetStatus(codes.Error, "failed to set power state")
 		log.Error(err, fmt.Sprintf("error completing power %v action", action))
 		err = fmt.Errorf("error completing power %v action", action)
 	}
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		log.Error(err, fmt.Sprintf("error completing power %v action", action))
 
 		return "", &repository.Error{
@@ -267,6 +314,7 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 		}
 	}
 
+	span.SetStatus(codes.Ok, "")
 	log.Info(base + " complete")
 	m.SendStatusMessage(base + " complete")
 

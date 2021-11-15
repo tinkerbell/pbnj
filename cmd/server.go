@@ -9,6 +9,7 @@ import (
 
 	jwt "github.com/cristalhq/jwt/v3"
 	jwt_helper "github.com/dgrijalva/jwt-go"
+	"github.com/equinix-labs/otel-init-go/otelinit"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
@@ -21,6 +22,7 @@ import (
 	grpcsvr "github.com/tinkerbell/pbnj/grpc"
 	"github.com/tinkerbell/pbnj/pkg/http"
 	"github.com/tinkerbell/pbnj/pkg/zaplog"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"goa.design/goa/grpc/middleware"
 	"google.golang.org/grpc"
 )
@@ -47,6 +49,9 @@ var (
 			ctx := context.Background()
 			ctx, cancel := context.WithCancel(ctx)
 			defer cancel()
+
+			ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, "pbnj")
+			defer otelShutdown(ctx)
 
 			logger, zlog, err := logr.NewPacketLogr(
 				logr.WithServiceName("github.com/tinkerbell/pbnj"),
@@ -86,6 +91,7 @@ var (
 					zaplog.UnaryLogRequestID(zlog, requestIDKey, requestIDLogKey),
 					grpc_zap.UnaryServerInterceptor(zlog),
 					zaplog.UnaryLogBMCIP(),
+					otelgrpc.UnaryServerInterceptor(),
 					grpc_validator.UnaryServerInterceptor(),
 				),
 			)
