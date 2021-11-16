@@ -41,9 +41,9 @@ enum BootDevice {
     BOOT_DEVICE_UNSPECIFIED = 0;
     BOOT_DEVICE_NONE = 1;
     BOOT_DEVICE_BIOS = 2;
-    BOOT_DEVICE_CDROM = 3;
-    BOOT_DEVICE_DISK = 4;
-    BOOT_DEVICE_PXE = 5;
+    BOOT_DEVICE_CDROM = 4;
+    BOOT_DEVICE_DISK = 5;
+    BOOT_DEVICE_PXE = 6;
 }
 
 enum PowerAction {
