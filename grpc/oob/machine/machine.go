@@ -289,7 +289,7 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 		attribute.StringSlice("bmclib.SuccessfulOpenConns", meta.SuccessfulOpenConns),
 		attribute.StringSlice("bmclib.SuccessfulCloseConns", meta.SuccessfulCloseConns))
 	if err != nil {
-		span.SetStatus(codes.Error, "failed to get power state")
+		span.SetStatus(codes.Error, "failed to get power state: "+err.Error())
 		log.Error(err, "failed to get power state")
 		m.SendStatusMessage("error getting power state: " + err.Error())
 		return "", &repository.Error{
@@ -322,7 +322,7 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	}
 	log = m.Log.WithValues(logMetadata(client.GetMetadata())...)
 	if err != nil {
-		span.SetStatus(codes.Error, "failed to set power state"+base)
+		span.SetStatus(codes.Error, "failed to set power state: "+base+": "+err.Error())
 		log.Error(err, "failed to set power state "+base)
 		m.SendStatusMessage("error with " + base + ": " + err.Error())
 	}
