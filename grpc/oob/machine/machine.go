@@ -146,10 +146,8 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	m.SendStatusMessage("connecting to BMC")
 	err = client.Open(ctx)
 	meta := client.GetMetadata()
-	span.SetAttributes(attribute.String("bmclib.SuccessfulProvider", meta.SuccessfulProvider),
-		attribute.StringSlice("bmclib.ProvidersAttempted", meta.ProvidersAttempted),
-		attribute.StringSlice("bmclib.SuccessfulOpenConns", meta.SuccessfulOpenConns),
-		attribute.StringSlice("bmclib.SuccessfulCloseConns", meta.SuccessfulCloseConns))
+	span.SetAttributes(attribute.StringSlice("bmc.open.providersAttempted", meta.ProvidersAttempted),
+		attribute.StringSlice("bmc.open.successfulOpenConns", meta.SuccessfulOpenConns))
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return "", &repository.Error{
@@ -168,10 +166,8 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	ok, err := client.SetBootDevice(ctx, dev, persistent, efiBoot)
 	log = m.Log.WithValues(logMetadata(client.GetMetadata())...)
 	meta = client.GetMetadata()
-	span.SetAttributes(attribute.String("bmclib.SuccessfulProvider", meta.SuccessfulProvider),
-		attribute.StringSlice("bmclib.ProvidersAttempted", meta.ProvidersAttempted),
-		attribute.StringSlice("bmclib.SuccessfulOpenConns", meta.SuccessfulOpenConns),
-		attribute.StringSlice("bmclib.SuccessfulCloseConns", meta.SuccessfulCloseConns))
+	span.SetAttributes(attribute.String("bmc.setBootDevice.successfulProvider", meta.SuccessfulProvider),
+		attribute.StringSlice("bmc.setBootDevice.ProvidersAttempted", meta.ProvidersAttempted))
 	if err != nil {
 		log.Error(err, "failed to set boot device")
 	} else if !ok {
@@ -256,10 +252,8 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 
 	err = client.Open(ctx)
 	meta := client.GetMetadata()
-	span.SetAttributes(attribute.String("bmclib.SuccessfulProvider", meta.SuccessfulProvider),
-		attribute.StringSlice("bmclib.ProvidersAttempted", meta.ProvidersAttempted),
-		attribute.StringSlice("bmclib.SuccessfulOpenConns", meta.SuccessfulOpenConns),
-		attribute.StringSlice("bmclib.SuccessfulCloseConns", meta.SuccessfulCloseConns))
+	span.SetAttributes(attribute.StringSlice("bmc.open.providersAttempted", meta.ProvidersAttempted),
+		attribute.StringSlice("bmc.open.successfulOpenConns", meta.SuccessfulOpenConns))
 
 	if err != nil {
 		span.SetStatus(codes.Error, "connecting to BMC failed: "+err.Error())
@@ -284,10 +278,8 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	// or used for control in cycle, and is always sent in traces
 	currentPowerState, err := client.GetPowerState(ctx)
 	meta = client.GetMetadata()
-	span.SetAttributes(attribute.String("bmclib.SuccessfulProvider", meta.SuccessfulProvider),
-		attribute.StringSlice("bmclib.ProvidersAttempted", meta.ProvidersAttempted),
-		attribute.StringSlice("bmclib.SuccessfulOpenConns", meta.SuccessfulOpenConns),
-		attribute.StringSlice("bmclib.SuccessfulCloseConns", meta.SuccessfulCloseConns))
+	span.SetAttributes(attribute.String("bmc.getPowerState.successfulProvider", meta.SuccessfulProvider),
+		attribute.StringSlice("bmc.getPowerState.providersAttempted", meta.ProvidersAttempted))
 	if err != nil {
 		span.SetStatus(codes.Error, "failed to get power state: "+err.Error())
 		log.Error(err, "failed to get power state")
@@ -315,10 +307,8 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 		ok, err = client.SetPowerState(ctx, pwrAction)
 		result = fmt.Sprintf("%v complete", base)
 		meta = client.GetMetadata()
-		span.SetAttributes(attribute.String("bmclib.SuccessfulProvider", meta.SuccessfulProvider),
-			attribute.StringSlice("bmclib.ProvidersAttempted", meta.ProvidersAttempted),
-			attribute.StringSlice("bmclib.SuccessfulOpenConns", meta.SuccessfulOpenConns),
-			attribute.StringSlice("bmclib.SuccessfulCloseConns", meta.SuccessfulCloseConns))
+		span.SetAttributes(attribute.String("bmc.setPowerState.successfulProvider", meta.SuccessfulProvider),
+			attribute.StringSlice("bmc.setPowerState.providersAttempted", meta.ProvidersAttempted))
 	}
 	log = m.Log.WithValues(logMetadata(client.GetMetadata())...)
 	if err != nil {
