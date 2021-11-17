@@ -53,7 +53,7 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 		// a child context. This allows us to correctly plumb otel into the background task.
 		c := trace.ContextWithSpanContext(context.Background(), trace.SpanContextFromContext(ctx))
 		taskCtx, cancel := context.WithTimeout(c, m.Timeout)
-		_ = cancel
+		defer cancel()
 		return mbd.BootDeviceSet(taskCtx, in.BootDevice.String(), in.Persistent, in.EfiBoot)
 	}
 	m.TaskRunner.Execute(ctx, "setting boot device", taskID, execFunc)
@@ -88,7 +88,7 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 		// a child context. This allows us to correctly plumb otel into the background task.
 		c := trace.ContextWithSpanContext(context.Background(), trace.SpanContextFromContext(ctx))
 		taskCtx, cancel := context.WithTimeout(c, m.Timeout)
-		_ = cancel
+		defer cancel()
 		return mp.PowerSet(taskCtx, in.PowerAction.String())
 	}
 	m.TaskRunner.Execute(ctx, "power action: "+in.GetPowerAction().String(), taskID, execFunc)

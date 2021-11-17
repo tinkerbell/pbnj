@@ -53,10 +53,7 @@ func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetR
 			return "", err
 		}
 		taskCtx, cancel := context.WithTimeout(ctx, b.Timeout)
-		// cant defer this cancel because it cancels the context before the func is run
-		// cant have cancel be _ because go vet complains.
-		// TODO(jacobweinstock): maybe move this context withTimeout into the TaskRunner.Execute function
-		_ = cancel
+		defer cancel()
 		return "", t.BMCReset(taskCtx, in.ResetKind.String())
 	}
 	b.TaskRunner.Execute(ctx, "bmc reset", taskID, execFunc)
@@ -92,7 +89,7 @@ func (b *BmcService) CreateUser(ctx context.Context, in *v1.CreateUserRequest) (
 		// a child context. This allows us to correctly plumb otel into the background task.
 		c := trace.ContextWithSpanContext(context.Background(), trace.SpanContextFromContext(ctx))
 		taskCtx, cancel := context.WithTimeout(c, b.Timeout)
-		_ = cancel
+		defer cancel()
 		return "", t.CreateUser(taskCtx)
 	}
 	b.TaskRunner.Execute(ctx, "creating user", taskID, execFunc)
@@ -128,7 +125,7 @@ func (b *BmcService) UpdateUser(ctx context.Context, in *v1.UpdateUserRequest) (
 		// a child context. This allows us to correctly plumb otel into the background task.
 		c := trace.ContextWithSpanContext(context.Background(), trace.SpanContextFromContext(ctx))
 		taskCtx, cancel := context.WithTimeout(c, b.Timeout)
-		_ = cancel
+		defer cancel()
 		return "", t.UpdateUser(taskCtx)
 	}
 	b.TaskRunner.Execute(ctx, "updating user", taskID, execFunc)
@@ -162,7 +159,7 @@ func (b *BmcService) DeleteUser(ctx context.Context, in *v1.DeleteUserRequest) (
 		// a child context. This allows us to correctly plumb otel into the background task.
 		c := trace.ContextWithSpanContext(context.Background(), trace.SpanContextFromContext(ctx))
 		taskCtx, cancel := context.WithTimeout(c, b.Timeout)
-		_ = cancel
+		defer cancel()
 		return "", t.DeleteUser(taskCtx)
 	}
 	b.TaskRunner.Execute(ctx, "deleting user", taskID, execFunc)
