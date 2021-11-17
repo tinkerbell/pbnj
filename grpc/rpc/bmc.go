@@ -10,6 +10,7 @@ import (
 	"github.com/tinkerbell/pbnj/grpc/oob/bmc"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/task"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // BmcService for doing BMC actions.
@@ -87,7 +88,10 @@ func (b *BmcService) CreateUser(ctx context.Context, in *v1.CreateUserRequest) (
 		if err != nil {
 			return "", err
 		}
-		taskCtx, cancel := context.WithTimeout(context.Background(), b.Timeout)
+		// Because this is a background task, we want to pass through the span context, but not be
+		// a child context. This allows us to correctly plumb otel into the background task.
+		c := trace.ContextWithSpanContext(context.Background(), trace.SpanContextFromContext(ctx))
+		taskCtx, cancel := context.WithTimeout(c, b.Timeout)
 		_ = cancel
 		return "", t.CreateUser(taskCtx)
 	}
@@ -120,7 +124,10 @@ func (b *BmcService) UpdateUser(ctx context.Context, in *v1.UpdateUserRequest) (
 		if err != nil {
 			return "", err
 		}
-		taskCtx, cancel := context.WithTimeout(context.Background(), b.Timeout)
+		// Because this is a background task, we want to pass through the span context, but not be
+		// a child context. This allows us to correctly plumb otel into the background task.
+		c := trace.ContextWithSpanContext(context.Background(), trace.SpanContextFromContext(ctx))
+		taskCtx, cancel := context.WithTimeout(c, b.Timeout)
 		_ = cancel
 		return "", t.UpdateUser(taskCtx)
 	}
@@ -151,7 +158,10 @@ func (b *BmcService) DeleteUser(ctx context.Context, in *v1.DeleteUserRequest) (
 		if err != nil {
 			return "", err
 		}
-		taskCtx, cancel := context.WithTimeout(context.Background(), b.Timeout)
+		// Because this is a background task, we want to pass through the span context, but not be
+		// a child context. This allows us to correctly plumb otel into the background task.
+		c := trace.ContextWithSpanContext(context.Background(), trace.SpanContextFromContext(ctx))
+		taskCtx, cancel := context.WithTimeout(c, b.Timeout)
 		_ = cancel
 		return "", t.DeleteUser(taskCtx)
 	}

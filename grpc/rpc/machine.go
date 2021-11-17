@@ -49,7 +49,10 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 		if err != nil {
 			return "", err
 		}
-		taskCtx, cancel := context.WithTimeout(context.Background(), m.Timeout)
+		// Because this is a background task, we want to pass through the span context, but not be
+		// a child context. This allows us to correctly plumb otel into the background task.
+		c := trace.ContextWithSpanContext(context.Background(), trace.SpanContextFromContext(ctx))
+		taskCtx, cancel := context.WithTimeout(c, m.Timeout)
 		_ = cancel
 		return mbd.BootDeviceSet(taskCtx, in.BootDevice.String(), in.Persistent, in.EfiBoot)
 	}
