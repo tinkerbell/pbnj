@@ -301,7 +301,7 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 			// if powered on, do cycle
 			// if powered off, do power on
 			if strings.Contains(strings.ToLower(currentPowerState), "off") {
-				pwrAction = v1.PowerAction_POWER_ACTION_ON.String()
+				pwrAction = "on"
 			}
 		}
 		ok, err = client.SetPowerState(ctx, pwrAction)
