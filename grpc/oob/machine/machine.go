@@ -146,10 +146,8 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	m.SendStatusMessage("connecting to BMC")
 	err = client.Open(ctx)
 	meta := client.GetMetadata()
-	span.SetAttributes(attribute.String("bmclib.SuccessfulProvider", meta.SuccessfulProvider),
-		attribute.StringSlice("bmclib.ProvidersAttempted", meta.ProvidersAttempted),
-		attribute.StringSlice("bmclib.SuccessfulOpenConns", meta.SuccessfulOpenConns),
-		attribute.StringSlice("bmclib.SuccessfulCloseConns", meta.SuccessfulCloseConns))
+	span.SetAttributes(attribute.StringSlice("bmc.open.providersAttempted", meta.ProvidersAttempted),
+		attribute.StringSlice("bmc.open.successfulOpenConns", meta.SuccessfulOpenConns))
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return "", &repository.Error{
@@ -168,10 +166,8 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	ok, err := client.SetBootDevice(ctx, dev, persistent, efiBoot)
 	log = m.Log.WithValues(logMetadata(client.GetMetadata())...)
 	meta = client.GetMetadata()
-	span.SetAttributes(attribute.String("bmclib.SuccessfulProvider", meta.SuccessfulProvider),
-		attribute.StringSlice("bmclib.ProvidersAttempted", meta.ProvidersAttempted),
-		attribute.StringSlice("bmclib.SuccessfulOpenConns", meta.SuccessfulOpenConns),
-		attribute.StringSlice("bmclib.SuccessfulCloseConns", meta.SuccessfulCloseConns))
+	span.SetAttributes(attribute.String("bmc.setBootDevice.successfulProvider", meta.SuccessfulProvider),
+		attribute.StringSlice("bmc.setBootDevice.ProvidersAttempted", meta.ProvidersAttempted))
 	if err != nil {
 		log.Error(err, "failed to set boot device")
 	} else if !ok {
