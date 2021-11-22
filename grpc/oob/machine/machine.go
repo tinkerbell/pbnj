@@ -254,6 +254,12 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
 
 	err = client.Open(ctx)
+	if err != nil {
+		return "", &repository.Error{
+			Code:    v1.Code_value["UNKNOWN"],
+			Message: err.Error(),
+		}
+	}
 	meta := client.GetMetadata()
 	span.SetAttributes(attribute.String("bmc.open.providersAttempted", fmt.Sprintf("%v", meta.ProvidersAttempted)),
 		attribute.String("bmc.open.successfulOpenConns", fmt.Sprintf("%v", meta.SuccessfulOpenConns)))
