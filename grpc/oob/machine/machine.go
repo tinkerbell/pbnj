@@ -255,6 +255,9 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 
 	err = client.Open(ctx)
 	if err != nil {
+		span.SetStatus(codes.Error, "connecting to BMC failed: "+err.Error())
+		m.SendStatusMessage("connecting to BMC failed")
+
 		return "", &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
 			Message: err.Error(),
