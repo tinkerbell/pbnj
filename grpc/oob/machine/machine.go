@@ -267,16 +267,6 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	span.SetAttributes(attribute.String("bmc.open.providersAttempted", fmt.Sprintf("%v", meta.ProvidersAttempted)),
 		attribute.String("bmc.open.successfulOpenConns", fmt.Sprintf("%v", meta.SuccessfulOpenConns)))
 
-	if err != nil {
-		span.SetStatus(codes.Error, "connecting to BMC failed: "+err.Error())
-		m.SendStatusMessage("connecting to BMC failed")
-
-		return "", &repository.Error{
-			Code:    v1.Code_value["UNKNOWN"],
-			Message: err.Error(),
-		}
-	}
-
 	log := m.Log.WithValues("action", action, "host", host, "user", user)
 
 	defer func() {
