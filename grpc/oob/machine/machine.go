@@ -254,10 +254,6 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
 
 	err = client.Open(ctx)
-	meta := client.GetMetadata()
-	span.SetAttributes(attribute.String("bmc.open.providersAttempted", fmt.Sprintf("%v", meta.ProvidersAttempted)),
-		attribute.String("bmc.open.successfulOpenConns", fmt.Sprintf("%v", meta.SuccessfulOpenConns)))
-
 	if err != nil {
 		span.SetStatus(codes.Error, "connecting to BMC failed: "+err.Error())
 		m.SendStatusMessage("connecting to BMC failed")
@@ -267,6 +263,9 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 			Message: err.Error(),
 		}
 	}
+	meta := client.GetMetadata()
+	span.SetAttributes(attribute.String("bmc.open.providersAttempted", fmt.Sprintf("%v", meta.ProvidersAttempted)),
+		attribute.String("bmc.open.successfulOpenConns", fmt.Sprintf("%v", meta.SuccessfulOpenConns)))
 
 	log := m.Log.WithValues("action", action, "host", host, "user", user)
 
