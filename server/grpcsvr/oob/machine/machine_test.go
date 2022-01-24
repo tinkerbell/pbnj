@@ -17,7 +17,7 @@ import (
 )
 
 func newAction(withAuthErr bool) Action {
-	l, _, _ := logr.NewPacketLogr()
+	packetLogr, _, _ := logr.NewPacketLogr()
 	var authn *v1.Authn_DirectAuthn
 	if withAuthErr {
 		authn = &v1.Authn_DirectAuthn{
@@ -36,7 +36,7 @@ func newAction(withAuthErr bool) Action {
 	}
 	m := Action{
 		Accessory: common.Accessory{
-			Log:            l,
+			Log:            packetLogr.Logger,
 			StatusMessages: make(chan string),
 		},
 		BootDeviceRequest: &v1.DeviceRequest{

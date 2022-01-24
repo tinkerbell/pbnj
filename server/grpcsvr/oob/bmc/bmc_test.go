@@ -16,7 +16,7 @@ import (
 )
 
 func newAction(withAuthErr bool) Action {
-	l, _, _ := logr.NewPacketLogr()
+	packetLogr, _, _ := logr.NewPacketLogr()
 	var authn *v1.Authn_DirectAuthn
 	if withAuthErr {
 		authn = &v1.Authn_DirectAuthn{
@@ -35,7 +35,7 @@ func newAction(withAuthErr bool) Action {
 	}
 	m := Action{
 		Accessory: oob.Accessory{
-			Log:            l,
+			Log:            packetLogr.Logger,
 			StatusMessages: make(chan string),
 		},
 		ResetBMCRequest: &v1.ResetRequest{

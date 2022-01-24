@@ -26,8 +26,8 @@ func TestTaskFound(t *testing.T) {
 		Message: "",
 		Details: nil,
 	}
-	l, zapLogger, _ := logr.NewPacketLogr()
-	logger := zaplog.RegisterLogger(l)
+	packetLogr, zapLogger, _ := logr.NewPacketLogr()
+	logger := zaplog.RegisterLogger(packetLogr.Logger)
 	ctx = ctxzap.ToContext(ctx, zapLogger)
 	f := freecache.NewStore(freecache.DefaultOptions)
 	s := gokv.Store(f)
@@ -84,8 +84,8 @@ func TestRecordNotFound(t *testing.T) {
 
 			ctx := context.Background()
 
-			l, zapLogger, _ := logr.NewPacketLogr()
-			logger := zaplog.RegisterLogger(l)
+			packetLogr, zapLogger, _ := logr.NewPacketLogr()
+			logger := zaplog.RegisterLogger(packetLogr.Logger)
 			ctx = ctxzap.ToContext(ctx, zapLogger)
 			f := freecache.NewStore(freecache.DefaultOptions)
 			s := gokv.Store(f)

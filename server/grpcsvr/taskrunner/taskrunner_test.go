@@ -27,8 +27,8 @@ func TestRoundTrip(t *testing.T) {
 	s := gokv.Store(f)
 	defer s.Close()
 	repo := &persistence.GoKV{Store: s, Ctx: ctx}
-	l, zapLogger, _ := logr.NewPacketLogr()
-	logger := zaplog.RegisterLogger(l)
+	packetLogr, zapLogger, _ := logr.NewPacketLogr()
+	logger := zaplog.RegisterLogger(packetLogr.Logger)
 	ctx = ctxzap.ToContext(ctx, zapLogger)
 	runner := Runner{
 		Repository: repo,

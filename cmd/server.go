@@ -50,7 +50,7 @@ var (
 			ctx, cancel := context.WithCancel(ctx)
 			defer cancel()
 
-			logger, zlog, err := logr.NewPacketLogr(
+			packetLogr, zlog, err := logr.NewPacketLogr(
 				logr.WithServiceName("github.com/tinkerbell/pbnj"),
 				logr.WithLogLevel(logLevel),
 			)
@@ -58,6 +58,8 @@ var (
 				fmt.Fprintf(os.Stderr, "%v\n", err)
 				os.Exit(1)
 			}
+
+			logger := packetLogr.Logger
 			defer zlog.Sync() // nolint
 
 			// Make sure that log statements internal to gRPC library are logged using the zapLogger as well.

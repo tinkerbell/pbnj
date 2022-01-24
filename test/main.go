@@ -43,8 +43,8 @@ func main() {
 	}
 
 	fmt.Println(*logLevel)
-	logger, _, _ := logr.NewPacketLogr(logr.WithLogLevel(*logLevel))
-	runner.RunTests(logger, cfgData)
+	packetLogr, _, _ := logr.NewPacketLogr(logr.WithLogLevel(*logLevel))
+	runner.RunTests(packetLogr.Logger, cfgData)
 }
 
 // Returns an int >= min, < max
