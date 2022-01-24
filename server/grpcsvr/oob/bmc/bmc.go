@@ -99,6 +99,25 @@ func NewBMCResetter(opts ...Option) (oob.BMCResetter, error) {
 	return a, nil
 }
 
+// setupConnections returns a map of bmc connection names to the BMC client
+func (m Action) setupConnections(host, user, password string, creds *v1.UserCreds) map[string]interface{} {
+	return map[string]interface{}{
+		"bmclib2": &bmclibClient{
+			user:     user,
+			password: password,
+			host:     host,
+			creds:    creds,
+		},
+		//	"bmclib": &bmclibUserManagement{
+		//		user:     user,
+		//		password: password,
+		//		host:     host,
+		//		log:      m.Log,
+		//		creds:    creds,
+		//	},
+	}
+}
+
 // CreateUser functionality for machines
 func (m Action) CreateUser(ctx context.Context) error {
 	labels := prometheus.Labels{
@@ -113,20 +132,13 @@ func (m Action) CreateUser(ctx context.Context) error {
 	if parseErr != nil {
 		return parseErr
 	}
+
 	creds := m.CreateUserRequest.GetUserCreds()
 	base := "creating user: " + creds.GetUsername()
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	connections := map[string]interface{}{
-		"bmclib": &bmclibUserManagement{
-			user:     user,
-			password: password,
-			host:     host,
-			log:      m.Log,
-			creds:    creds,
-		},
-	}
+	connections := m.setupConnections(host, user, password, creds)
 
 	m.SendStatusMessage("connecting to BMC")
 	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
@@ -177,15 +189,7 @@ func (m Action) UpdateUser(ctx context.Context) error {
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	connections := map[string]interface{}{
-		"bmclib": &bmclibUserManagement{
-			user:     user,
-			password: password,
-			host:     host,
-			log:      m.Log,
-			creds:    creds,
-		},
-	}
+	connections := m.setupConnections(host, user, password, creds)
 
 	m.SendStatusMessage("connecting to BMC")
 	successfulConnections, ecErr := common.EstablishConnections(ctx, connections)
