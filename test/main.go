@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/packethost/pkg/log/logr"
+	"github.com/packethost/pkg/log/logr/v2"
 	"github.com/tinkerbell/pbnj/cmd"
 	"github.com/tinkerbell/pbnj/test/runner"
 )
@@ -48,7 +48,7 @@ func main() {
 
 	fmt.Println(*logLevel)
 	logger, _, _ := logr.NewPacketLogr(logr.WithLogLevel(*logLevel))
-	runner.RunTests(logger, cfgData)
+	runner.RunTests(logger.Logger, cfgData)
 }
 
 // Returns an int >= min, < max.

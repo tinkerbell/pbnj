@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	"github.com/packethost/pkg/log/logr"
+	"github.com/packethost/pkg/log/logr/v2"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
@@ -39,8 +39,8 @@ func TestMain(m *testing.M) {
 
 func setup() {
 	ctx = context.Background()
-	l, zapLogger, _ := logr.NewPacketLogr()
-	log = zaplog.RegisterLogger(l)
+	packetLogr, zapLogger, _ := logr.NewPacketLogr()
+	logger := zaplog.RegisterLogger(packetLogr.Logger)
 	ctx = ctxzap.ToContext(ctx, zapLogger)
 	f := freecache.NewStore(freecache.DefaultOptions)
 	s := gokv.Store(f)
@@ -52,10 +52,10 @@ func setup() {
 	taskRunner = &taskrunner.Runner{
 		Repository: repo,
 		Ctx:        ctx,
-		Log:        log,
+		Log:        logger,
 	}
 	bmcService = BmcService{
-		Log:                    log,
+		Log:                    logger,
 		TaskRunner:             taskRunner,
 		UnimplementedBMCServer: v1.UnimplementedBMCServer{},
 	}

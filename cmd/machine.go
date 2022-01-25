@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/packethost/pkg/log/logr"
+	"github.com/packethost/pkg/log/logr/v2"
 	"github.com/spf13/cobra"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	v1Client "github.com/tinkerbell/pbnj/client"

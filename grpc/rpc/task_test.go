@@ -7,7 +7,7 @@ import (
 
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/onsi/gomega"
-	"github.com/packethost/pkg/log/logr"
+	"github.com/packethost/pkg/log/logr/v2"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	"github.com/rs/xid"
@@ -26,8 +26,8 @@ func TestTaskFound(t *testing.T) {
 		Message: "",
 		Details: nil,
 	}
-	l, zapLogger, _ := logr.NewPacketLogr()
-	logger := zaplog.RegisterLogger(l)
+	packetLogr, zapLogger, _ := logr.NewPacketLogr()
+	logger := zaplog.RegisterLogger(packetLogr.Logger)
 	ctx = ctxzap.ToContext(ctx, zapLogger)
 	f := freecache.NewStore(freecache.DefaultOptions)
 	s := gokv.Store(f)
@@ -82,9 +82,8 @@ func TestRecordNotFound(t *testing.T) {
 			g := gomega.NewGomegaWithT(t)
 
 			ctx := context.Background()
-
-			l, zapLogger, _ := logr.NewPacketLogr()
-			logger := zaplog.RegisterLogger(l)
+			packetLogr, zapLogger, _ := logr.NewPacketLogr()
+			logger := zaplog.RegisterLogger(packetLogr.Logger)
 			ctx = ctxzap.ToContext(ctx, zapLogger)
 			f := freecache.NewStore(freecache.DefaultOptions)
 			s := gokv.Store(f)

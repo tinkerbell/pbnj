@@ -8,6 +8,6 @@ import (
 
 // Logger represent common interface for logging function.
 type Logger interface {
-	logr.Logger
+	logr.LogSink
 	GetContextLogger(ctx context.Context) logr.Logger
 }

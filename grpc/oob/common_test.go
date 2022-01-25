@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/packethost/pkg/log/logr"
+	"github.com/packethost/pkg/log/logr/v2"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
@@ -22,12 +22,12 @@ func TestParseAuth(t *testing.T) {
 		"nil Direct Auth": {input: &v1.Authn{Authn: &v1.Authn_DirectAuthn{DirectAuthn: nil}}, want: &repository.Error{Code: v1.Code_value["UNAUTHENTICATED"], Message: "no auth found", Details: nil}},
 		"nil auth":        {input: nil, want: &repository.Error{Code: v1.Code_value["UNAUTHENTICATED"], Message: "no auth found", Details: nil}},
 	}
-	l, _, _ := logr.NewPacketLogr()
+	packetLogr, _, _ := logr.NewPacketLogr()
 	sm := make(chan string)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			a := Accessory{
-				Log:            l,
+				Log:            packetLogr.Logger,
 				StatusMessages: sm,
 			}
 
@@ -66,14 +66,14 @@ func TestSendStatusMessage(t *testing.T) {
 		"without chan receiver": {runChanReceiver: false, want: nil},
 	}
 
-	l, _, _ := logr.NewPacketLogr()
+	packetLogr, _, _ := logr.NewPacketLogr()
 	sm := make(chan string)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			var msgs []string
 			done := make(chan bool, 1)
 			a := Accessory{
-				Log:            l,
+				Log:            packetLogr.Logger,
 				StatusMessages: sm,
 			}
 

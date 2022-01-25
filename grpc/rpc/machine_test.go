@@ -8,7 +8,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/onsi/gomega"
-	"github.com/packethost/pkg/log/logr"
+	"github.com/packethost/pkg/log/logr/v2"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
@@ -62,8 +62,8 @@ func TestDevice(t *testing.T) {
 
 			ctx := context.Background()
 
-			l, zapLogger, _ := logr.NewPacketLogr()
-			logger := zaplog.RegisterLogger(l)
+			packetLogr, zapLogger, _ := logr.NewPacketLogr()
+			logger := zaplog.RegisterLogger(packetLogr.Logger)
 			ctx = ctxzap.ToContext(ctx, zapLogger)
 			f := freecache.NewStore(freecache.DefaultOptions)
 			s := gokv.Store(f)
@@ -166,8 +166,8 @@ func TestPower(t *testing.T) {
 
 			ctx := context.Background()
 
-			l, zapLogger, _ := logr.NewPacketLogr()
-			logger := zaplog.RegisterLogger(l)
+			packetLogr, zapLogger, _ := logr.NewPacketLogr()
+			logger := zaplog.RegisterLogger(packetLogr.Logger)
 			ctx = ctxzap.ToContext(ctx, zapLogger)
 			f := freecache.NewStore(freecache.DefaultOptions)
 			s := gokv.Store(f)

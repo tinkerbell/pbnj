@@ -17,7 +17,7 @@ import (
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/packethost/pkg/grpc/authz"
-	"github.com/packethost/pkg/log/logr"
+	"github.com/packethost/pkg/log/logr/v2"
 	"github.com/spf13/cobra"
 	grpcsvr "github.com/tinkerbell/pbnj/grpc"
 	"github.com/tinkerbell/pbnj/pkg/http"
@@ -97,9 +97,9 @@ var (
 			)
 
 			httpServer := http.NewServer(metricsAddr)
-			httpServer.WithLogger(logger)
+			httpServer.WithLogger(logger.Logger)
 
-			if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger), grpcServer, port, httpServer, grpcsvr.WithBmcTimeout(bmcTimeout)); err != nil {
+			if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger.Logger), grpcServer, port, httpServer, grpcsvr.WithBmcTimeout(bmcTimeout)); err != nil {
 				logger.Error(err, "error running server")
 				os.Exit(1)
 			}

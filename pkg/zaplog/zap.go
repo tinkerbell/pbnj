@@ -11,7 +11,7 @@ import (
 
 // Logger is a wrapper around zap.SugaredLogger.
 type Logger struct {
-	logr.Logger
+	logr.LogSink
 }
 
 // GetContextLogger get and return a logger from a ctx.
@@ -21,5 +21,5 @@ func (l Logger) GetContextLogger(ctx context.Context) logr.Logger {
 
 // RegisterLogger returns a logr and a zap logger (needed for use in grpc interceptors).
 func RegisterLogger(log logr.Logger) logging.Logger {
-	return Logger{log}
+	return Logger{log.GetSink()}
 }

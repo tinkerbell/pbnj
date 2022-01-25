@@ -114,7 +114,7 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 	signal.Notify(sigChan, os.Interrupt)
 	go func() {
 		for range sigChan {
-			log.Info("sig received, shutting down PBnJ")
+			log.Info(0, "sig received, shutting down PBnJ")
 			grpcServer.GracefulStop()
 			<-ctx.Done()
 		}
@@ -122,10 +122,10 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 
 	go func() {
 		<-ctx.Done()
-		log.Info("ctx cancelled, shutting down PBnJ")
+		log.Info(0, "ctx cancelled, shutting down PBnJ")
 		grpcServer.GracefulStop()
 	}()
 
-	log.Info("starting PBnJ gRPC server")
+	log.Info(0, "starting PBnJ gRPC server")
 	return grpcServer.Serve(listen)
 }
