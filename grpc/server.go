@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/go-logr/logr"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
@@ -16,7 +17,6 @@ import (
 	"github.com/tinkerbell/pbnj/grpc/taskrunner"
 	"github.com/tinkerbell/pbnj/pkg/healthcheck"
 	"github.com/tinkerbell/pbnj/pkg/http"
-	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
@@ -42,7 +42,7 @@ func WithBmcTimeout(t time.Duration) ServerOption {
 }
 
 // RunServer registers all services and runs the server.
-func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server, port string, httpServer *http.Server, opts ...ServerOption) error {
+func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, port string, httpServer *http.Server, opts ...ServerOption) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -66,25 +66,21 @@ func RunServer(ctx context.Context, log logging.Logger, grpcServer *grpc.Server,
 	taskRunner := &taskrunner.Runner{
 		Repository: defaultServer.Actions,
 		Ctx:        ctx,
-		Log:        log,
 	}
 
 	ms := rpc.MachineService{
-		Log:        log,
 		TaskRunner: taskRunner,
 		Timeout:    defaultServer.bmcTimeout,
 	}
 	v1.RegisterMachineServer(grpcServer, &ms)
 
 	bs := rpc.BmcService{
-		Log:        log,
 		TaskRunner: taskRunner,
 		Timeout:    defaultServer.bmcTimeout,
 	}
 	v1.RegisterBMCServer(grpcServer, &bs)
 
 	ts := rpc.TaskService{
-		Log:        log,
 		TaskRunner: taskRunner,
 	}
 	v1.RegisterTaskServer(grpcServer, &ts)

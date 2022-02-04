@@ -6,15 +6,12 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
 	"github.com/onsi/gomega"
-	"github.com/packethost/pkg/log/logr"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/grpc/persistence"
 	"github.com/tinkerbell/pbnj/grpc/taskrunner"
-	"github.com/tinkerbell/pbnj/pkg/zaplog"
 )
 
 func TestDevice(t *testing.T) {
@@ -62,9 +59,6 @@ func TestDevice(t *testing.T) {
 
 			ctx := context.Background()
 
-			l, zapLogger, _ := logr.NewPacketLogr()
-			logger := zaplog.RegisterLogger(l)
-			ctx = ctxzap.ToContext(ctx, zapLogger)
 			f := freecache.NewStore(freecache.DefaultOptions)
 			s := gokv.Store(f)
 			repo := &persistence.GoKV{
@@ -75,10 +69,8 @@ func TestDevice(t *testing.T) {
 			taskRunner := &taskrunner.Runner{
 				Repository: repo,
 				Ctx:        ctx,
-				Log:        logger,
 			}
 			machineSvc := MachineService{
-				Log:        logger,
 				TaskRunner: taskRunner,
 			}
 			response, err := machineSvc.BootDevice(ctx, testCase.req)
@@ -166,9 +158,6 @@ func TestPower(t *testing.T) {
 
 			ctx := context.Background()
 
-			l, zapLogger, _ := logr.NewPacketLogr()
-			logger := zaplog.RegisterLogger(l)
-			ctx = ctxzap.ToContext(ctx, zapLogger)
 			f := freecache.NewStore(freecache.DefaultOptions)
 			s := gokv.Store(f)
 			repo := &persistence.GoKV{
@@ -179,10 +168,8 @@ func TestPower(t *testing.T) {
 			taskRunner := &taskrunner.Runner{
 				Repository: repo,
 				Ctx:        ctx,
-				Log:        logger,
 			}
 			machineSvc := MachineService{
-				Log:        logger,
 				TaskRunner: taskRunner,
 			}
 			response, err := machineSvc.Power(ctx, testCase.req)

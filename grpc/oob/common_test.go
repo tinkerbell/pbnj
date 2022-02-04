@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/google/go-cmp/cmp"
-	"github.com/packethost/pkg/log/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
@@ -22,7 +22,7 @@ func TestParseAuth(t *testing.T) {
 		"nil Direct Auth": {input: &v1.Authn{Authn: &v1.Authn_DirectAuthn{DirectAuthn: nil}}, want: &repository.Error{Code: v1.Code_value["UNAUTHENTICATED"], Message: "no auth found", Details: nil}},
 		"nil auth":        {input: nil, want: &repository.Error{Code: v1.Code_value["UNAUTHENTICATED"], Message: "no auth found", Details: nil}},
 	}
-	l, _, _ := logr.NewPacketLogr()
+	l := logr.Discard()
 	sm := make(chan string)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -66,7 +66,7 @@ func TestSendStatusMessage(t *testing.T) {
 		"without chan receiver": {runChanReceiver: false, want: nil},
 	}
 
-	l, _, _ := logr.NewPacketLogr()
+	l := logr.Discard()
 	sm := make(chan string)
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {

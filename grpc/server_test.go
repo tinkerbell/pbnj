@@ -10,13 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	"github.com/packethost/pkg/log/logr"
+	"github.com/go-logr/logr"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	"github.com/tinkerbell/pbnj/grpc/persistence"
 	"github.com/tinkerbell/pbnj/pkg/http"
-	"github.com/tinkerbell/pbnj/pkg/zaplog"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 )
@@ -24,13 +22,7 @@ import (
 func TestRunServer(t *testing.T) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 9*time.Second)
-	l, zapLogger, err := logr.NewPacketLogr()
-	log := zaplog.RegisterLogger(l)
-	ctx = ctxzap.ToContext(ctx, zapLogger)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	log := logr.Discard()
 	rand.Seed(time.Now().UnixNano())
 	min := 40041
 	max := 40042
@@ -43,7 +35,7 @@ func TestRunServer(t *testing.T) {
 
 	grpcServer := grpc.NewServer()
 	httpServer := http.NewServer(fmt.Sprintf(":%d", port+1))
-	httpServer.WithLogger(l)
+	httpServer.WithLogger(log)
 
 	g := new(errgroup.Group)
 	g.Go(func() error {
@@ -61,12 +53,7 @@ func TestRunServerSignals(t *testing.T) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
-	l, zapLogger, err := logr.NewPacketLogr()
-	log := zaplog.RegisterLogger(l)
-	ctx = ctxzap.ToContext(ctx, zapLogger)
-	if err != nil {
-		t.Fatal(err)
-	}
+	log := logr.Discard()
 
 	rand.Seed(time.Now().UnixNano())
 	min := 40044
@@ -74,7 +61,7 @@ func TestRunServerSignals(t *testing.T) {
 	port := rand.Intn(max-min+1) + min
 	grpcServer := grpc.NewServer()
 	httpServer := http.NewServer(fmt.Sprintf(":%d", port+1))
-	httpServer.WithLogger(l)
+	httpServer.WithLogger(log)
 
 	g := new(errgroup.Group)
 	g.Go(func() error {
@@ -105,16 +92,11 @@ func TestRunServerPortInUse(t *testing.T) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	l, zapLogger, err := logr.NewPacketLogr()
-	log := zaplog.RegisterLogger(l)
-	ctx = ctxzap.ToContext(ctx, zapLogger)
-	if err != nil {
-		t.Fatal(err)
-	}
+	log := logr.Discard()
 
 	grpcServer := grpc.NewServer()
 	httpServer := http.NewServer(fmt.Sprintf(":%d", port+1))
-	httpServer.WithLogger(l)
+	httpServer.WithLogger(log)
 
 	err = RunServer(ctx, log, grpcServer, strconv.Itoa(port), httpServer)
 	if err.Error() != "listen tcp :40039: bind: address already in use" {

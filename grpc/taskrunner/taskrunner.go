@@ -8,10 +8,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-logr/logr"
 	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 
-	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/metrics"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
@@ -20,7 +20,6 @@ import (
 type Runner struct {
 	Repository repository.Actions
 	Ctx        context.Context
-	Log        logging.Logger
 	active     int
 	total      int
 	counterMu  sync.RWMutex
@@ -41,14 +40,13 @@ func (r *Runner) TotalWorkers() int {
 }
 
 // Execute a task, update repository with status.
-func (r *Runner) Execute(ctx context.Context, description, taskID string, action func(chan string) (string, error)) {
-	go r.worker(ctx, description, taskID, action)
+func (r *Runner) Execute(ctx context.Context, l logr.Logger, description, taskID string, action func(chan string) (string, error)) {
+	go r.worker(ctx, l, description, taskID, action)
 }
 
 // does the work, updates the repo record
 // TODO handle retrys, use a timeout.
-func (r *Runner) worker(ctx context.Context, description, taskID string, action func(chan string) (string, error)) {
-	logger := r.Log.GetContextLogger(ctx)
+func (r *Runner) worker(_ context.Context, logger logr.Logger, description, taskID string, action func(chan string) (string, error)) {
 	logger = logger.WithValues("taskID", taskID, "description", description)
 	r.counterMu.Lock()
 	r.active++

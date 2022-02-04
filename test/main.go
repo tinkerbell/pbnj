@@ -8,7 +8,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/packethost/pkg/log/logr"
+	"github.com/go-logr/logr"
+	"github.com/go-logr/zerologr"
+	"github.com/rs/zerolog"
 	"github.com/tinkerbell/pbnj/cmd"
 	"github.com/tinkerbell/pbnj/test/runner"
 )
@@ -47,8 +49,28 @@ func main() {
 	}
 
 	fmt.Println(*logLevel)
-	logger, _, _ := logr.NewPacketLogr(logr.WithLogLevel(*logLevel))
+	logger := defaultLogger(*logLevel)
 	runner.RunTests(logger, cfgData)
+}
+
+// defaultLogger is a zerolog logr implementation.
+func defaultLogger(level string) logr.Logger {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
+	zerologr.NameFieldName = "logger"
+	zerologr.NameSeparator = "/"
+
+	zl := zerolog.New(os.Stdout)
+	zl = zl.With().Caller().Timestamp().Logger()
+	var l zerolog.Level
+	switch level {
+	case "debug":
+		l = zerolog.DebugLevel
+	default:
+		l = zerolog.InfoLevel
+	}
+	zl = zl.Level(l)
+
+	return zerologr.New(&zl)
 }
 
 // Returns an int >= min, < max.

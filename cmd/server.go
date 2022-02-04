@@ -3,25 +3,24 @@ package cmd
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"time"
 
 	jwt "github.com/cristalhq/jwt/v3"
 	"github.com/equinix-labs/otel-init-go/otelinit"
 	jwt_helper "github.com/golang-jwt/jwt/v4"
+	"github.com/go-logr/logr"
+	"github.com/go-logr/zerologr"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
-	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
-	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/packethost/pkg/grpc/authz"
-	"github.com/packethost/pkg/log/logr"
+	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	grpcsvr "github.com/tinkerbell/pbnj/grpc"
 	"github.com/tinkerbell/pbnj/pkg/http"
-	"github.com/tinkerbell/pbnj/pkg/zaplog"
+	"github.com/tinkerbell/pbnj/pkg/logging"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"goa.design/goa/grpc/middleware"
 	"google.golang.org/grpc"
@@ -53,22 +52,7 @@ var (
 			ctx, otelShutdown := otelinit.InitOpenTelemetry(ctx, "pbnj")
 			defer otelShutdown(ctx)
 
-			logger, zlog, err := logr.NewPacketLogr(
-				logr.WithServiceName("github.com/tinkerbell/pbnj"),
-				logr.WithLogLevel(logLevel),
-			)
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "%v\n", err)
-				os.Exit(1)
-			}
-			defer func() {
-				if err := zlog.Sync(); err != nil {
-					fmt.Fprintf(os.Stderr, "zlog sync failed: %v", err)
-				}
-			}()
-
-			// Make sure that log statements internal to gRPC library are logged using the zapLogger as well.
-			grpc_zap.ReplaceGrpcLoggerV2(zlog)
+			logger := defaultLogger(logLevel).WithName("github.com/tinkerbell/pbnj").WithValues("service", "github.com/tinkerbell/pbnj")
 
 			authzInterceptor := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 				return handler(ctx, req)
@@ -86,11 +70,10 @@ var (
 				grpc_middleware.WithUnaryServerChain(
 					grpc_prometheus.UnaryServerInterceptor,
 					authzInterceptor,
-					grpc_ctxtags.UnaryServerInterceptor(grpc_ctxtags.WithFieldExtractor(grpc_ctxtags.CodeGenRequestFieldExtractor)),
 					middleware.UnaryRequestID(middleware.UseXRequestIDMetadataOption(true), middleware.XRequestMetadataLimitOption(512)),
-					zaplog.UnaryLogRequestID(zlog, requestIDKey, requestIDLogKey),
-					grpc_zap.UnaryServerInterceptor(zlog),
-					zaplog.UnaryLogBMCIP(),
+					logging.UnaryServerInterceptor(logger),                   // this puts the logger in the context. Allows per-request logging and other middleware to be used.
+					logging.UnaryLogRequestID(requestIDKey, requestIDLogKey), // must be after logging.UnaryServerInterceptor because the logger must be in the context.
+					logging.UnaryLogBMCIP(),                                  // must be after logging.UnaryServerInterceptor because the logger must be in the context.
 					otelgrpc.UnaryServerInterceptor(),
 					grpc_validator.UnaryServerInterceptor(),
 				),
@@ -99,7 +82,7 @@ var (
 			httpServer := http.NewServer(metricsAddr)
 			httpServer.WithLogger(logger)
 
-			if err := grpcsvr.RunServer(ctx, zaplog.RegisterLogger(logger), grpcServer, port, httpServer, grpcsvr.WithBmcTimeout(bmcTimeout)); err != nil {
+			if err := grpcsvr.RunServer(ctx, logger, grpcServer, port, httpServer, grpcsvr.WithBmcTimeout(bmcTimeout)); err != nil {
 				logger.Error(err, "error running server")
 				os.Exit(1)
 			}
@@ -115,6 +98,26 @@ func init() {
 	serverCmd.PersistentFlags().StringVar(&rsPubKey, "rsPubKey", "", "RS public key")
 	serverCmd.PersistentFlags().DurationVar(&bmcTimeout, "bmcTimeout", (15 * time.Second), "Timeout for BMC calls")
 	rootCmd.AddCommand(serverCmd)
+}
+
+// defaultLogger is a zerolog logr implementation.
+func defaultLogger(level string) logr.Logger {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
+	zerologr.NameFieldName = "logger"
+	zerologr.NameSeparator = "/"
+
+	zl := zerolog.New(os.Stdout)
+	zl = zl.With().Caller().Timestamp().Logger()
+	var l zerolog.Level
+	switch level {
+	case "debug":
+		l = zerolog.DebugLevel
+	default:
+		l = zerolog.InfoLevel
+	}
+	zl = zl.Level(l)
+
+	return zerologr.New(&zl)
 }
 
 // authFunc will validate (signed and not expired) the JWT against the methods in the ScopeMapping.

@@ -14,7 +14,6 @@ import (
 
 // MachineService for doing power and device actions.
 type MachineService struct {
-	Log logging.Logger
 	// Timeout is how long a task should be run
 	// before it is cancelled. This is for use in a
 	// TaskRunner.Execute function that runs all BMC
@@ -26,8 +25,7 @@ type MachineService struct {
 
 // BootDevice sets the next boot device of a machine.
 func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (*v1.DeviceResponse, error) {
-	// TODO figure out how not to have to do this, but still keep the logging abstraction clean?
-	l := m.Log.GetContextLogger(ctx)
+	l := logging.ExtractLogr(ctx)
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID)
 
@@ -56,16 +54,16 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 		defer cancel()
 		return mbd.BootDeviceSet(taskCtx, in.BootDevice.String(), in.Persistent, in.EfiBoot)
 	}
-	m.TaskRunner.Execute(ctx, "setting boot device", taskID, execFunc)
+	m.TaskRunner.Execute(ctx, l, "setting boot device", taskID, execFunc)
 
 	return &v1.DeviceResponse{TaskId: taskID}, nil
 }
 
 // Power does a power action against a BMC.
 func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.PowerResponse, error) {
-	l := m.Log.GetContextLogger(ctx)
+	l := logging.ExtractLogr(ctx)
 	taskID := xid.New().String()
-	l = l.WithValues("taskID", taskID)
+	l = l.WithValues("taskID", taskID, "bmcIP", in.Authn.GetDirectAuthn().GetHost().GetHost())
 	l.Info(
 		"start Power request",
 		"username", in.Authn.GetDirectAuthn().GetUsername(),
@@ -91,7 +89,7 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 		defer cancel()
 		return mp.PowerSet(taskCtx, in.PowerAction.String())
 	}
-	m.TaskRunner.Execute(ctx, "power action: "+in.GetPowerAction().String(), taskID, execFunc)
+	m.TaskRunner.Execute(ctx, l, "power action: "+in.GetPowerAction().String(), taskID, execFunc)
 
 	return &v1.PowerResponse{TaskId: taskID}, nil
 }
