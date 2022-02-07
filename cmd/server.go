@@ -8,8 +8,8 @@ import (
 	"time"
 
 	jwt "github.com/cristalhq/jwt/v3"
-	jwt_helper "github.com/dgrijalva/jwt-go"
 	"github.com/equinix-labs/otel-init-go/otelinit"
+	jwt_helper "github.com/golang-jwt/jwt/v4"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
