@@ -11,7 +11,7 @@ FROM alpine:3.8
 LABEL maintainers="https://tinkerbell.org/community/slack/"
 
 ARG IPMITOOL_REPO=https://github.com/ipmitool/ipmitool.git
-ARG IPMITOOL_COMMIT=39ca56bf33975b8a8b7e87928d67dc66366161da
+ARG IPMITOOL_COMMIT=b5ce925744851b58193ad3ee18957ce88f6efc26
 ARG GRPC_HEALTH_PROBE_VERSION=v0.3.4
 
 WORKDIR /tmp
