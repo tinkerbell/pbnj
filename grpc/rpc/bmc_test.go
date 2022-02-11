@@ -10,21 +10,16 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	"github.com/packethost/pkg/log/logr"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/grpc/persistence"
 	"github.com/tinkerbell/pbnj/grpc/taskrunner"
-	"github.com/tinkerbell/pbnj/pkg/logging"
-	"github.com/tinkerbell/pbnj/pkg/zaplog"
 )
 
 const tempIPMITool = "/tmp/ipmitool"
 
 var (
-	log        logging.Logger
 	ctx        context.Context
 	taskRunner *taskrunner.Runner
 	bmcService BmcService
@@ -39,9 +34,6 @@ func TestMain(m *testing.M) {
 
 func setup() {
 	ctx = context.Background()
-	l, zapLogger, _ := logr.NewPacketLogr()
-	log = zaplog.RegisterLogger(l)
-	ctx = ctxzap.ToContext(ctx, zapLogger)
 	f := freecache.NewStore(freecache.DefaultOptions)
 	s := gokv.Store(f)
 	repo := &persistence.GoKV{
@@ -52,10 +44,8 @@ func setup() {
 	taskRunner = &taskrunner.Runner{
 		Repository: repo,
 		Ctx:        ctx,
-		Log:        log,
 	}
 	bmcService = BmcService{
-		Log:                    log,
 		TaskRunner:             taskRunner,
 		UnimplementedBMCServer: v1.UnimplementedBMCServer{},
 	}

@@ -12,14 +12,13 @@ import (
 
 // TaskService for retrieving task details.
 type TaskService struct {
-	Log        logging.Logger
 	TaskRunner task.Task
 	v1.UnimplementedTaskServer
 }
 
 // Status returns a task record.
 func (t *TaskService) Status(ctx context.Context, in *v1.StatusRequest) (*v1.StatusResponse, error) {
-	l := t.Log.GetContextLogger(ctx)
+	l := logging.ExtractLogr(ctx)
 	l.Info("start Status request", "taskID", in.TaskId)
 
 	record, err := t.TaskRunner.Status(ctx, in.TaskId)

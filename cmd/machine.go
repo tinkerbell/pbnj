@@ -2,14 +2,13 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"os"
 
-	"github.com/packethost/pkg/log/logr"
 	"github.com/spf13/cobra"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	v1Client "github.com/tinkerbell/pbnj/client"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // machineCmd represents the server command.
@@ -23,22 +22,9 @@ var machineCmd = &cobra.Command{
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		logger, zlog, err := logr.NewPacketLogr(
-			logr.WithServiceName("github.com/tinkerbell/pbnj"),
-			logr.WithLogLevel(logLevel),
-		)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
-			os.Exit(1)
-		}
+		logger := defaultLogger(logLevel)
 
-		defer func() {
-			if err := zlog.Sync(); err != nil {
-				fmt.Fprintf(os.Stderr, "zlog sync failed: %v", err)
-			}
-		}()
-
-		opts = append(opts, grpc.WithInsecure())
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		conn, err := grpc.Dial("localhost:"+port, opts...)
 		if err != nil {
 			logger.Error(err, "fail to dial server")

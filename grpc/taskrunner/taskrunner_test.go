@@ -5,14 +5,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
-	"github.com/packethost/pkg/log/logr"
+	"github.com/go-logr/logr"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	"github.com/rs/xid"
 	"github.com/tinkerbell/pbnj/grpc/persistence"
 	"github.com/tinkerbell/pbnj/pkg/repository"
-	"github.com/tinkerbell/pbnj/pkg/zaplog"
 )
 
 func TestRoundTrip(t *testing.T) {
@@ -27,17 +25,14 @@ func TestRoundTrip(t *testing.T) {
 	s := gokv.Store(f)
 	defer s.Close()
 	repo := &persistence.GoKV{Store: s, Ctx: ctx}
-	l, zapLogger, _ := logr.NewPacketLogr()
-	logger := zaplog.RegisterLogger(l)
-	ctx = ctxzap.ToContext(ctx, zapLogger)
+	logger := logr.Discard()
 	runner := Runner{
 		Repository: repo,
 		Ctx:        ctx,
-		Log:        logger,
 	}
 
 	taskID := xid.New().String()
-	runner.Execute(ctx, description, taskID, func(s chan string) (string, error) {
+	runner.Execute(ctx, logger, description, taskID, func(s chan string) (string, error) {
 		return "didnt do anything", defaultError
 	})
 

@@ -15,7 +15,6 @@ import (
 
 // BmcService for doing BMC actions.
 type BmcService struct {
-	Log logging.Logger
 	// Timeout is how long a task should be run
 	// before it is cancelled. This is for use in a
 	// TaskRunner.Execute function that runs all BMC
@@ -32,7 +31,7 @@ func (b *BmcService) NetworkSource(_ context.Context, _ *v1.NetworkSourceRequest
 
 // Reset calls a reset on a BMC.
 func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetResponse, error) {
-	l := b.Log.GetContextLogger(ctx)
+	l := logging.ExtractLogr(ctx)
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID)
 
@@ -56,15 +55,14 @@ func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetR
 		defer cancel()
 		return "", t.BMCReset(taskCtx, in.ResetKind.String())
 	}
-	b.TaskRunner.Execute(ctx, "bmc reset", taskID, execFunc)
+	b.TaskRunner.Execute(ctx, l, "bmc reset", taskID, execFunc)
 
 	return &v1.ResetResponse{TaskId: taskID}, nil
 }
 
 // CreateUser sets the next boot device of a machine.
 func (b *BmcService) CreateUser(ctx context.Context, in *v1.CreateUserRequest) (*v1.CreateUserResponse, error) {
-	// TODO figure out how not to have to do this, but still keep the logging abstraction clean?
-	l := b.Log.GetContextLogger(ctx)
+	l := logging.ExtractLogr(ctx)
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID)
 
@@ -92,15 +90,14 @@ func (b *BmcService) CreateUser(ctx context.Context, in *v1.CreateUserRequest) (
 		defer cancel()
 		return "", t.CreateUser(taskCtx)
 	}
-	b.TaskRunner.Execute(ctx, "creating user", taskID, execFunc)
+	b.TaskRunner.Execute(ctx, l, "creating user", taskID, execFunc)
 
 	return &v1.CreateUserResponse{TaskId: taskID}, nil
 }
 
 // UpdateUser updates a users credentials on a BMC.
 func (b *BmcService) UpdateUser(ctx context.Context, in *v1.UpdateUserRequest) (*v1.UpdateUserResponse, error) {
-	// TODO figure out how not to have to do this, but still keep the logging abstraction clean?
-	l := b.Log.GetContextLogger(ctx)
+	l := logging.ExtractLogr(ctx)
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID)
 
@@ -128,15 +125,14 @@ func (b *BmcService) UpdateUser(ctx context.Context, in *v1.UpdateUserRequest) (
 		defer cancel()
 		return "", t.UpdateUser(taskCtx)
 	}
-	b.TaskRunner.Execute(ctx, "updating user", taskID, execFunc)
+	b.TaskRunner.Execute(ctx, l, "updating user", taskID, execFunc)
 
 	return &v1.UpdateUserResponse{TaskId: taskID}, nil
 }
 
 // DeleteUser deletes a user on a BMC.
 func (b *BmcService) DeleteUser(ctx context.Context, in *v1.DeleteUserRequest) (*v1.DeleteUserResponse, error) {
-	// TODO figure out how not to have to do this, but still keep the logging abstraction clean?
-	l := b.Log.GetContextLogger(ctx)
+	l := logging.ExtractLogr(ctx)
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID)
 	l.Info(
@@ -162,7 +158,7 @@ func (b *BmcService) DeleteUser(ctx context.Context, in *v1.DeleteUserRequest) (
 		defer cancel()
 		return "", t.DeleteUser(taskCtx)
 	}
-	b.TaskRunner.Execute(ctx, "deleting user", taskID, execFunc)
+	b.TaskRunner.Execute(ctx, l, "deleting user", taskID, execFunc)
 
 	return &v1.DeleteUserResponse{TaskId: taskID}, nil
 }

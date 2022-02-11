@@ -16,6 +16,7 @@ import (
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	v1Client "github.com/tinkerbell/pbnj/client"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/testing/protocmp"
 )
 
@@ -145,7 +146,7 @@ func runMachinePowerClient(in testResource, action v1.PowerAction, s Server) (*v
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	conn, err := grpc.Dial(s.URL+":"+s.Port, opts...)
 	if err != nil {
 		return nil, err
@@ -184,7 +185,7 @@ func runMachineBootDevClient(in testResource, action v1.BootDevice, s Server) (*
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	conn, err := grpc.Dial(s.URL+":"+s.Port, opts...)
 	if err != nil {
 		return nil, err
@@ -226,7 +227,7 @@ func runBMCCreateUserClient(in testResource, action *v1.CreateUserRequest, s Ser
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	conn, err := grpc.Dial(s.URL+":"+s.Port, opts...)
 	if err != nil {
 		return nil, err
@@ -270,7 +271,7 @@ func runBMCDeleteUserClient(in testResource, action *v1.DeleteUserRequest, s Ser
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	conn, err := grpc.Dial(s.URL+":"+s.Port, opts...)
 	if err != nil {
 		return nil, err

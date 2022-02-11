@@ -5,9 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/zap/ctxzap"
+	"github.com/go-logr/logr"
 	"github.com/onsi/gomega"
-	"github.com/packethost/pkg/log/logr"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	"github.com/rs/xid"
@@ -15,7 +14,6 @@ import (
 	"github.com/tinkerbell/pbnj/grpc/persistence"
 	"github.com/tinkerbell/pbnj/grpc/taskrunner"
 	"github.com/tinkerbell/pbnj/pkg/repository"
-	"github.com/tinkerbell/pbnj/pkg/zaplog"
 )
 
 func TestTaskFound(t *testing.T) {
@@ -26,9 +24,7 @@ func TestTaskFound(t *testing.T) {
 		Message: "",
 		Details: nil,
 	}
-	l, zapLogger, _ := logr.NewPacketLogr()
-	logger := zaplog.RegisterLogger(l)
-	ctx = ctxzap.ToContext(ctx, zapLogger)
+	logger := logr.Discard()
 	f := freecache.NewStore(freecache.DefaultOptions)
 	s := gokv.Store(f)
 	repo := &persistence.GoKV{Store: s, Ctx: ctx}
@@ -36,17 +32,15 @@ func TestTaskFound(t *testing.T) {
 	taskRunner := &taskrunner.Runner{
 		Repository: repo,
 		Ctx:        ctx,
-		Log:        logger,
 	}
 	taskID := xid.New().String()
-	taskRunner.Execute(ctx, "test", taskID, func(s chan string) (string, error) {
+	taskRunner.Execute(ctx, logger, "test", taskID, func(s chan string) (string, error) {
 		return "doing cool stuff", defaultError
 	})
 
 	taskReq := &v1.StatusRequest{TaskId: taskID}
 
 	taskSvc := TaskService{
-		Log:        logger,
 		TaskRunner: taskRunner,
 	}
 
@@ -83,9 +77,6 @@ func TestRecordNotFound(t *testing.T) {
 
 			ctx := context.Background()
 
-			l, zapLogger, _ := logr.NewPacketLogr()
-			logger := zaplog.RegisterLogger(l)
-			ctx = ctxzap.ToContext(ctx, zapLogger)
 			f := freecache.NewStore(freecache.DefaultOptions)
 			s := gokv.Store(f)
 			repo := &persistence.GoKV{Store: s, Ctx: ctx}
@@ -93,10 +84,8 @@ func TestRecordNotFound(t *testing.T) {
 			taskRunner := &taskrunner.Runner{
 				Repository: repo,
 				Ctx:        ctx,
-				Log:        logger,
 			}
 			taskSvc := TaskService{
-				Log:        logger,
 				TaskRunner: taskRunner,
 			}
 			response, err := taskSvc.Status(ctx, testCase.req)
