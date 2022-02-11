@@ -5,12 +5,12 @@ go 1.16
 require (
 	github.com/bmc-toolbox/bmclib v0.4.14-0.20211027184927-2f9a20e0a479
 	github.com/cristalhq/jwt/v3 v3.0.9
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/equinix-labs/otel-init-go v0.0.4
 	github.com/fatih/color v1.7.0
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.4.0
 	github.com/go-test/deep v1.0.7
+	github.com/golang-jwt/jwt/v4 v4.2.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.6
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
