@@ -8,9 +8,9 @@ import (
 
 	jwt "github.com/cristalhq/jwt/v3"
 	"github.com/equinix-labs/otel-init-go/otelinit"
-	jwt_helper "github.com/golang-jwt/jwt/v4"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zerologr"
+	jwt_helper "github.com/golang-jwt/jwt/v4"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
