@@ -229,6 +229,7 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 	}
 	m.SendStatusMessage("working on bmc reset")
 	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
+	client.Registry.Drivers = client.Registry.PreferDriver("gofish")
 
 	lookup := map[string]string{
 		v1.ResetKind_RESET_KIND_COLD.String(): "cold",
