@@ -76,7 +76,7 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 
 	bs := rpc.BmcService{
 		TaskRunner: taskRunner,
-		Timeout:    defaultServer.bmcTimeout,
+		Timeout:    time.Second * 60,
 	}
 	v1.RegisterBMCServer(grpcServer, &bs)
 
