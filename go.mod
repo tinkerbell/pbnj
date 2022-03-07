@@ -3,7 +3,7 @@ module github.com/tinkerbell/pbnj
 go 1.16
 
 require (
-	github.com/bmc-toolbox/bmclib v0.4.16-0.20220222141527-4a6f31e75616
+	github.com/bmc-toolbox/bmclib v0.4.16-0.20220224155224-80ddde802be7
 	github.com/cristalhq/jwt/v3 v3.1.0
 	github.com/equinix-labs/otel-init-go v0.0.5
 	github.com/fatih/color v1.13.0
