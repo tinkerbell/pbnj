@@ -7,8 +7,33 @@ GIT_COMMIT:=$(shell git rev-parse --short HEAD)
 BUILD_ARGS:=GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags '-s -w -extldflags "-static"'
 PROTOBUF_BUILDER_IMG:=pbnj-protobuf-builder
 
-help:
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[32m%-30s\033[0m %s\n", $$1, $$2}'
+.PHONY: help
+help: ## Display this help.
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+##@ Build
+
+.PHONY: darwin
+darwin: ## complie for darwin
+	GOOS=darwin ${BUILD_ARGS} -o bin/${BINARY}-darwin-amd64 main.go
+
+.PHONY: linux
+linux: ## complie for linux
+	GOOS=linux ${BUILD_ARGS} -o bin/${BINARY}-linux-amd64 main.go
+
+.PHONY: build
+build: ## compile the binary for the native OS
+ifeq (${OSFLAG},linux)
+	@$(MAKE) linux
+else
+	@$(MAKE) darwin
+endif
+
+.PHONY: image
+image: ## make the Container Image
+	docker build -t pbnj:local .
+
+##@ Development
 
 .PHONY: test
 test: ## run tests
@@ -43,22 +68,6 @@ buf-lint:  ## run linting
 	@echo be sure buf is installed: https://buf.build/docs/installation
 	buf check lint
 
-.PHONY: darwin
-darwin: ## complie for darwin
-	GOOS=darwin ${BUILD_ARGS} -o bin/${BINARY}-darwin-amd64 main.go
-
-.PHONY: linux
-linux: ## complie for linux
-	GOOS=linux ${BUILD_ARGS} -o bin/${BINARY}-linux-amd64 main.go
-
-.PHONY: build
-build: ## compile the binary for the native OS
-ifeq (${OSFLAG},linux)
-	@$(MAKE) linux
-else
-	@$(MAKE) darwin
-endif
-
 PHONY: run-server
 run-server: ## run server locally
 ifeq (, $(shell which jq))
@@ -80,28 +89,12 @@ pbs-docker: pbs-docker-image ## generate go stubs from protocol buffers in a con
 	docker run -it --rm -v ${PWD}:/code -w /code ${PROTOBUF_BUILDER_IMG} scripts/protoc.sh
 
 .PHONY: pbs-docker-image
-pbs-docker-image: ## generate container image for building protocol buffers 
+pbs-docker-image: ## generate container image for building protocol buffers
 	docker build -t ${PROTOBUF_BUILDER_IMG} -f scripts/Dockerfile.pbbuilder .
-
-.PHONY: image
-image: ## make the Container Image
-	docker build -t pbnj:local . 
 
 .PHONY: run-image
 run-image: ## run PBnJ container image
 	scripts/run-image.sh
-
-
-.PHONY: ruby-client-demo
-ruby-client-demo: image ## run ruby client demo
-	# make ruby-client-demo host=10.10.10.10 user=ADMIN pass=ADMIN
-	docker run -d --name pbnj pbnj:local
-	docker run -it --rm --net container:pbnj -v ${PWD}:/code -w /code/examples/clients/ruby --entrypoint /bin/bash ruby /code/examples/clients/ruby/demo.sh ${host} ${user} ${pass}
-	docker rm -f pbnj
-
-.PHONY: evans
-evans: ## run evans grpc client
-	evans --path $$(go env GOMODCACHE) --path . --proto $$(find api/v1 -type f -name '*.proto'| xargs | tr " " ",") -p "$${PBNJ_PORT:-50051}" repl
 
 # BEGIN: lint-install .
 # http://github.com/tinkerbell/lint-install
@@ -143,3 +136,16 @@ out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH):
 	mv out/linters/golangci-lint out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH)
 
 # END: lint-install .
+
+##@ Clients
+
+.PHONY: ruby-client-demo
+ruby-client-demo: image ## run ruby client demo
+	# make ruby-client-demo host=10.10.10.10 user=ADMIN pass=ADMIN
+	docker run -d --name pbnj pbnj:local
+	docker run -it --rm --net container:pbnj -v ${PWD}:/code -w /code/examples/clients/ruby --entrypoint /bin/bash ruby /code/examples/clients/ruby/demo.sh ${host} ${user} ${pass}
+	docker rm -f pbnj
+
+.PHONY: evans
+evans: ## run evans grpc client
+	evans --path $$(go env GOMODCACHE) --path . --proto $$(find api/v1 -type f -name '*.proto'| xargs | tr " " ",") -p "$${PBNJ_PORT:-50051}" repl
