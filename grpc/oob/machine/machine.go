@@ -142,7 +142,6 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	m.SendStatusMessage(msg)
 
 	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
-	client.Registry.Drivers = client.Registry.PreferDriver("gofish")
 
 	m.SendStatusMessage("connecting to BMC")
 	err = client.Open(ctx)
@@ -250,7 +249,6 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	m.SendStatusMessage(msg)
 
 	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
-	client.Registry.Drivers = client.Registry.PreferDriver("gofish")
 
 	err = client.Open(ctx)
 	if err != nil {
