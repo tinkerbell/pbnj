@@ -3,16 +3,16 @@ module github.com/tinkerbell/pbnj
 go 1.17
 
 require (
-	github.com/bmc-toolbox/bmclib v0.4.16-0.20220224155224-80ddde802be7
+	github.com/bmc-toolbox/bmclib v0.5.4-0.20220529134709-d94c2689841e
 	github.com/cristalhq/jwt/v3 v3.1.0
 	github.com/equinix-labs/otel-init-go v0.0.5
 	github.com/fatih/color v1.13.0
-	github.com/go-logr/logr v1.2.2
+	github.com/go-logr/logr v1.2.3
 	github.com/go-logr/zerologr v1.2.1
 	github.com/go-test/deep v1.0.8
 	github.com/golang-jwt/jwt/v4 v4.3.0
 	github.com/golang/protobuf v1.5.2
-	github.com/google/go-cmp v0.5.7
+	github.com/google/go-cmp v0.5.8
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-multierror v1.1.1
@@ -57,7 +57,7 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
-	github.com/jacobweinstock/registrar v0.4.5 // indirect
+	github.com/jacobweinstock/registrar v0.4.6 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
@@ -74,7 +74,7 @@ require (
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/stmcginnis/gofish v0.12.0 // indirect
+	github.com/stmcginnis/gofish v0.12.1-0.20220311113027-6072260f4c8d // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.3.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.3.0 // indirect
@@ -85,7 +85,6 @@ require (
 	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
