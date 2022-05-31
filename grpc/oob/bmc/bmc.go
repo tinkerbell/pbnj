@@ -13,6 +13,9 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/metrics"
 	"github.com/tinkerbell/pbnj/pkg/oob"
 	"github.com/tinkerbell/pbnj/pkg/repository"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Action for making bmc actions on BMCs, implements oob.User interface.
@@ -120,10 +123,13 @@ func (m Action) setupConnection(ctx context.Context, user, password, host string
 		},
 	}
 
+	span := trace.SpanFromContext(ctx)
+
 	m.SendStatusMessage("connecting to BMC")
 	successfulConnections, err := common.EstablishConnections(ctx, connections)
 	if err != nil {
 		m.SendStatusMessage("connecting to BMC failed")
+		span.SetStatus(codes.Error, "connecting to BMC failed")
 		return nil, err
 	}
 
@@ -149,6 +155,10 @@ func (m Action) CreateUser(ctx context.Context) error {
 	timer := prometheus.NewTimer(metrics.ActionDuration.With(prometheus.Labels{"service": "bmc", "action": "create_user"}))
 	defer timer.ObserveDuration()
 
+	tracer := otel.Tracer("pbnj")
+	ctx, span := tracer.Start(ctx, "client.CreateUser")
+	defer span.End()
+
 	host, user, password, err := m.ParseAuth(m.CreateUserRequest.Authn)
 	if err != nil {
 		return err
@@ -161,13 +171,16 @@ func (m Action) CreateUser(ctx context.Context) error {
 	actions, err := m.setupConnection(ctx, user, password, host, creds)
 	if err != nil {
 		m.SendStatusMessage("connection setup failed")
+		span.SetStatus(codes.Error, "connection setup failed")
 		return err
 	}
 
 	err = oob.CreateUser(ctx, actions)
 	if err != nil {
-		m.SendStatusMessage(fmt.Sprintf("error %s: %v", status, err))
-		m.Log.Info(fmt.Sprintf("error %s: %v", status, err))
+		eString := fmt.Sprintf("error %s: %v", status, err)
+		m.SendStatusMessage(eString)
+		span.SetStatus(codes.Error, eString)
+		m.Log.Info(eString)
 		return err
 	}
 
@@ -179,6 +192,10 @@ func (m Action) CreateUser(ctx context.Context) error {
 func (m Action) UpdateUser(ctx context.Context) error {
 	timer := prometheus.NewTimer(metrics.ActionDuration.With(prometheus.Labels{"service": "bmc", "action": "update_user"}))
 	defer timer.ObserveDuration()
+
+	tracer := otel.Tracer("pbnj")
+	ctx, span := tracer.Start(ctx, "client.UpdateUser")
+	defer span.End()
 
 	host, user, password, err := m.ParseAuth(m.UpdateUserRequest.Authn)
 	if err != nil {
@@ -210,6 +227,10 @@ func (m Action) DeleteUser(ctx context.Context) error {
 	timer := prometheus.NewTimer(metrics.ActionDuration.With(prometheus.Labels{"service": "bmc", "action": "Delete_user"}))
 	defer timer.ObserveDuration()
 
+	tracer := otel.Tracer("pbnj")
+	ctx, span := tracer.Start(ctx, "client.DeleteUser")
+	defer span.End()
+
 	host, user, password, err := m.ParseAuth(m.DeleteUserRequest.Authn)
 	if err != nil {
 		return err
@@ -237,6 +258,10 @@ func (m Action) DeleteUser(ctx context.Context) error {
 
 // BMCReset functionality for machines.
 func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
+	tracer := otel.Tracer("pbnj")
+	ctx, span := tracer.Start(ctx, "client.BMCReset")
+	defer span.End()
+
 	host, user, password, parseErr := m.ParseAuth(m.ResetBMCRequest.Authn)
 	if parseErr != nil {
 		return parseErr
