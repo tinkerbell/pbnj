@@ -25,7 +25,7 @@ func (b *bmclibNextUserManagement) Connect(ctx context.Context) error {
 	var errMsg repository.Error
 
 	client := bmclib.NewClient(b.host, "", b.user, b.password, bmclib.WithLogger(b.log))
-	client.Registry.Drivers = client.Registry.Using("redfish")
+	client.Registry.Drivers = client.Registry.FilterForCompatible(ctx)
 
 	if err := client.Open(ctx); err != nil {
 		errMsg.Code = v1.Code_value["UNKNOWN"]
