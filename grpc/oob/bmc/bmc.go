@@ -14,6 +14,7 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/oob"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -124,6 +125,7 @@ func (m Action) setupConnection(ctx context.Context, user, password, host string
 	}
 
 	span := trace.SpanFromContext(ctx)
+	span.SetAttributes(attribute.String("bmc.host", host), attribute.String("bmc.username", user))
 
 	m.SendStatusMessage("connecting to BMC")
 	successfulConnections, err := common.EstablishConnections(ctx, connections)
@@ -163,6 +165,7 @@ func (m Action) CreateUser(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	span.SetAttributes(attribute.String("bmc.host", host), attribute.String("bmc.username", user))
 
 	creds := m.CreateUserRequest.GetUserCreds()
 	status := fmt.Sprintf("creating user %q", creds.GetUsername())
@@ -171,7 +174,7 @@ func (m Action) CreateUser(ctx context.Context) error {
 	actions, err := m.setupConnection(ctx, user, password, host, creds)
 	if err != nil {
 		m.SendStatusMessage("connection setup failed")
-		span.SetStatus(codes.Error, "connection setup failed")
+		span.SetStatus(codes.Error, "connection setup failed: "+err.Error())
 		return err
 	}
 
@@ -201,6 +204,7 @@ func (m Action) UpdateUser(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	span.SetAttributes(attribute.String("bmc.host", host), attribute.String("bmc.username", user))
 
 	creds := m.UpdateUserRequest.GetUserCreds()
 	status := fmt.Sprintf("updating user %q", creds.GetUsername())
@@ -209,12 +213,16 @@ func (m Action) UpdateUser(ctx context.Context) error {
 	actions, err := m.setupConnection(ctx, user, password, host, creds)
 	if err != nil {
 		m.SendStatusMessage("connection setup failed")
+		span.SetStatus(codes.Error, "connection setup failed: "+err.Error())
 		return err
 	}
 
-	if err = oob.UpdateUser(ctx, actions); err != nil {
-		m.SendStatusMessage(fmt.Sprintf("error %s: %v", status, err))
-		m.Log.Info(fmt.Sprintf("error %s: %v", status, err))
+	err = oob.UpdateUser(ctx, actions)
+	if err != nil {
+		eString := fmt.Sprintf("error %s: %v", status, err)
+		m.SendStatusMessage(eString)
+		span.SetStatus(codes.Error, eString)
+		m.Log.Info(eString)
 		return err
 	}
 
@@ -235,6 +243,7 @@ func (m Action) DeleteUser(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	span.SetAttributes(attribute.String("bmc.host", host), attribute.String("bmc.username", user))
 
 	creds := &v1.UserCreds{Username: m.DeleteUserRequest.Username}
 	status := fmt.Sprintf("deleting user %q", creds.GetUsername())
@@ -243,12 +252,16 @@ func (m Action) DeleteUser(ctx context.Context) error {
 	actions, err := m.setupConnection(ctx, user, password, host, creds)
 	if err != nil {
 		m.SendStatusMessage("connectiion setup failed")
+		span.SetStatus(codes.Error, "connection setup failed: "+err.Error())
 		return err
 	}
 
-	if err = oob.DeleteUser(ctx, actions); err != nil {
-		m.SendStatusMessage(fmt.Sprintf("error %s: %v", status, err))
-		m.Log.Info(fmt.Sprintf("error %s: %v", status, err))
+	err = oob.DeleteUser(ctx, actions)
+	if err != nil {
+		eString := fmt.Sprintf("error %s: %v", status, err)
+		m.SendStatusMessage(eString)
+		span.SetStatus(codes.Error, eString)
+		m.Log.Info(eString)
 		return err
 	}
 
@@ -266,6 +279,7 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 	if parseErr != nil {
 		return parseErr
 	}
+	span.SetAttributes(attribute.String("bmc.host", host), attribute.String("bmc.username", user))
 	m.SendStatusMessage("working on bmc reset")
 	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
 
@@ -275,6 +289,7 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 	}
 	rLookup, ok := lookup[rType]
 	if !ok {
+		span.SetStatus(codes.Error, "unknown reset request")
 		return &repository.Error{
 			Code:    v1.Code_value["INVALID_ARGUMENT"],
 			Message: "unknown reset request",
@@ -282,6 +297,7 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 	}
 	err = client.Open(ctx)
 	if err != nil {
+		span.SetStatus(codes.Error, "Permission Denied: "+err.Error())
 		return &repository.Error{
 			Code:    v1.Code_value["PERMISSION_DENIED"],
 			Message: err.Error(),
@@ -298,11 +314,13 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 	ok, err = client.ResetBMC(ctx, rLookup)
 	log = m.Log.WithValues(logMetadata(client.GetMetadata())...)
 	if err != nil {
+		span.SetStatus(codes.Error, "failed to reset BMC: "+err.Error())
 		log.Error(err, "failed to reset BMC")
 	} else if !ok {
 		err = fmt.Errorf("reset failed")
 	}
 	if err != nil {
+		span.SetStatus(codes.Error, "failed to reset BMC: "+err.Error())
 		m.SendStatusMessage(fmt.Sprintf("failed to %v reset BMC", rLookup))
 		return &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
