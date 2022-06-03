@@ -51,7 +51,10 @@ func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetR
 		if err != nil {
 			return "", err
 		}
-		taskCtx, cancel := context.WithTimeout(ctx, b.Timeout)
+		// Because this is a background task, we want to pass through the span context, but not be
+		// a child context. This allows us to correctly plumb otel into the background task.
+		c := trace.ContextWithSpanContext(context.Background(), trace.SpanContextFromContext(ctx))
+		taskCtx, cancel := context.WithTimeout(c, b.Timeout)
 		defer cancel()
 		return "", t.BMCReset(taskCtx, in.ResetKind.String())
 	}
