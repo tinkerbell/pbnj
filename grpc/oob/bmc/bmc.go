@@ -152,6 +152,16 @@ func (m Action) setupConnection(ctx context.Context, user, password, host string
 	return actions, nil
 }
 
+// noteError will send a GRPC status message, log it, and update
+// the status of the provided tracing span.
+func (m Action) noteError(message string, span trace.Span) {
+	m.SendStatusMessage(message)
+	m.Log.Info(message)
+	if span != nil {
+		span.SetStatus(codes.Error, message)
+	}
+}
+
 // CreateUser functionality for machines.
 func (m Action) CreateUser(ctx context.Context) error {
 	timer := prometheus.NewTimer(metrics.ActionDuration.With(prometheus.Labels{"service": "bmc", "action": "create_user"}))
@@ -173,17 +183,13 @@ func (m Action) CreateUser(ctx context.Context) error {
 
 	actions, err := m.setupConnection(ctx, user, password, host, creds)
 	if err != nil {
-		m.SendStatusMessage("connection setup failed")
-		span.SetStatus(codes.Error, "connection setup failed: "+err.Error())
+		// setupConnection is responsible for sending a status message and updating the span
 		return err
 	}
 
 	err = oob.CreateUser(ctx, actions)
 	if err != nil {
-		eString := fmt.Sprintf("error %s: %v", status, err)
-		m.SendStatusMessage(eString)
-		span.SetStatus(codes.Error, eString)
-		m.Log.Info(eString)
+		m.noteError(fmt.Sprintf("error %s: %v", status, err), span)
 		return err
 	}
 
@@ -212,17 +218,13 @@ func (m Action) UpdateUser(ctx context.Context) error {
 
 	actions, err := m.setupConnection(ctx, user, password, host, creds)
 	if err != nil {
-		m.SendStatusMessage("connection setup failed")
-		span.SetStatus(codes.Error, "connection setup failed: "+err.Error())
+		// setupConnection is responsible for sending a status message and updating the span
 		return err
 	}
 
 	err = oob.UpdateUser(ctx, actions)
 	if err != nil {
-		eString := fmt.Sprintf("error %s: %v", status, err)
-		m.SendStatusMessage(eString)
-		span.SetStatus(codes.Error, eString)
-		m.Log.Info(eString)
+		m.noteError(fmt.Sprintf("error %s: %v", status, err), span)
 		return err
 	}
 
@@ -232,7 +234,7 @@ func (m Action) UpdateUser(ctx context.Context) error {
 
 // DeleteUser functionality for machines.
 func (m Action) DeleteUser(ctx context.Context) error {
-	timer := prometheus.NewTimer(metrics.ActionDuration.With(prometheus.Labels{"service": "bmc", "action": "Delete_user"}))
+	timer := prometheus.NewTimer(metrics.ActionDuration.With(prometheus.Labels{"service": "bmc", "action": "delete_user"}))
 	defer timer.ObserveDuration()
 
 	tracer := otel.Tracer("pbnj")
@@ -251,17 +253,13 @@ func (m Action) DeleteUser(ctx context.Context) error {
 
 	actions, err := m.setupConnection(ctx, user, password, host, creds)
 	if err != nil {
-		m.SendStatusMessage("connectiion setup failed")
-		span.SetStatus(codes.Error, "connection setup failed: "+err.Error())
+		// setupConnection is responsible for sending a status message and updating the span
 		return err
 	}
 
 	err = oob.DeleteUser(ctx, actions)
 	if err != nil {
-		eString := fmt.Sprintf("error %s: %v", status, err)
-		m.SendStatusMessage(eString)
-		span.SetStatus(codes.Error, eString)
-		m.Log.Info(eString)
+		m.noteError(fmt.Sprintf("error %s: %v", status, err), span)
 		return err
 	}
 
