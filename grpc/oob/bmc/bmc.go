@@ -187,8 +187,7 @@ func (m Action) CreateUser(ctx context.Context) error {
 		return err
 	}
 
-	err = oob.CreateUser(ctx, actions)
-	if err != nil {
+	if err = oob.CreateUser(ctx, actions); err != nil {
 		m.noteError(fmt.Sprintf("error %s: %v", status, err), span)
 		return err
 	}
@@ -222,8 +221,7 @@ func (m Action) UpdateUser(ctx context.Context) error {
 		return err
 	}
 
-	err = oob.UpdateUser(ctx, actions)
-	if err != nil {
+	if err = oob.UpdateUser(ctx, actions); err != nil {
 		m.noteError(fmt.Sprintf("error %s: %v", status, err), span)
 		return err
 	}
@@ -257,8 +255,7 @@ func (m Action) DeleteUser(ctx context.Context) error {
 		return err
 	}
 
-	err = oob.DeleteUser(ctx, actions)
-	if err != nil {
+	if err = oob.DeleteUser(ctx, actions); err != nil {
 		m.noteError(fmt.Sprintf("error %s: %v", status, err), span)
 		return err
 	}
