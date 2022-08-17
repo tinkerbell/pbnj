@@ -1,6 +1,6 @@
 module github.com/tinkerbell/pbnj
 
-go 1.17
+go 1.18
 
 require (
 	github.com/bmc-toolbox/bmclib v0.5.4-0.20220529134709-d94c2689841e
