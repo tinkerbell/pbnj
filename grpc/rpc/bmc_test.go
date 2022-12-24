@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"testing"
@@ -51,7 +50,7 @@ func setup() {
 	}
 	_, err := exec.LookPath("ipmitool")
 	if err != nil {
-		err := ioutil.WriteFile(tempIPMITool, []byte{}, 0o777)
+		err := os.WriteFile(tempIPMITool, []byte{}, 0o777)
 		if err != nil {
 			fmt.Println("didnt find ipmitool in PATH and couldnt create one in /tmp")
 			os.Exit(3) //nolint:revive // deep-exit here is OK

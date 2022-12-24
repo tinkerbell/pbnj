@@ -1,7 +1,7 @@
 package runner
 
 import (
-	"io/ioutil"
+	"os"
 
 	"gopkg.in/yaml.v2"
 )
@@ -40,7 +40,7 @@ type Resource struct {
 
 // Config for the resources file.
 func (c *ConfigFile) Config(name string) error {
-	config, err := ioutil.ReadFile(name)
+	config, err := os.ReadFile(name)
 	if err != nil {
 		return err
 	}

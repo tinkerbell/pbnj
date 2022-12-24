@@ -141,7 +141,7 @@ func (m Action) setupConnection(ctx context.Context, user, password, host string
 	for _, elem := range successfulConnections {
 		conn := connections[elem]
 		if r, ok := conn.(common.Connection); ok && elem == "bmclib" {
-			defer r.Close(ctx) // nolint:revive // defer in a loop is OK here, as loop length is limited
+			defer r.Close(ctx) //nolint:revive // defer in a loop is OK here, as loop length is limited
 		}
 
 		if r, ok := conn.(oob.BMC); ok {
