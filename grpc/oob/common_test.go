@@ -3,7 +3,6 @@ package oob
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -35,7 +34,7 @@ func TestParseAuth(t *testing.T) {
 			if errMsg != nil {
 				diff := cmp.Diff(tc.want.Error(), errMsg.Error())
 				if diff != "" {
-					t.Log(fmt.Sprintf("%+v", errMsg))
+					t.Logf("%+v", errMsg)
 					t.Fatalf(diff)
 				}
 			}

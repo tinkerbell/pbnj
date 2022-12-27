@@ -93,7 +93,7 @@ func (r *Runner) worker(_ context.Context, logger logr.Logger, description, task
 			select {
 			case msg := <-messagesChan:
 				currStatus, _ := repo.Get(taskID)
-				sessionRecord.Messages = append(currStatus.Messages, msg) // nolint:gocritic // apparently this is the right slice
+				sessionRecord.Messages = append(currStatus.Messages, msg) //nolint:gocritic // apparently this is the right slice
 				_ = repo.Update(taskID, sessionRecord)
 			case <-actionSyn:
 				actionACK <- true
