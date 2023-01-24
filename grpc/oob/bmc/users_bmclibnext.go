@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/bmc-toolbox/bmclib"
+	"github.com/bmc-toolbox/bmclib/v2"
 	"github.com/go-logr/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/pkg/repository"
