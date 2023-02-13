@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bmc-toolbox/bmclib"
-	"github.com/bmc-toolbox/bmclib/bmc"
+	"github.com/bmc-toolbox/bmclib/v2"
+	"github.com/bmc-toolbox/bmclib/v2/bmc"
 	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
