@@ -1,4 +1,4 @@
-FROM golang:1.17.11 as builder
+FROM golang:1.18 as builder
 
 WORKDIR /code
 COPY go.mod go.sum /code/
@@ -50,7 +50,7 @@ RUN rm -rf /tmp/ipmitool \
     && wget -O/tmp/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 \
     && chmod +x /tmp/grpc_health_probe
 
-ENV GIN_MODE release 
+ENV GIN_MODE release
 USER pbnj
 EXPOSE 50051 9090 8080
 
