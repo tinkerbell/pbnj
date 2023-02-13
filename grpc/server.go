@@ -26,6 +26,14 @@ import (
 type Server struct {
 	repository.Actions
 	bmcTimeout time.Duration
+	// skipRedfishVersions is a list of Redfish versions to be ignored,
+	//
+	// When running an action on a BMC, PBnJ will pass the value of the skipRedfishVersions to bmclib
+	// which will then ignore the Redfish endpoint completely on BMCs running the given Redfish versions,
+	// and will proceed to attempt other drivers like - IPMI/SSH/Vendor API instead.
+	//
+	// for more information see https://github.com/bmc-toolbox/bmclib#bmc-connections
+	skipRedfishVersions []string
 }
 
 // ServerOption for setting optional values.
@@ -39,6 +47,11 @@ func WithPersistence(repo repository.Actions) ServerOption {
 // WithBmcTimeout sets the timeout for BMC calls.
 func WithBmcTimeout(t time.Duration) ServerOption {
 	return func(args *Server) { args.bmcTimeout = t }
+}
+
+// WithSkipRedfishVersions sets the Redfish versions to ignore for BMC calls.
+func WithSkipRedfishVersions(versions []string) ServerOption {
+	return func(args *Server) { args.skipRedfishVersions = versions }
 }
 
 // RunServer registers all services and runs the server.
@@ -75,8 +88,9 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 	v1.RegisterMachineServer(grpcServer, &ms)
 
 	bs := rpc.BmcService{
-		TaskRunner: taskRunner,
-		Timeout:    defaultServer.bmcTimeout,
+		TaskRunner:          taskRunner,
+		Timeout:             defaultServer.bmcTimeout,
+		SkipRedfishVersions: defaultServer.skipRedfishVersions,
 	}
 	v1.RegisterBMCServer(grpcServer, &bs)
 

@@ -85,6 +85,14 @@ func NewBootDeviceSetter(opts ...Option) (*Action, error) {
 	return a, nil
 }
 
+// WithSkipRedfishVersions sets the Redfish versions to skip in the Action struct.
+func WithSkipRedfishVersions(versions []string) Option {
+	return func(a *Action) error {
+		a.SkipRedfishVersions = versions
+		return nil
+	}
+}
+
 // BootDeviceSet functionality for machines.
 func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, efiBoot bool) (result string, err error) {
 	labels := prometheus.Labels{
@@ -141,7 +149,13 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
+	opts := []bmclib.Option{bmclib.WithLogger(m.Log)}
+
+	if len(m.SkipRedfishVersions) > 0 {
+		opts = append(opts, bmclib.WithRedfishVersionsNotCompatible(m.SkipRedfishVersions))
+	}
+
+	client := bmclib.NewClient(host, "623", user, password, opts...)
 
 	m.SendStatusMessage("connecting to BMC")
 	err = client.Open(ctx)
