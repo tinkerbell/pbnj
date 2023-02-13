@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strings"
 	"time"
 
 	jwt "github.com/cristalhq/jwt/v3"
@@ -39,6 +40,12 @@ var (
 	rsPubKey    string
 	// bmcTimeout is how long a BMC call/interaction is allow to run before it is cancelled.
 	bmcTimeout time.Duration
+	// When running an action on a BMC, PBnJ will pass the value of the skipRedfishVersions to bmclib
+	// which will then ignore the Redfish endpoint completely on BMCs running the given Redfish versions,
+	// and will proceed to attempt other drivers like - IPMI/SSH/Vendor API instead.
+	//
+	// for more information see https://github.com/bmc-toolbox/bmclib#bmc-connections
+	skipRedfishVersions string
 	// serverCmd represents the server command.
 	serverCmd = &cobra.Command{
 		Use:   "server",
@@ -82,7 +89,14 @@ var (
 			httpServer := http.NewServer(metricsAddr)
 			httpServer.WithLogger(logger)
 
-			if err := grpcsvr.RunServer(ctx, logger, grpcServer, port, httpServer, grpcsvr.WithBmcTimeout(bmcTimeout)); err != nil {
+			opts := []grpcsvr.ServerOption{grpcsvr.WithBmcTimeout(bmcTimeout)}
+
+			if skipRedfishVersions != "" {
+				versions := strings.Split(skipRedfishVersions, ",")
+				opts = append(opts, grpcsvr.WithSkipRedfishVersions(versions))
+			}
+
+			if err := grpcsvr.RunServer(ctx, logger, grpcServer, port, httpServer, opts...); err != nil {
 				logger.Error(err, "error running server")
 				os.Exit(1)
 			}
@@ -97,6 +111,7 @@ func init() {
 	serverCmd.PersistentFlags().StringVar(&hsKey, "hsKey", "", "HS key")
 	serverCmd.PersistentFlags().StringVar(&rsPubKey, "rsPubKey", "", "RS public key")
 	serverCmd.PersistentFlags().DurationVar(&bmcTimeout, "bmcTimeout", (15 * time.Second), "Timeout for BMC calls")
+	serverCmd.PersistentFlags().StringVar(&skipRedfishVersions, "skipRedfishVersions", "", "Ignore the redfish endpoint on BMCs running the given version(s)")
 	rootCmd.AddCommand(serverCmd)
 }
 

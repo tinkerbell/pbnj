@@ -79,6 +79,14 @@ func WithResetRequest(in *v1.ResetRequest) Option {
 	}
 }
 
+// WithSkipRedfishVersions sets the Redfish versions to skip in the Action struct.
+func WithSkipRedfishVersions(versions []string) Option {
+	return func(a *Action) error {
+		a.SkipRedfishVersions = versions
+		return nil
+	}
+}
+
 // NewBMC returns an oob.BMC interface.
 func NewBMC(opts ...Option) (oob.BMC, error) {
 	a := &Action{}
@@ -108,14 +116,15 @@ func NewBMCResetter(opts ...Option) (*Action, error) {
 // setupConnection connects to the BMC, returning BMC management methods.
 func (m Action) setupConnection(ctx context.Context, user, password, host string, creds *v1.UserCreds) ([]oob.BMC, error) {
 	connections := map[string]interface{}{
-		"bmclib": &bmclibUserManagement{
-			user:     user,
-			password: password,
-			host:     host,
-			log:      m.Log,
-			creds:    creds,
+		"bmclibv2": &bmclibv2UserManagement{
+			user:                user,
+			password:            password,
+			host:                host,
+			log:                 m.Log,
+			creds:               creds,
+			skipRedfishVersions: m.SkipRedfishVersions,
 		},
-		"bmclibNext": &bmclibNextUserManagement{
+		"bmclib": &bmclibUserManagement{
 			user:     user,
 			password: password,
 			host:     host,

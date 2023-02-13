@@ -20,6 +20,14 @@ type Connection interface {
 type Accessory struct {
 	Log            logr.Logger
 	StatusMessages chan string
+	// SkipRedfishVersions is a list of Redfish versions to be ignored,
+	//
+	// When running an action on a BMC, PBnJ will pass the value of the skipRedfishVersions to bmclib
+	// which will then ignore the Redfish endpoint completely on BMCs running the given Redfish versions,
+	// and will proceed to attempt other drivers like - IPMI/SSH/Vendor API instead.
+	//
+	// for more information see https://github.com/bmc-toolbox/bmclib#bmc-connections
+	SkipRedfishVersions []string
 }
 
 // Connect to a BMC interface function.

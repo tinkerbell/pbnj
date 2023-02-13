@@ -10,21 +10,35 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
-// bmclibNextUserManagement wraps attributes to manage user accounts.
-type bmclibNextUserManagement struct {
+// bmclibv2UserManagement wraps attributes to manage user accounts with bmclib v2.
+type bmclibv2UserManagement struct {
 	conn     *bmclib.Client
 	host     string
 	log      logr.Logger
 	password string
 	user     string
 	creds    *v1.UserCreds
+	// skipRedfishVersions is a list of Redfish versions to be ignored,
+	//
+	// When running an action on a BMC, PBnJ will pass the value of the skipRedfishVersions to bmclib
+	// which will then ignore the Redfish endpoint completely on BMCs running the given Redfish versions,
+	// and will proceed to attempt other drivers like - IPMI/SSH/Vendor API instead.
+	//
+	// for more information see https://github.com/bmc-toolbox/bmclib#bmc-connections
+	skipRedfishVersions []string
 }
 
 // Connect sets up the BMC client connection.
-func (b *bmclibNextUserManagement) Connect(ctx context.Context) error {
+func (b *bmclibv2UserManagement) Connect(ctx context.Context) error {
 	var errMsg repository.Error
 
-	client := bmclib.NewClient(b.host, "", b.user, b.password, bmclib.WithLogger(b.log))
+	opts := []bmclib.Option{bmclib.WithLogger(b.log)}
+
+	if len(b.skipRedfishVersions) > 0 {
+		opts = append(opts, bmclib.WithRedfishVersionsNotCompatible(b.skipRedfishVersions))
+	}
+
+	client := bmclib.NewClient(b.host, "", b.user, b.password, opts...)
 	client.Registry.Drivers = client.Registry.FilterForCompatible(ctx)
 
 	if err := client.Open(ctx); err != nil {
@@ -39,12 +53,12 @@ func (b *bmclibNextUserManagement) Connect(ctx context.Context) error {
 }
 
 // Close closes the BMC client connection.
-func (b *bmclibNextUserManagement) Close(ctx context.Context) {
+func (b *bmclibv2UserManagement) Close(ctx context.Context) {
 	b.conn.Close(ctx)
 }
 
 // CreateUser creates a user account.
-func (b *bmclibNextUserManagement) CreateUser(ctx context.Context) error {
+func (b *bmclibv2UserManagement) CreateUser(ctx context.Context) error {
 	ok, err := b.conn.CreateUser(ctx, b.creds.Username, b.creds.Password, userRole(b.creds.UserRole))
 	if !ok && err == nil {
 		err = fmt.Errorf("error creating user")
@@ -61,7 +75,7 @@ func (b *bmclibNextUserManagement) CreateUser(ctx context.Context) error {
 }
 
 // UpdateUser updates a user account.
-func (b *bmclibNextUserManagement) UpdateUser(ctx context.Context) error {
+func (b *bmclibv2UserManagement) UpdateUser(ctx context.Context) error {
 	ok, err := b.conn.UpdateUser(ctx, b.creds.Username, b.creds.Password, userRole(b.creds.UserRole))
 	if !ok && err == nil {
 		err = fmt.Errorf("error updating user")
@@ -77,7 +91,7 @@ func (b *bmclibNextUserManagement) UpdateUser(ctx context.Context) error {
 }
 
 // DeleteUser deletes a user account.
-func (b *bmclibNextUserManagement) DeleteUser(ctx context.Context) error {
+func (b *bmclibv2UserManagement) DeleteUser(ctx context.Context) error {
 	ok, err := b.conn.DeleteUser(ctx, b.creds.Username)
 	if !ok && err == nil {
 		err = fmt.Errorf("error deleting user")
