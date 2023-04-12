@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zerologr"
@@ -75,6 +74,5 @@ func defaultLogger(level string) logr.Logger {
 
 // Returns an int >= min, < max.
 func randomInt(min, max int) string {
-	rand.Seed(time.Now().UnixNano())
 	return strconv.Itoa(rand.Intn(max-min+1) + min)
 }

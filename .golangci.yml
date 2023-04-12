@@ -29,9 +29,9 @@ linters-settings:
     min-complexity: 8
 
   nolintlint:
-      require-explanation: true
-      allow-unused: false
-      require-specific: true
+    require-explanation: true
+    allow-unused: false
+    require-specific: true
 
   revive:
     ignore-generated-header: true
@@ -78,10 +78,10 @@ linters-settings:
       - name: waitgroup-by-value
 
   staticcheck:
-    go: "1.18"
+    go: "1.20"
 
   unused:
-    go: "1.18"
+    go: "1.20"
 
 output:
   sort-results: true
@@ -159,7 +159,6 @@ linters:
   # - gofumpt
   # - gosec
   # - tagliatelle
-
 
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source

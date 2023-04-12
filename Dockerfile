@@ -1,4 +1,4 @@
-FROM golang:1.18 as builder
+FROM golang:1.20 as builder
 
 WORKDIR /code
 COPY go.mod go.sum /code/
@@ -16,31 +16,31 @@ ARG GRPC_HEALTH_PROBE_VERSION=v0.3.4
 
 WORKDIR /tmp
 RUN apk add --update --upgrade --no-cache --virtual build-deps \
-        alpine-sdk=1.0-r0 \
-        autoconf=2.69-r2 \
-        automake=1.16.1-r0 \
-        git=2.18.4-r0 \
-        libtool=2.4.6-r5 \
-        ncurses-dev=6.1_p20180818-r1 \
-        openssl-dev=1.0.2u-r0 \
-        readline-dev=7.0.003-r0 \
+    alpine-sdk=1.0-r0 \
+    autoconf=2.69-r2 \
+    automake=1.16.1-r0 \
+    git=2.18.4-r0 \
+    libtool=2.4.6-r5 \
+    ncurses-dev=6.1_p20180818-r1 \
+    openssl-dev=1.0.2u-r0 \
+    readline-dev=7.0.003-r0 \
     && apk add --update --upgrade --no-cache --virtual run-deps \
-	    ca-certificates=20191127-r2 \
-        libcrypto1.0=1.0.2u-r0 \
-        musl=1.1.19-r11 \
-        readline=7.0.003-r0 \
+    ca-certificates=20191127-r2 \
+    libcrypto1.0=1.0.2u-r0 \
+    musl=1.1.19-r11 \
+    readline=7.0.003-r0 \
     && git clone -b master ${IPMITOOL_REPO}
 
 WORKDIR /tmp/ipmitool
 RUN git checkout ${IPMITOOL_COMMIT} \
     && ./bootstrap \
     && ./configure \
-        --prefix=/usr/local \
-        --enable-ipmievd \
-        --enable-ipmishell \
-        --enable-intf-lan \
-        --enable-intf-lanplus \
-        --enable-intf-open \
+    --prefix=/usr/local \
+    --enable-ipmievd \
+    --enable-ipmishell \
+    --enable-intf-lan \
+    --enable-intf-lanplus \
+    --enable-intf-open \
     && make \
     && make install \
     && apk del build-deps

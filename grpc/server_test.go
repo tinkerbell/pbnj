@@ -23,7 +23,6 @@ func TestRunServer(t *testing.T) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 9*time.Second)
 	log := logr.Discard()
-	rand.Seed(time.Now().UnixNano())
 	min := 40041
 	max := 40042
 	port := rand.Intn(max-min+1) + min
@@ -55,7 +54,6 @@ func TestRunServerSignals(t *testing.T) {
 	defer cancel()
 	log := logr.Discard()
 
-	rand.Seed(time.Now().UnixNano())
 	min := 40044
 	max := 40045
 	port := rand.Intn(max-min+1) + min
