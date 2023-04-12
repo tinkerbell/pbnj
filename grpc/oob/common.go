@@ -10,6 +10,11 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
+var (
+	// DefaultBmcTimeout is the default value for how long a BMC call/interaction is allowed to run before it is cancelled.
+	DefaultBmcTimeout = 120 * time.Second
+)
+
 // Connection methods open/close.
 type Connection interface {
 	Connect(context.Context) error

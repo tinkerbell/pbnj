@@ -12,6 +12,7 @@ import (
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
+	"github.com/tinkerbell/pbnj/grpc/oob"
 	"github.com/tinkerbell/pbnj/grpc/persistence"
 	"github.com/tinkerbell/pbnj/grpc/rpc"
 	"github.com/tinkerbell/pbnj/grpc/taskrunner"
@@ -69,7 +70,7 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 
 	defaultServer := &Server{
 		Actions:    repo,
-		bmcTimeout: 15 * time.Second,
+		bmcTimeout: oob.DefaultBmcTimeout,
 	}
 
 	for _, opt := range opts {

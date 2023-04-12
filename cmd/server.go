@@ -20,6 +20,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	grpcsvr "github.com/tinkerbell/pbnj/grpc"
+	"github.com/tinkerbell/pbnj/grpc/oob"
 	"github.com/tinkerbell/pbnj/pkg/http"
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -38,8 +39,10 @@ var (
 	enableAuthz bool
 	hsKey       string
 	rsPubKey    string
-	// bmcTimeout is how long a BMC call/interaction is allow to run before it is cancelled.
+
+	// bmcTimeout is the value for how long a BMC call/interaction is allowed to run before it is cancelled.
 	bmcTimeout time.Duration
+
 	// When running an action on a BMC, PBnJ will pass the value of the skipRedfishVersions to bmclib
 	// which will then ignore the Redfish endpoint completely on BMCs running the given Redfish versions,
 	// and will proceed to attempt other drivers like - IPMI/SSH/Vendor API instead.
@@ -110,7 +113,7 @@ func init() {
 	serverCmd.PersistentFlags().BoolVar(&enableAuthz, "enableAuthz", false, "enable Authz middleware. Configure with configuration file details")
 	serverCmd.PersistentFlags().StringVar(&hsKey, "hsKey", "", "HS key")
 	serverCmd.PersistentFlags().StringVar(&rsPubKey, "rsPubKey", "", "RS public key")
-	serverCmd.PersistentFlags().DurationVar(&bmcTimeout, "bmcTimeout", (15 * time.Second), "Timeout for BMC calls")
+	serverCmd.PersistentFlags().DurationVar(&bmcTimeout, "bmcTimeout", oob.DefaultBmcTimeout, "Timeout for BMC calls")
 	serverCmd.PersistentFlags().StringVar(&skipRedfishVersions, "skipRedfishVersions", "", "Ignore the redfish endpoint on BMCs running the given version(s)")
 	rootCmd.AddCommand(serverCmd)
 }
