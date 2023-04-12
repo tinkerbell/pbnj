@@ -7,6 +7,7 @@ import (
 	"github.com/bmc-toolbox/bmclib/v2"
 	"github.com/go-logr/logr"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
+	common "github.com/tinkerbell/pbnj/grpc/oob"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
@@ -32,7 +33,10 @@ type bmclibv2UserManagement struct {
 func (b *bmclibv2UserManagement) Connect(ctx context.Context) error {
 	var errMsg repository.Error
 
-	opts := []bmclib.Option{bmclib.WithLogger(b.log)}
+	opts := []bmclib.Option{
+		bmclib.WithLogger(b.log),
+		bmclib.WithPerProviderTimeout(common.BmcTimeoutFromCtx(ctx)),
+	}
 
 	if len(b.skipRedfishVersions) > 0 {
 		opts = append(opts, bmclib.WithRedfishVersionsNotCompatible(b.skipRedfishVersions))

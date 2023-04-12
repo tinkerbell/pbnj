@@ -149,7 +149,10 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	opts := []bmclib.Option{bmclib.WithLogger(m.Log)}
+	opts := []bmclib.Option{
+		bmclib.WithLogger(m.Log),
+		bmclib.WithPerProviderTimeout(common.BmcTimeoutFromCtx(ctx)),
+	}
 
 	if len(m.SkipRedfishVersions) > 0 {
 		opts = append(opts, bmclib.WithRedfishVersionsNotCompatible(m.SkipRedfishVersions))
@@ -262,7 +265,12 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
 
-	client := bmclib.NewClient(host, "623", user, password, bmclib.WithLogger(m.Log))
+	clientOpts := []bmclib.Option{
+		bmclib.WithLogger(m.Log),
+		bmclib.WithPerProviderTimeout(common.BmcTimeoutFromCtx(ctx)),
+	}
+
+	client := bmclib.NewClient(host, "623", user, password, clientOpts...)
 
 	err = client.Open(ctx)
 	if err != nil {
@@ -274,6 +282,7 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 			Message: err.Error(),
 		}
 	}
+
 	meta := client.GetMetadata()
 	span.SetAttributes(attribute.StringSlice("bmc.open.providersAttempted", meta.ProvidersAttempted),
 		attribute.StringSlice("bmc.open.successfulOpenConns", meta.SuccessfulOpenConns))
