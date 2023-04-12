@@ -113,6 +113,14 @@ func NewBMCResetter(opts ...Option) (*Action, error) {
 	return a, nil
 }
 
+func (m Action) closeConnection(ctx context.Context, connections []oob.BMC) {
+	for _, conn := range connections {
+		if r, ok := conn.(common.Connection); ok {
+			defer r.Close(ctx) //nolint:revive // defer in a loop is OK here, as loop length is limited
+		}
+	}
+}
+
 // setupConnection connects to the BMC, returning BMC management methods.
 func (m Action) setupConnection(ctx context.Context, user, password, host string, creds *v1.UserCreds) ([]oob.BMC, error) {
 	connections := map[string]interface{}{
@@ -124,7 +132,7 @@ func (m Action) setupConnection(ctx context.Context, user, password, host string
 			creds:               creds,
 			skipRedfishVersions: m.SkipRedfishVersions,
 		},
-		"bmclib": &bmclibUserManagement{
+		"bmclibv1": &bmclibUserManagement{
 			user:     user,
 			password: password,
 			host:     host,
@@ -149,7 +157,8 @@ func (m Action) setupConnection(ctx context.Context, user, password, host string
 	var actions []oob.BMC
 	for _, elem := range successfulConnections {
 		conn := connections[elem]
-		if r, ok := conn.(common.Connection); ok && elem == "bmclib" {
+		// the connection is closed here only for bmclibv1 since bmclibv2 behaves differently
+		if r, ok := conn.(common.Connection); ok && elem == "bmclibv1" {
 			defer r.Close(ctx) //nolint:revive // defer in a loop is OK here, as loop length is limited
 		}
 
@@ -196,6 +205,8 @@ func (m Action) CreateUser(ctx context.Context) error {
 		return err
 	}
 
+	defer m.closeConnection(ctx, actions)
+
 	if err = oob.CreateUser(ctx, actions); err != nil {
 		m.noteError(fmt.Sprintf("error %s: %v", status, err), span)
 		return err
@@ -230,6 +241,8 @@ func (m Action) UpdateUser(ctx context.Context) error {
 		return err
 	}
 
+	defer m.closeConnection(ctx, actions)
+
 	if err = oob.UpdateUser(ctx, actions); err != nil {
 		m.noteError(fmt.Sprintf("error %s: %v", status, err), span)
 		return err
@@ -263,6 +276,8 @@ func (m Action) DeleteUser(ctx context.Context) error {
 		// setupConnection is responsible for sending a status message and updating the span
 		return err
 	}
+
+	defer m.closeConnection(ctx, actions)
 
 	if err = oob.DeleteUser(ctx, actions); err != nil {
 		m.noteError(fmt.Sprintf("error %s: %v", status, err), span)
