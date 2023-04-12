@@ -111,3 +111,15 @@ func (a *Accessory) SendStatusMessage(msg string) {
 		a.Log.V(1).Info("timed out waiting for status message receiver", "statusMsg", msg)
 	}
 }
+
+// BmcTimeoutFromCtx returns the time remaining in the context deadline.
+//
+// The returned value defaults to DefaultBmcTimeout.
+func BmcTimeoutFromCtx(ctx context.Context) time.Duration {
+	deadline, ok := ctx.Deadline()
+	if !ok || time.Until(deadline) == 0 {
+		return DefaultBmcTimeout
+	}
+
+	return time.Until(deadline)
+}
