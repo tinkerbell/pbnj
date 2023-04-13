@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	// DefaultBmcTimeout is the default value for how long a BMC call/interaction is allowed to run before it is cancelled.
-	DefaultBmcTimeout = 120 * time.Second
+	// DefaultBMCTimeout is the default value for how long a BMC call/interaction is allowed to run before it is cancelled.
+	DefaultBMCTimeout = 120 * time.Second
 )
 
 // Connection methods open/close.
@@ -112,13 +112,13 @@ func (a *Accessory) SendStatusMessage(msg string) {
 	}
 }
 
-// BmcTimeoutFromCtx returns the time remaining in the context deadline.
+// BMCTimeoutFromCtx returns the time remaining in the context deadline.
 //
-// The returned value defaults to DefaultBmcTimeout.
-func BmcTimeoutFromCtx(ctx context.Context) time.Duration {
+// The returned value defaults to DefaultBMCTimeout.
+func BMCTimeoutFromCtx(ctx context.Context) time.Duration {
 	deadline, ok := ctx.Deadline()
 	if !ok || time.Until(deadline) == 0 {
-		return DefaultBmcTimeout
+		return DefaultBMCTimeout
 	}
 
 	return time.Until(deadline)

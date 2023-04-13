@@ -113,7 +113,7 @@ func NewBMCResetter(opts ...Option) (*Action, error) {
 	return a, nil
 }
 
-func (m Action) closeConnection(ctx context.Context, connections []oob.BMC) {
+func (m Action) closeConnections(ctx context.Context, connections []oob.BMC) {
 	for _, conn := range connections {
 		if r, ok := conn.(common.Connection); ok {
 			defer r.Close(ctx) //nolint:revive // defer in a loop is OK here, as loop length is limited
@@ -205,7 +205,7 @@ func (m Action) CreateUser(ctx context.Context) error {
 		return err
 	}
 
-	defer m.closeConnection(ctx, actions)
+	defer m.closeConnections(ctx, actions)
 
 	if err = oob.CreateUser(ctx, actions); err != nil {
 		m.noteError(fmt.Sprintf("error %s: %v", status, err), span)
@@ -241,7 +241,7 @@ func (m Action) UpdateUser(ctx context.Context) error {
 		return err
 	}
 
-	defer m.closeConnection(ctx, actions)
+	defer m.closeConnections(ctx, actions)
 
 	if err = oob.UpdateUser(ctx, actions); err != nil {
 		m.noteError(fmt.Sprintf("error %s: %v", status, err), span)
@@ -277,7 +277,7 @@ func (m Action) DeleteUser(ctx context.Context) error {
 		return err
 	}
 
-	defer m.closeConnection(ctx, actions)
+	defer m.closeConnections(ctx, actions)
 
 	if err = oob.DeleteUser(ctx, actions); err != nil {
 		m.noteError(fmt.Sprintf("error %s: %v", status, err), span)
@@ -303,7 +303,7 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 
 	opts := []bmclib.Option{
 		bmclib.WithLogger(m.Log),
-		bmclib.WithPerProviderTimeout(common.BmcTimeoutFromCtx(ctx)),
+		bmclib.WithPerProviderTimeout(common.BMCTimeoutFromCtx(ctx)),
 	}
 
 	client := bmclib.NewClient(host, "623", user, password, opts...)

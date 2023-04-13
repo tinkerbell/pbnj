@@ -113,7 +113,7 @@ func init() {
 	serverCmd.PersistentFlags().BoolVar(&enableAuthz, "enableAuthz", false, "enable Authz middleware. Configure with configuration file details")
 	serverCmd.PersistentFlags().StringVar(&hsKey, "hsKey", "", "HS key")
 	serverCmd.PersistentFlags().StringVar(&rsPubKey, "rsPubKey", "", "RS public key")
-	serverCmd.PersistentFlags().DurationVar(&bmcTimeout, "bmcTimeout", oob.DefaultBmcTimeout, "Timeout for BMC calls")
+	serverCmd.PersistentFlags().DurationVar(&bmcTimeout, "bmcTimeout", oob.DefaultBMCTimeout, "Timeout for BMC calls")
 	serverCmd.PersistentFlags().StringVar(&skipRedfishVersions, "skipRedfishVersions", "", "Ignore the redfish endpoint on BMCs running the given version(s)")
 	rootCmd.AddCommand(serverCmd)
 }

@@ -151,7 +151,7 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 
 	opts := []bmclib.Option{
 		bmclib.WithLogger(m.Log),
-		bmclib.WithPerProviderTimeout(common.BmcTimeoutFromCtx(ctx)),
+		bmclib.WithPerProviderTimeout(common.BMCTimeoutFromCtx(ctx)),
 	}
 
 	if len(m.SkipRedfishVersions) > 0 {
@@ -267,7 +267,7 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 
 	clientOpts := []bmclib.Option{
 		bmclib.WithLogger(m.Log),
-		bmclib.WithPerProviderTimeout(common.BmcTimeoutFromCtx(ctx)),
+		bmclib.WithPerProviderTimeout(common.BMCTimeoutFromCtx(ctx)),
 	}
 
 	client := bmclib.NewClient(host, "623", user, password, clientOpts...)

@@ -35,7 +35,7 @@ func (b *bmclibv2UserManagement) Connect(ctx context.Context) error {
 
 	opts := []bmclib.Option{
 		bmclib.WithLogger(b.log),
-		bmclib.WithPerProviderTimeout(common.BmcTimeoutFromCtx(ctx)),
+		bmclib.WithPerProviderTimeout(common.BMCTimeoutFromCtx(ctx)),
 	}
 
 	if len(b.skipRedfishVersions) > 0 {
