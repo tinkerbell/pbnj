@@ -70,7 +70,7 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 
 	defaultServer := &Server{
 		Actions:    repo,
-		bmcTimeout: oob.DefaultBmcTimeout,
+		bmcTimeout: oob.DefaultBMCTimeout,
 	}
 
 	for _, opt := range opts {
