@@ -10,7 +10,7 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
-var (
+const (
 	// DefaultBMCTimeout is the default value for how long a BMC call/interaction is allowed to run before it is cancelled.
 	DefaultBMCTimeout = 120 * time.Second
 )
