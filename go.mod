@@ -1,6 +1,6 @@
 module github.com/tinkerbell/pbnj
 
-go 1.18
+go 1.20
 
 require (
 	github.com/bmc-toolbox/bmclib v0.5.7
@@ -60,10 +60,8 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/jacobweinstock/go-amt v0.0.0-20221125040441-53475f4ae023 // indirect
 	github.com/jacobweinstock/iamt v0.0.0-20230304043040-a6b4a1001123 // indirect
 	github.com/jacobweinstock/registrar v0.4.6 // indirect
-	github.com/jacobweinstock/wsman v0.0.0-20221125035617-2eae65734c77 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -91,12 +89,9 @@ require (
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	golang.org/x/crypto v0.6.0 // indirect
 	golang.org/x/exp v0.0.0-20230212135524-a684f29349b6 // indirect
-	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
-	golang.org/x/mod v0.9.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
-	golang.org/x/tools v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20230209215440-0dfe4f8abfcc // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
