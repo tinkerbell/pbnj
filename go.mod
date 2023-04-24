@@ -1,10 +1,10 @@
-module github.com/joelrebel/pbnj
+module github.com/tinkerbell/pbnj
 
 go 1.18
 
 require (
 	github.com/bmc-toolbox/bmclib v0.5.7
-	github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230212165211-bac64498b8ba
+	github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230324092939-d39fb75b6aa9
 	github.com/cristalhq/jwt/v3 v3.1.0
 	github.com/equinix-labs/otel-init-go v0.0.7
 	github.com/fatih/color v1.15.0
@@ -30,7 +30,6 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.15.0
-	github.com/tinkerbell/pbnj v0.0.0-20230417160823-a6b3ad18fb5a
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.40.0
 	go.opentelemetry.io/otel v1.14.0
 	go.opentelemetry.io/otel/trace v1.14.0
@@ -45,7 +44,7 @@ require (
 	github.com/VictorLowther/simplexml v0.0.0-20180716164440-0bff93621230 // indirect
 	github.com/VictorLowther/soap v0.0.0-20150314151524-8e36fca84b22 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/bmc-toolbox/common v0.0.0-20230130163330-5f18efe8a099 // indirect
+	github.com/bmc-toolbox/common v0.0.0-20230220061748-93ff001f4a1d // indirect
 	github.com/bombsimon/logrusr/v2 v2.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
@@ -62,6 +61,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jacobweinstock/go-amt v0.0.0-20221125040441-53475f4ae023 // indirect
+	github.com/jacobweinstock/iamt v0.0.0-20230304043040-a6b4a1001123 // indirect
 	github.com/jacobweinstock/registrar v0.4.6 // indirect
 	github.com/jacobweinstock/wsman v0.0.0-20221125035617-2eae65734c77 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
