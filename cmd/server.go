@@ -12,7 +12,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zerologr"
 	jwt_helper "github.com/golang-jwt/jwt/v4"
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -77,7 +76,7 @@ var (
 			}
 			grpc_prometheus.EnableHandlingTimeHistogram()
 			grpcServer := grpc.NewServer(
-				grpc_middleware.WithUnaryServerChain(
+				grpc.ChainUnaryInterceptor(
 					grpc_prometheus.UnaryServerInterceptor,
 					authzInterceptor,
 					middleware.UnaryRequestID(middleware.UseXRequestIDMetadataOption(true), middleware.XRequestMetadataLimitOption(512)),
