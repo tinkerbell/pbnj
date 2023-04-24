@@ -75,6 +75,6 @@ func defaultLogger(level string) logr.Logger {
 
 // Returns an int >= min, < max.
 func randomInt(min, max int) string {
-	rand.Seed(time.Now().UnixNano())
-	return strconv.Itoa(rand.Intn(max-min+1) + min)
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return strconv.Itoa(r.Intn(max-min+1) + min)
 }
