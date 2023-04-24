@@ -99,7 +99,7 @@ run-image: ## run PBnJ container image
 # BEGIN: lint-install .
 # http://github.com/tinkerbell/lint-install
 
-GOLINT_VERSION ?= v1.50.1
+GOLINT_VERSION ?= v1.52.2
 HADOLINT_VERSION ?= v2.7.0
 SHELLCHECK_VERSION ?= v0.7.2
 LINT_OS := $(shell uname)
