@@ -6,19 +6,11 @@ collaborators:
     permission: maintain
   - username: chrisdoherty4
     permission: maintain
-  # Approvers
   - username: joelrebel
-    permission: push
-  - username: nshalman
-    permission: push
+    permission: maintain
+  # Approvers
   # Reviewers
-  - username: abhay-krishna
-    permission: triage
   - username: mmlb
-    permission: triage
-  - username: Raj-Dharwadkar
-    permission: triage
-  - username: tstromberg
     permission: triage
 
   # Note: `permission` is only valid on organization-owned repositories.
