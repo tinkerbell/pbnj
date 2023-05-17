@@ -42,7 +42,7 @@ func (b *bmclibv2UserManagement) Connect(ctx context.Context) error {
 		opts = append(opts, bmclib.WithRedfishVersionsNotCompatible(b.skipRedfishVersions))
 	}
 
-	client := bmclib.NewClient(b.host, "", b.user, b.password, opts...)
+	client := bmclib.NewClient(b.host, b.user, b.password, opts...)
 	client.Registry.Drivers = client.Registry.FilterForCompatible(ctx)
 
 	if err := client.Open(ctx); err != nil {
