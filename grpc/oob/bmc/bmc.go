@@ -304,9 +304,10 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 	opts := []bmclib.Option{
 		bmclib.WithLogger(m.Log),
 		bmclib.WithPerProviderTimeout(common.BMCTimeoutFromCtx(ctx)),
+		bmclib.WithIpmitoolPort("623"),
 	}
 
-	client := bmclib.NewClient(host, "623", user, password, opts...)
+	client := bmclib.NewClient(host, user, password, opts...)
 
 	lookup := map[string]string{
 		v1.ResetKind_RESET_KIND_COLD.String(): "cold",
