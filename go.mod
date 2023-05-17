@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/bmc-toolbox/bmclib v0.5.7
-	github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230324092939-d39fb75b6aa9
+	github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230515164712-2714c7479477
 	github.com/cristalhq/jwt/v3 v3.1.0
 	github.com/equinix-labs/otel-init-go v0.0.7
 	github.com/fatih/color v1.15.0
@@ -60,8 +60,8 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/jacobweinstock/iamt v0.0.0-20230304043040-a6b4a1001123 // indirect
-	github.com/jacobweinstock/registrar v0.4.6 // indirect
+	github.com/jacobweinstock/iamt v0.0.0-20230502042727-d7cdbe67d9ef // indirect
+	github.com/jacobweinstock/registrar v0.4.7 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -79,7 +79,7 @@ require (
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/stmcginnis/gofish v0.13.1-0.20230130123602-c77017d5737a // indirect
+	github.com/stmcginnis/gofish v0.14.0 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.13.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.13.0 // indirect

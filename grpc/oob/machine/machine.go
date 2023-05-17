@@ -152,13 +152,14 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	opts := []bmclib.Option{
 		bmclib.WithLogger(m.Log),
 		bmclib.WithPerProviderTimeout(common.BMCTimeoutFromCtx(ctx)),
+		bmclib.WithIpmitoolPort("623"),
 	}
 
 	if len(m.SkipRedfishVersions) > 0 {
 		opts = append(opts, bmclib.WithRedfishVersionsNotCompatible(m.SkipRedfishVersions))
 	}
 
-	client := bmclib.NewClient(host, "623", user, password, opts...)
+	client := bmclib.NewClient(host, user, password, opts...)
 
 	m.SendStatusMessage("connecting to BMC")
 	err = client.Open(ctx)
@@ -268,9 +269,10 @@ func (m Action) PowerSet(ctx context.Context, action string) (result string, err
 	clientOpts := []bmclib.Option{
 		bmclib.WithLogger(m.Log),
 		bmclib.WithPerProviderTimeout(common.BMCTimeoutFromCtx(ctx)),
+		bmclib.WithIpmitoolPort("623"),
 	}
 
-	client := bmclib.NewClient(host, "623", user, password, clientOpts...)
+	client := bmclib.NewClient(host, user, password, clientOpts...)
 
 	err = client.Open(ctx)
 	if err != nil {
