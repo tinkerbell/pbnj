@@ -95,6 +95,9 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 	}
 	v1.RegisterBMCServer(grpcServer, &bs)
 
+	ds := rpc.DiagnosticService{}
+	v1.RegisterDiagnosticServer(grpcServer, &ds)
+
 	ts := rpc.TaskService{
 		TaskRunner: taskRunner,
 	}

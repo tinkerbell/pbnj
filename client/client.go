@@ -2,6 +2,8 @@ package client
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"time"
 
 	v1 "github.com/tinkerbell/pbnj/api/v1"
@@ -105,4 +107,20 @@ func BMCDeleteUser(ctx context.Context, client v1.BMCClient, taskClient v1.TaskC
 		time.Sleep(1 * time.Second)
 	}
 	return statusResp, nil
+}
+
+// Screenshot retrieves a screenshot from the server.
+func Screenshot(ctx context.Context, client v1.DiagnosticClient, request *v1.ScreenshotRequest) (string, error) {
+	screenshotResponse, err := client.Screenshot(ctx, request)
+	if err != nil {
+		return "", err
+	}
+
+	filename := fmt.Sprintf("%s.%s", time.Now().String(), screenshotResponse.Filetype)
+
+	if err := os.WriteFile(filename, screenshotResponse.Image, 0755); err != nil {
+		return "", err
+	}
+
+	return filename, nil
 }
