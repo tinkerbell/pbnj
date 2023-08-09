@@ -88,6 +88,11 @@ pbs-install-deps: ## locally install dependencies in order to generate go stubs 
 pbs-docker: pbs-docker-image ## generate go stubs from protocol buffers in a container
 	docker run -it --rm -v ${PWD}:/code -w /code ${PROTOBUF_BUILDER_IMG} scripts/protoc.sh
 
+.PHONY: pbs-docker-ruby
+pbs-docker-ruby:  ## generate ruby stubs from protocol buffers in a container
+	docker build -t ${PROTOBUF_BUILDER_IMG}.ruby -f scripts/Dockerfile.pbbuilder.ruby .
+	docker run -it --rm -v ${PWD}:/code -w /code ${PROTOBUF_BUILDER_IMG}.ruby scripts/protoc-ruby.sh
+
 .PHONY: pbs-docker-image
 pbs-docker-image: ## generate container image for building protocol buffers
 	docker build -t ${PROTOBUF_BUILDER_IMG} -f scripts/Dockerfile.pbbuilder .

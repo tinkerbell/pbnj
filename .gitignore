@@ -8,3 +8,5 @@ examples/clients/ruby/lib/api/*
 !examples/clients/ruby/lib/pbnj
 
 out/
+
+client/ruby/
