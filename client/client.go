@@ -118,7 +118,7 @@ func Screenshot(ctx context.Context, client v1.DiagnosticClient, request *v1.Scr
 
 	filename := fmt.Sprintf("%s.%s", time.Now().String(), screenshotResponse.Filetype)
 
-	if err := os.WriteFile(filename, screenshotResponse.Image, 0755); err != nil {
+	if err := os.WriteFile(filename, screenshotResponse.Image, 0o755); err != nil { //nolint:gosec // Can we make this 0600?
 		return "", err
 	}
 

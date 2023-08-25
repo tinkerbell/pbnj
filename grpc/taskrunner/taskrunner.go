@@ -60,22 +60,22 @@ func (r *Runner) TotalWorkers() int {
 	return int(r.total.Load())
 }
 
-func (d *Runner) Start(ctx context.Context) {
+func (r *Runner) Start(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			elem, err := d.Dispatcher.IngestQueue.Dequeue()
+			elem, err := r.Dispatcher.IngestQueue.Dequeue()
 			if err != nil {
 				break
 			}
 
 			ch := make(chan Ingest)
-			v, loaded := d.Dispatcher.perID.LoadOrStore(elem.Host, taskChannel{ch: ch})
+			v, loaded := r.Dispatcher.perID.LoadOrStore(elem.Host, taskChannel{ch: ch})
 			if !loaded {
-				go d.worker1(ctx, elem.Host, ch)
-				d.Dispatcher.goroutinePerID.Add(1)
+				go r.worker1(ctx, elem.Host, ch)
+				r.Dispatcher.goroutinePerID.Add(1)
 			}
 			v.(taskChannel).ch <- elem
 		}
@@ -85,12 +85,12 @@ func (d *Runner) Start(ctx context.Context) {
 // channelWorker is a worker that listens on a channel for jobs.
 // It will shutdown the worker after gc duration of no elements in the channel or the context is canceled.
 // worker is in charge of its own lifecycle.
-func (q *Runner) worker1(ctx context.Context, id string, ch chan Ingest) {
+func (r *Runner) worker1(ctx context.Context, id string, ch chan Ingest) {
 	defer func() {
 		// do i need to delete the channel if i delete the map entry it lives in?
 		// close(ch)
-		q.Dispatcher.perID.Delete(id)
-		q.Dispatcher.goroutinePerID.Add(-1)
+		r.Dispatcher.perID.Delete(id)
+		r.Dispatcher.goroutinePerID.Add(-1)
 	}()
 	for {
 		select {
@@ -98,8 +98,8 @@ func (q *Runner) worker1(ctx context.Context, id string, ch chan Ingest) {
 			return
 		case t := <-ch:
 			// execute the task synchronously
-			q.worker(ctx, q.Dispatcher.log, t.Description, t.ID, t.Action)
-		case <-time.After(q.Dispatcher.idleWorkerShutdown):
+			r.worker(ctx, r.Dispatcher.log, t.Description, t.ID, t.Action)
+		case <-time.After(r.Dispatcher.idleWorkerShutdown):
 			// shutdown the worker after this duration of no elements in the channel.
 			return
 		}
@@ -107,33 +107,21 @@ func (q *Runner) worker1(ctx context.Context, id string, ch chan Ingest) {
 }
 
 // Execute a task, update repository with status.
-func (r *Runner) Execute(ctx context.Context, l logr.Logger, description, taskID, host string, action func(chan string) (string, error)) {
+func (r *Runner) Execute(_ context.Context, l logr.Logger, description, taskID, host string, action func(chan string) (string, error)) {
 	i := Ingest{
 		ID:          taskID,
 		Host:        host,
 		Description: description,
 		Action:      action,
 	}
+	if r.Dispatcher == nil {
+		r.Dispatcher = NewDispatcher()
+	}
 	r.Dispatcher.log = l
 	r.Dispatcher.IngestQueue.Enqueue(i)
 }
 
 func (r *Runner) updateMessages(ctx context.Context, taskID, desc string, ch chan string) error {
-	sessionRecord := repository.Record{
-		ID:          taskID,
-		Description: desc,
-		State:       "running",
-		Messages:    []string{},
-		Error: &repository.Error{
-			Code:    0,
-			Message: "",
-			Details: nil,
-		},
-	}
-	err := r.Repository.Create(taskID, sessionRecord)
-	if err != nil {
-		return err
-	}
 	for {
 		select {
 		case <-ctx.Done():
@@ -167,6 +155,21 @@ func (r *Runner) worker(ctx context.Context, logger logr.Logger, description, ta
 
 	messagesChan := make(chan string)
 	defer close(messagesChan)
+	sessionRecord := repository.Record{
+		ID:          taskID,
+		Description: description,
+		State:       "running",
+		Messages:    []string{},
+		Error: &repository.Error{
+			Code:    0,
+			Message: "",
+			Details: nil,
+		},
+	}
+	err := r.Repository.Create(taskID, sessionRecord)
+	if err != nil {
+		return
+	}
 	go r.updateMessages(ctx, taskID, description, messagesChan)
 
 	resultRecord := repository.Record{

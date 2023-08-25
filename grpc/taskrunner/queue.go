@@ -24,7 +24,7 @@ func NewIngestQueue() *IngestQueue {
 	}
 }
 
-// Enqueue inserts the item into the queue
+// Enqueue inserts the item into the queue.
 func (i *IngestQueue) Enqueue(item Ingest) {
 	i.mu.Lock()
 	defer i.mu.Unlock()

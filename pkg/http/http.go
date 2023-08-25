@@ -34,7 +34,7 @@ func (h *Server) init() {
 }
 
 func (h *Server) Run() error {
-	return http.ListenAndServe(h.address, h.mux)
+	return http.ListenAndServe(h.address, h.mux) //nolint:gosec // TODO: add handle timeouts
 }
 
 func NewServer(addr string) *Server {

@@ -32,7 +32,9 @@ func TestTaskFound(t *testing.T) {
 	taskRunner := &taskrunner.Runner{
 		Repository: repo,
 		Ctx:        ctx,
+		Dispatcher: taskrunner.NewDispatcher(),
 	}
+	go taskRunner.Start(ctx)
 	taskID := xid.New().String()
 	taskRunner.Execute(ctx, logger, "test", taskID, "123", func(s chan string) (string, error) {
 		return "doing cool stuff", defaultError
@@ -84,7 +86,9 @@ func TestRecordNotFound(t *testing.T) {
 			taskRunner := &taskrunner.Runner{
 				Repository: repo,
 				Ctx:        ctx,
+				Dispatcher: taskrunner.NewDispatcher(),
 			}
+			go taskRunner.Start(ctx)
 			taskSvc := TaskService{
 				TaskRunner: taskRunner,
 			}

@@ -31,7 +31,7 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 
 	l.Info(
 		"start BootDevice request",
-		"username", in.Authn.GetDirectAuthn().GetUsername(),
+		"username", in.GetAuthn().GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),
 		"bootDevice", in.BootDevice.String(),
 		"persistent", in.Persistent,
@@ -54,7 +54,7 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 		defer cancel()
 		return mbd.BootDeviceSet(taskCtx, in.BootDevice.String(), in.Persistent, in.EfiBoot)
 	}
-	m.TaskRunner.Execute(ctx, l, "setting boot device", taskID, in.Authn.GetDirectAuthn().GetHost().Host, execFunc)
+	m.TaskRunner.Execute(ctx, l, "setting boot device", taskID, in.GetAuthn().GetDirectAuthn().GetHost().GetHost(), execFunc)
 
 	return &v1.DeviceResponse{TaskId: taskID}, nil
 }
@@ -63,10 +63,10 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.PowerResponse, error) {
 	l := logging.ExtractLogr(ctx)
 	taskID := xid.New().String()
-	l = l.WithValues("taskID", taskID, "bmcIP", in.Authn.GetDirectAuthn().GetHost().GetHost())
+	l = l.WithValues("taskID", taskID, "bmcIP", in.GetAuthn().GetDirectAuthn().GetHost().GetHost())
 	l.Info(
 		"start Power request",
-		"username", in.Authn.GetDirectAuthn().GetUsername(),
+		"username", in.GetAuthn().GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),
 		"powerAction", in.GetPowerAction().String(),
 		"softTimeout", in.SoftTimeout,
@@ -89,7 +89,7 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 		defer cancel()
 		return mp.PowerSet(taskCtx, in.PowerAction.String())
 	}
-	m.TaskRunner.Execute(ctx, l, "power action: "+in.GetPowerAction().String(), taskID, in.Authn.GetDirectAuthn().GetHost().Host, execFunc)
+	m.TaskRunner.Execute(ctx, l, "power action: "+in.GetPowerAction().String(), taskID, in.GetAuthn().GetDirectAuthn().GetHost().GetHost(), execFunc)
 
 	return &v1.PowerResponse{TaskId: taskID}, nil
 }

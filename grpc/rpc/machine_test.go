@@ -69,7 +69,9 @@ func TestDevice(t *testing.T) {
 			taskRunner := &taskrunner.Runner{
 				Repository: repo,
 				Ctx:        ctx,
+				Dispatcher: taskrunner.NewDispatcher(),
 			}
+			go taskRunner.Start(ctx)
 			machineSvc := MachineService{
 				TaskRunner: taskRunner,
 			}
@@ -168,7 +170,9 @@ func TestPower(t *testing.T) {
 			taskRunner := &taskrunner.Runner{
 				Repository: repo,
 				Ctx:        ctx,
+				Dispatcher: taskrunner.NewDispatcher(),
 			}
+			go taskRunner.Start(ctx)
 			machineSvc := MachineService{
 				TaskRunner: taskRunner,
 			}
