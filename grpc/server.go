@@ -21,6 +21,7 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
 )
 
 // Server options.
@@ -80,7 +81,9 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 	taskRunner := &taskrunner.Runner{
 		Repository: defaultServer.Actions,
 		Ctx:        ctx,
+		Dispatcher: taskrunner.NewDispatcher(),
 	}
+	go taskRunner.Start(ctx)
 
 	ms := rpc.MachineService{
 		TaskRunner: taskRunner,
@@ -114,6 +117,7 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 	}
 
 	httpServer.WithTaskRunner(taskRunner)
+	reflection.Register(grpcServer)
 
 	go func() {
 		err := httpServer.Run()

@@ -5,11 +5,11 @@ import (
 	"net"
 	"net/url"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 
 	"github.com/tinkerbell/pbnj/pkg/metrics"
@@ -20,58 +20,108 @@ import (
 type Runner struct {
 	Repository repository.Actions
 	Ctx        context.Context
-	active     int
-	total      int
-	counterMu  sync.RWMutex
+	active     atomic.Int32
+	total      atomic.Int32
+	Dispatcher *dispatcher
+}
+
+type dispatcher struct {
+	// IngestQueue is a queue of jobs that is process synchronously.
+	// It's the entry point for all jobs.
+	IngestQueue *IngestQueue
+	// perID hold a queue per ID.
+	// jobs across different IDs are processed concurrently.
+	// jobs with the same ID are processed synchronously.
+	perID              sync.Map
+	goroutinePerID     atomic.Int32
+	idleWorkerShutdown time.Duration
+	log                logr.Logger
+}
+
+type taskChannel struct {
+	ch chan Ingest
+}
+
+func NewDispatcher() *dispatcher {
+	return &dispatcher{
+		IngestQueue:        NewIngestQueue(),
+		perID:              sync.Map{},
+		idleWorkerShutdown: time.Second * 10,
+	}
 }
 
 // ActiveWorkers returns a count of currently active worker jobs.
 func (r *Runner) ActiveWorkers() int {
-	r.counterMu.RLock()
-	defer r.counterMu.RUnlock()
-	return r.active
+	return int(r.active.Load())
 }
 
 // TotalWorkers returns a count total workers executed.
 func (r *Runner) TotalWorkers() int {
-	r.counterMu.RLock()
-	defer r.counterMu.RUnlock()
-	return r.total
+	return int(r.total.Load())
+}
+
+func (d *Runner) Start(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			elem, err := d.Dispatcher.IngestQueue.Dequeue()
+			if err != nil {
+				break
+			}
+
+			ch := make(chan Ingest)
+			v, loaded := d.Dispatcher.perID.LoadOrStore(elem.Host, taskChannel{ch: ch})
+			if !loaded {
+				go d.worker1(ctx, elem.Host, ch)
+				d.Dispatcher.goroutinePerID.Add(1)
+			}
+			v.(taskChannel).ch <- elem
+		}
+	}
+}
+
+// channelWorker is a worker that listens on a channel for jobs.
+// It will shutdown the worker after gc duration of no elements in the channel or the context is canceled.
+// worker is in charge of its own lifecycle.
+func (q *Runner) worker1(ctx context.Context, id string, ch chan Ingest) {
+	defer func() {
+		// do i need to delete the channel if i delete the map entry it lives in?
+		// close(ch)
+		q.Dispatcher.perID.Delete(id)
+		q.Dispatcher.goroutinePerID.Add(-1)
+	}()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case t := <-ch:
+			// execute the task synchronously
+			q.worker(ctx, q.Dispatcher.log, t.Description, t.ID, t.Action)
+		case <-time.After(q.Dispatcher.idleWorkerShutdown):
+			// shutdown the worker after this duration of no elements in the channel.
+			return
+		}
+	}
 }
 
 // Execute a task, update repository with status.
-func (r *Runner) Execute(ctx context.Context, l logr.Logger, description, taskID string, action func(chan string) (string, error)) {
-	go r.worker(ctx, l, description, taskID, action)
+func (r *Runner) Execute(ctx context.Context, l logr.Logger, description, taskID, host string, action func(chan string) (string, error)) {
+	i := Ingest{
+		ID:          taskID,
+		Host:        host,
+		Description: description,
+		Action:      action,
+	}
+	r.Dispatcher.log = l
+	r.Dispatcher.IngestQueue.Enqueue(i)
 }
 
-// does the work, updates the repo record
-// TODO handle retrys, use a timeout.
-func (r *Runner) worker(_ context.Context, logger logr.Logger, description, taskID string, action func(chan string) (string, error)) {
-	logger = logger.WithValues("taskID", taskID, "description", description)
-	r.counterMu.Lock()
-	r.active++
-	r.total++
-	r.counterMu.Unlock()
-	defer func() {
-		r.counterMu.Lock()
-		r.active--
-		r.counterMu.Unlock()
-	}()
-
-	metrics.TasksTotal.Inc()
-	metrics.TasksActive.Inc()
-	defer metrics.TasksActive.Dec()
-
-	messagesChan := make(chan string)
-	actionACK := make(chan bool, 1)
-	actionSyn := make(chan bool, 1)
-	defer close(messagesChan)
-	defer close(actionACK)
-	defer close(actionSyn)
-	repo := r.Repository
+func (r *Runner) updateMessages(ctx context.Context, taskID, desc string, ch chan string) error {
 	sessionRecord := repository.Record{
 		ID:          taskID,
-		Description: description,
+		Description: desc,
 		State:       "running",
 		Messages:    []string{},
 		Error: &repository.Error{
@@ -80,60 +130,79 @@ func (r *Runner) worker(_ context.Context, logger logr.Logger, description, task
 			Details: nil,
 		},
 	}
-
-	err := repo.Create(taskID, sessionRecord)
+	err := r.Repository.Create(taskID, sessionRecord)
 	if err != nil {
-		// TODO how to handle unable to create record; ie network error, persistence error, etc?
-		logger.Error(err, "task complete", "complete", true)
-		return
+		return err
 	}
-
-	go func() {
-		for {
-			select {
-			case msg := <-messagesChan:
-				currStatus, _ := repo.Get(taskID)
-				sessionRecord.Messages = append(currStatus.Messages, msg) //nolint:gocritic // apparently this is the right slice
-				_ = repo.Update(taskID, sessionRecord)
-			case <-actionSyn:
-				actionACK <- true
-				return
-			default:
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case msg := <-ch:
+			record, err := r.Repository.Get(taskID)
+			if err != nil {
+				return err
 			}
-			time.Sleep(10 * time.Millisecond)
+			record.Messages = append(record.Messages, msg)
+			if err := r.Repository.Update(taskID, record); err != nil {
+				return err
+			}
 		}
+	}
+}
+
+// does the work, updates the repo record
+// TODO handle retrys, use a timeout.
+func (r *Runner) worker(ctx context.Context, logger logr.Logger, description, taskID string, action func(chan string) (string, error)) {
+	logger = logger.WithValues("taskID", taskID, "description", description)
+	r.active.Add(1)
+	r.total.Add(1)
+	defer func() {
+		r.active.Add(-1)
 	}()
 
-	sessionRecord.Result, err = action(messagesChan)
-	actionSyn <- true
-	<-actionACK
-	sessionRecord.State = "complete"
-	sessionRecord.Complete = true
-	var finalErr error
+	metrics.TasksTotal.Inc()
+	metrics.TasksActive.Inc()
+	defer metrics.TasksActive.Dec()
+
+	messagesChan := make(chan string)
+	defer close(messagesChan)
+	go r.updateMessages(ctx, taskID, description, messagesChan)
+
+	resultRecord := repository.Record{
+		State:    "complete",
+		Complete: true,
+	}
+	result, err := action(messagesChan)
 	if err != nil {
-		finalErr = multierror.Append(finalErr, err)
-		sessionRecord.Result = "action failed"
+		resultRecord.Result = "action failed"
 		re, ok := err.(*repository.Error)
 		if ok {
-			sessionRecord.Error = re.StructuredError()
+			resultRecord.Error = re.StructuredError()
 		} else {
-			sessionRecord.Error.Message = err.Error()
+			resultRecord.Error.Message = err.Error()
 		}
 		var foundErr *repository.Error
 		if errors.As(err, &foundErr) {
-			sessionRecord.Error = foundErr.StructuredError()
+			resultRecord.Error = foundErr.StructuredError()
 		}
+		logger.Error(err, "task completed with an error")
 	}
-	// TODO handle unable to update record; ie network error, persistence error, etc
-	if err := repo.Update(taskID, sessionRecord); err != nil {
-		finalErr = multierror.Append(finalErr, err)
+	record, err := r.Repository.Get(taskID)
+	if err != nil {
+		return
 	}
 
-	if finalErr != nil {
-		logger.Error(finalErr, "task complete", "complete", true)
-	} else {
-		logger.Info("task complete", "complete", true)
+	record.Complete = resultRecord.Complete
+	record.State = resultRecord.State
+	record.Result = result
+	record.Error = resultRecord.Error
+
+	if err := r.Repository.Update(taskID, record); err != nil {
+		logger.Error(err, "failed to update record")
 	}
+
+	logger.Info("worker complete", "complete", true)
 }
 
 // Status returns the status record of a task.

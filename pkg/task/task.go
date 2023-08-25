@@ -9,6 +9,6 @@ import (
 
 // Task interface for doing BMC actions.
 type Task interface {
-	Execute(ctx context.Context, l logr.Logger, description, taskID string, action func(chan string) (string, error))
+	Execute(ctx context.Context, l logr.Logger, description, taskID, host string, action func(chan string) (string, error))
 	Status(ctx context.Context, taskID string) (record repository.Record, err error)
 }

@@ -34,7 +34,7 @@ func TestTaskFound(t *testing.T) {
 		Ctx:        ctx,
 	}
 	taskID := xid.New().String()
-	taskRunner.Execute(ctx, logger, "test", taskID, func(s chan string) (string, error) {
+	taskRunner.Execute(ctx, logger, "test", taskID, "123", func(s chan string) (string, error) {
 		return "doing cool stuff", defaultError
 	})
 

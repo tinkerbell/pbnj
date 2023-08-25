@@ -66,7 +66,7 @@ func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetR
 		defer cancel()
 		return "", t.BMCReset(taskCtx, in.ResetKind.String())
 	}
-	b.TaskRunner.Execute(ctx, l, "bmc reset", taskID, execFunc)
+	b.TaskRunner.Execute(ctx, l, "bmc reset", taskID, in.Authn.GetDirectAuthn().GetHost().Host, execFunc)
 
 	return &v1.ResetResponse{TaskId: taskID}, nil
 }
@@ -101,7 +101,7 @@ func (b *BmcService) CreateUser(ctx context.Context, in *v1.CreateUserRequest) (
 		defer cancel()
 		return "", t.CreateUser(taskCtx)
 	}
-	b.TaskRunner.Execute(ctx, l, "creating user", taskID, execFunc)
+	b.TaskRunner.Execute(ctx, l, "creating user", taskID, in.Authn.GetDirectAuthn().GetHost().Host, execFunc)
 
 	return &v1.CreateUserResponse{TaskId: taskID}, nil
 }
@@ -136,7 +136,7 @@ func (b *BmcService) UpdateUser(ctx context.Context, in *v1.UpdateUserRequest) (
 		defer cancel()
 		return "", t.UpdateUser(taskCtx)
 	}
-	b.TaskRunner.Execute(ctx, l, "updating user", taskID, execFunc)
+	b.TaskRunner.Execute(ctx, l, "updating user", taskID, in.Authn.GetDirectAuthn().GetHost().Host, execFunc)
 
 	return &v1.UpdateUserResponse{TaskId: taskID}, nil
 }
@@ -169,7 +169,7 @@ func (b *BmcService) DeleteUser(ctx context.Context, in *v1.DeleteUserRequest) (
 		defer cancel()
 		return "", t.DeleteUser(taskCtx)
 	}
-	b.TaskRunner.Execute(ctx, l, "deleting user", taskID, execFunc)
+	b.TaskRunner.Execute(ctx, l, "deleting user", taskID, in.Authn.GetDirectAuthn().GetHost().Host, execFunc)
 
 	return &v1.DeleteUserResponse{TaskId: taskID}, nil
 }

@@ -32,7 +32,7 @@ func TestRoundTrip(t *testing.T) {
 	}
 
 	taskID := xid.New().String()
-	runner.Execute(ctx, logger, description, taskID, func(s chan string) (string, error) {
+	runner.Execute(ctx, logger, description, taskID, "123", func(s chan string) (string, error) {
 		return "didnt do anything", defaultError
 	})
 
