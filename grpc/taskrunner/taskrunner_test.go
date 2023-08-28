@@ -26,11 +26,7 @@ func TestRoundTrip(t *testing.T) {
 	defer s.Close()
 	repo := &persistence.GoKV{Store: s, Ctx: ctx}
 	logger := logr.Discard()
-	runner := Runner{
-		Repository: repo,
-		Ctx:        ctx,
-		Dispatcher: newDispatcher(),
-	}
+	runner := NewRunner(repo)
 	go runner.Start(ctx)
 
 	taskID := xid.New().String()
