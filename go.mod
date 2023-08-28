@@ -3,6 +3,7 @@ module github.com/tinkerbell/pbnj
 go 1.20
 
 require (
+	github.com/adrianbrad/queue v1.2.1
 	github.com/bmc-toolbox/bmclib v0.5.7
 	github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230515164712-2714c7479477
 	github.com/cristalhq/jwt/v3 v3.1.0
@@ -17,6 +18,8 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/jedib0t/go-pretty/v6 v6.4.6
+	github.com/lnquy/elastic-worker-pool v0.0.1
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/onsi/gomega v1.27.6
@@ -66,6 +69,7 @@ require (
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
+	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
@@ -74,6 +78,7 @@ require (
 	github.com/prometheus/client_model v0.3.0 // indirect
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
+	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/spf13/afero v1.9.3 // indirect

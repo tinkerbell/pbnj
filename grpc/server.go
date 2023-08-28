@@ -143,6 +143,9 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 		log.Info("ctx cancelled, shutting down PBnJ")
 		grpcServer.GracefulStop()
 	}()
+	defer func() {
+		log.Info("stats", "stats", taskRunner.GetStatistics(), "totalProcesses", taskRunner.Dispatcher.TotalProcessed.Load())
+	}()
 
 	log.Info("starting PBnJ gRPC server")
 	return grpcServer.Serve(listen)

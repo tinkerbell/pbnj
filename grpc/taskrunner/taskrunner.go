@@ -4,14 +4,18 @@ import (
 	"context"
 	"net"
 	"net/url"
+	"os"
 	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/go-logr/zerologr"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 
+	ewp "github.com/lnquy/elastic-worker-pool"
 	"github.com/tinkerbell/pbnj/pkg/metrics"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
@@ -32,21 +36,25 @@ type dispatcher struct {
 	// perID hold a queue per ID.
 	// jobs across different IDs are processed concurrently.
 	// jobs with the same ID are processed synchronously.
-	perID              sync.Map
-	goroutinePerID     atomic.Int32
-	idleWorkerShutdown time.Duration
-	log                logr.Logger
+	perID          sync.Map
+	maxWorkers     int32
+	TotalProcessed atomic.Int32
+	emptyMsg       atomic.Int32
+	pool           *ewp.ElasticWorkerPool
 }
 
-type taskChannel struct {
-	ch chan Ingest
+func NewRunner(repo repository.Actions) *Runner {
+	return &Runner{
+		Repository: repo,
+		Dispatcher: NewDispatcher(),
+	}
 }
 
 func NewDispatcher() *dispatcher {
 	return &dispatcher{
-		IngestQueue:        NewIngestQueue(),
-		perID:              sync.Map{},
-		idleWorkerShutdown: time.Second * 10,
+		IngestQueue: NewIngestQueue(),
+		perID:       sync.Map{},
+		maxWorkers:  500,
 	}
 }
 
@@ -60,10 +68,55 @@ func (r *Runner) TotalWorkers() int {
 	return int(r.total.Load())
 }
 
-func (r *Runner) Start(ctx context.Context) {
+func (r *Runner) startWorkerPool(min, max int32) *ewp.ElasticWorkerPool {
+	ewpConfig := ewp.Config{
+		MinWorker:           min,
+		MaxWorker:           max,
+		PoolControlInterval: time.Second,
+		BufferLength:        1000,
+	}
+	myPool, _ := ewp.New(ewpConfig, nil, nil) // error is always nil
+	myPool.Start()
+
+	return myPool
+}
+
+func (r *Runner) TotalProcessed(ctx context.Context, log logr.Logger) {
+	ticker := time.NewTicker(1 * time.Second)
 	for {
 		select {
 		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			log.Info("total processed", "total", r.Dispatcher.TotalProcessed.Load())
+		}
+	}
+}
+
+// defaultLogger is a zerolog logr implementation.
+func defaultLogger() logr.Logger {
+	zl := zerolog.New(os.Stdout)
+	zl = zl.With().Caller().Timestamp().Logger()
+	zl = zl.Level(zerolog.DebugLevel)
+
+	return zerologr.New(&zl)
+}
+
+func (r *Runner) GetStatistics() *ewp.Statistics {
+	return r.Dispatcher.pool.GetStatistics()
+}
+
+func (r *Runner) Start(ctx context.Context) {
+	if r.Dispatcher == nil {
+		r.Dispatcher = NewDispatcher()
+	}
+	//go r.TotalProcessed(ctx, defaultLogger())
+	myPool := r.startWorkerPool(10, 1000)
+	r.Dispatcher.pool = myPool
+	for {
+		select {
+		case <-ctx.Done():
+			myPool.Close()
 			return
 		default:
 			elem, err := r.Dispatcher.IngestQueue.Dequeue()
@@ -71,13 +124,16 @@ func (r *Runner) Start(ctx context.Context) {
 				break
 			}
 
-			ch := make(chan Ingest)
-			v, loaded := r.Dispatcher.perID.LoadOrStore(elem.Host, taskChannel{ch: ch})
-			if !loaded {
-				go r.worker1(ctx, elem.Host, ch)
-				r.Dispatcher.goroutinePerID.Add(1)
+			perIDQueue := NewIngestQueue()
+			perIDQueue.Enqueue(elem)
+			v, loaded := r.Dispatcher.perID.LoadOrStore(elem.Host, perIDQueue)
+			if loaded {
+				v.(*IngestQueue).Enqueue(elem)
 			}
-			v.(taskChannel).ch <- elem
+			myPool.Enqueue(func() {
+				r.worker1(ctx, elem.Host)
+				r.Dispatcher.TotalProcessed.Add(1)
+			})
 		}
 	}
 }
@@ -85,24 +141,14 @@ func (r *Runner) Start(ctx context.Context) {
 // channelWorker is a worker that listens on a channel for jobs.
 // It will shutdown the worker after gc duration of no elements in the channel or the context is canceled.
 // worker is in charge of its own lifecycle.
-func (r *Runner) worker1(ctx context.Context, id string, ch chan Ingest) {
-	defer func() {
-		// do i need to delete the channel if i delete the map entry it lives in?
-		// close(ch)
-		r.Dispatcher.perID.Delete(id)
-		r.Dispatcher.goroutinePerID.Add(-1)
-	}()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case t := <-ch:
-			// execute the task synchronously
-			r.worker(ctx, r.Dispatcher.log, t.Description, t.ID, t.Action)
-		case <-time.After(r.Dispatcher.idleWorkerShutdown):
-			// shutdown the worker after this duration of no elements in the channel.
+func (r *Runner) worker1(ctx context.Context, id string) {
+	elem, ok := r.Dispatcher.perID.Load(id)
+	if ok {
+		t, err := elem.(*IngestQueue).Dequeue()
+		if err != nil {
 			return
 		}
+		r.worker(ctx, t.Log, t.Description, t.ID, t.Action)
 	}
 }
 
@@ -113,11 +159,9 @@ func (r *Runner) Execute(_ context.Context, l logr.Logger, description, taskID, 
 		Host:        host,
 		Description: description,
 		Action:      action,
+		Log:         defaultLogger(),
 	}
-	if r.Dispatcher == nil {
-		r.Dispatcher = NewDispatcher()
-	}
-	r.Dispatcher.log = l
+
 	r.Dispatcher.IngestQueue.Enqueue(i)
 }
 
@@ -170,11 +214,19 @@ func (r *Runner) worker(ctx context.Context, logger logr.Logger, description, ta
 	if err != nil {
 		return
 	}
-	go r.updateMessages(ctx, taskID, description, messagesChan)
+	cctx, done := context.WithCancel(ctx)
+	defer done()
+	go r.updateMessages(cctx, taskID, description, messagesChan)
+	logger.Info("worker start")
 
 	resultRecord := repository.Record{
 		State:    "complete",
 		Complete: true,
+		Error: &repository.Error{
+			Code:    0,
+			Message: "",
+			Details: nil,
+		},
 	}
 	result, err := action(messagesChan)
 	if err != nil {

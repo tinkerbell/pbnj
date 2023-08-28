@@ -1,44 +1,36 @@
 package taskrunner
 
 import (
-	"sync"
-
-	"github.com/pkg/errors"
+	"github.com/adrianbrad/queue"
+	"github.com/go-logr/logr"
 )
 
 type IngestQueue struct {
-	mu    sync.Mutex
-	queue []Ingest
+	q *queue.Blocking[*Ingest]
 }
 
 type Ingest struct {
-	ID          string
-	Host        string
-	Description string
-	Action      func(chan string) (string, error)
+	ID          string                            `json:"id"`
+	Host        string                            `json:"host"`
+	Description string                            `json:"description"`
+	Action      func(chan string) (string, error) `json:"-"`
+	Log         logr.Logger                       `json:"-"`
 }
 
 func NewIngestQueue() *IngestQueue {
 	return &IngestQueue{
-		queue: []Ingest{},
+		q: queue.NewBlocking([]*Ingest{}, queue.WithCapacity(10000)),
 	}
 }
 
 // Enqueue inserts the item into the queue.
 func (i *IngestQueue) Enqueue(item Ingest) {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-	i.queue = append(i.queue, item)
+	i.q.OfferWait(&item)
 }
 
 // Dequeue removes the oldest element from the queue. FIFO.
 func (i *IngestQueue) Dequeue() (Ingest, error) {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-	if len(i.queue) > 0 {
-		item := i.queue[0]
-		i.queue = i.queue[1:]
-		return item, nil
-	}
-	return Ingest{}, errors.New("queue is empty")
+	item := i.q.GetWait()
+
+	return *item, nil
 }
