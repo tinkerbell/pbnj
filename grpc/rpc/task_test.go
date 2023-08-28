@@ -29,21 +29,17 @@ func TestTaskFound(t *testing.T) {
 	s := gokv.Store(f)
 	repo := &persistence.GoKV{Store: s, Ctx: ctx}
 
-	taskRunner := &taskrunner.Runner{
-		Repository: repo,
-		Ctx:        ctx,
-		Dispatcher: taskrunner.NewDispatcher(),
-	}
-	go taskRunner.Start(ctx)
+	tr := taskrunner.NewRunner(repo)
+	go tr.Start(ctx)
 	taskID := xid.New().String()
-	taskRunner.Execute(ctx, logger, "test", taskID, "123", func(s chan string) (string, error) {
+	tr.Execute(ctx, logger, "test", taskID, "123", func(s chan string) (string, error) {
 		return "doing cool stuff", defaultError
 	})
 
 	taskReq := &v1.StatusRequest{TaskId: taskID}
 
 	taskSvc := TaskService{
-		TaskRunner: taskRunner,
+		TaskRunner: tr,
 	}
 
 	time.Sleep(10 * time.Millisecond)
@@ -83,14 +79,10 @@ func TestRecordNotFound(t *testing.T) {
 			s := gokv.Store(f)
 			repo := &persistence.GoKV{Store: s, Ctx: ctx}
 
-			taskRunner := &taskrunner.Runner{
-				Repository: repo,
-				Ctx:        ctx,
-				Dispatcher: taskrunner.NewDispatcher(),
-			}
-			go taskRunner.Start(ctx)
+			tr := taskrunner.NewRunner(repo)
+			go tr.Start(ctx)
 			taskSvc := TaskService{
-				TaskRunner: taskRunner,
+				TaskRunner: tr,
 			}
 			response, err := taskSvc.Status(ctx, testCase.req)
 

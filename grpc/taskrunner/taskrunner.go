@@ -4,16 +4,13 @@ import (
 	"context"
 	"net"
 	"net/url"
-	"os"
 	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/go-logr/zerologr"
 	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
 
 	ewp "github.com/lnquy/elastic-worker-pool"
 	"github.com/tinkerbell/pbnj/pkg/metrics"
@@ -39,18 +36,17 @@ type dispatcher struct {
 	perID          sync.Map
 	maxWorkers     int32
 	TotalProcessed atomic.Int32
-	emptyMsg       atomic.Int32
 	pool           *ewp.ElasticWorkerPool
 }
 
 func NewRunner(repo repository.Actions) *Runner {
 	return &Runner{
 		Repository: repo,
-		Dispatcher: NewDispatcher(),
+		Dispatcher: newDispatcher(),
 	}
 }
 
-func NewDispatcher() *dispatcher {
+func newDispatcher() *dispatcher {
 	return &dispatcher{
 		IngestQueue: NewIngestQueue(),
 		perID:       sync.Map{},
@@ -81,36 +77,14 @@ func (r *Runner) startWorkerPool(min, max int32) *ewp.ElasticWorkerPool {
 	return myPool
 }
 
-func (r *Runner) TotalProcessed(ctx context.Context, log logr.Logger) {
-	ticker := time.NewTicker(1 * time.Second)
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			log.Info("total processed", "total", r.Dispatcher.TotalProcessed.Load())
-		}
-	}
-}
-
-// defaultLogger is a zerolog logr implementation.
-func defaultLogger() logr.Logger {
-	zl := zerolog.New(os.Stdout)
-	zl = zl.With().Caller().Timestamp().Logger()
-	zl = zl.Level(zerolog.DebugLevel)
-
-	return zerologr.New(&zl)
-}
-
 func (r *Runner) GetStatistics() *ewp.Statistics {
 	return r.Dispatcher.pool.GetStatistics()
 }
 
 func (r *Runner) Start(ctx context.Context) {
 	if r.Dispatcher == nil {
-		r.Dispatcher = NewDispatcher()
+		r.Dispatcher = newDispatcher()
 	}
-	//go r.TotalProcessed(ctx, defaultLogger())
 	myPool := r.startWorkerPool(10, 1000)
 	r.Dispatcher.pool = myPool
 	for {
@@ -128,9 +102,12 @@ func (r *Runner) Start(ctx context.Context) {
 			perIDQueue.Enqueue(elem)
 			v, loaded := r.Dispatcher.perID.LoadOrStore(elem.Host, perIDQueue)
 			if loaded {
-				v.(*IngestQueue).Enqueue(elem)
+				b, ok := v.(*IngestQueue)
+				if ok {
+					b.Enqueue(elem)
+				}
 			}
-			myPool.Enqueue(func() {
+			_ = myPool.Enqueue(func() {
 				r.worker1(ctx, elem.Host)
 				r.Dispatcher.TotalProcessed.Add(1)
 			})
@@ -159,25 +136,25 @@ func (r *Runner) Execute(_ context.Context, l logr.Logger, description, taskID, 
 		Host:        host,
 		Description: description,
 		Action:      action,
-		Log:         defaultLogger(),
+		Log:         l,
 	}
 
 	r.Dispatcher.IngestQueue.Enqueue(i)
 }
 
-func (r *Runner) updateMessages(ctx context.Context, taskID, desc string, ch chan string) error {
+func (r *Runner) updateMessages(ctx context.Context, taskID string, ch chan string) {
 	for {
 		select {
 		case <-ctx.Done():
-			return nil
+			return
 		case msg := <-ch:
 			record, err := r.Repository.Get(taskID)
 			if err != nil {
-				return err
+				return
 			}
 			record.Messages = append(record.Messages, msg)
 			if err := r.Repository.Update(taskID, record); err != nil {
-				return err
+				return
 			}
 		}
 	}
@@ -216,7 +193,7 @@ func (r *Runner) worker(ctx context.Context, logger logr.Logger, description, ta
 	}
 	cctx, done := context.WithCancel(ctx)
 	defer done()
-	go r.updateMessages(cctx, taskID, description, messagesChan)
+	go r.updateMessages(cctx, taskID, messagesChan)
 	logger.Info("worker start")
 
 	resultRecord := repository.Record{

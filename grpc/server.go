@@ -78,21 +78,17 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 		opt(defaultServer)
 	}
 
-	taskRunner := &taskrunner.Runner{
-		Repository: defaultServer.Actions,
-		Ctx:        ctx,
-		Dispatcher: taskrunner.NewDispatcher(),
-	}
-	go taskRunner.Start(ctx)
+	tr := taskrunner.NewRunner(repo)
+	go tr.Start(ctx)
 
 	ms := rpc.MachineService{
-		TaskRunner: taskRunner,
+		TaskRunner: tr,
 		Timeout:    defaultServer.bmcTimeout,
 	}
 	v1.RegisterMachineServer(grpcServer, &ms)
 
 	bs := rpc.BmcService{
-		TaskRunner:          taskRunner,
+		TaskRunner:          tr,
 		Timeout:             defaultServer.bmcTimeout,
 		SkipRedfishVersions: defaultServer.skipRedfishVersions,
 	}
@@ -102,7 +98,7 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 	v1.RegisterDiagnosticServer(grpcServer, &ds)
 
 	ts := rpc.TaskService{
-		TaskRunner: taskRunner,
+		TaskRunner: tr,
 	}
 	v1.RegisterTaskServer(grpcServer, &ts)
 
@@ -116,7 +112,7 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 		return err
 	}
 
-	httpServer.WithTaskRunner(taskRunner)
+	httpServer.WithTaskRunner(tr)
 	reflection.Register(grpcServer)
 
 	go func() {
@@ -144,7 +140,7 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 		grpcServer.GracefulStop()
 	}()
 	defer func() {
-		log.Info("stats", "stats", taskRunner.GetStatistics(), "totalProcesses", taskRunner.Dispatcher.TotalProcessed.Load())
+		log.Info("stats", "stats", tr.GetStatistics(), "totalProcesses", tr.Dispatcher.TotalProcessed.Load())
 	}()
 
 	log.Info("starting PBnJ gRPC server")

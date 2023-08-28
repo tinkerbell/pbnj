@@ -66,14 +66,10 @@ func TestDevice(t *testing.T) {
 				Ctx:   ctx,
 			}
 
-			taskRunner := &taskrunner.Runner{
-				Repository: repo,
-				Ctx:        ctx,
-				Dispatcher: taskrunner.NewDispatcher(),
-			}
-			go taskRunner.Start(ctx)
+			tr := taskrunner.NewRunner(repo)
+			go tr.Start(ctx)
 			machineSvc := MachineService{
-				TaskRunner: taskRunner,
+				TaskRunner: tr,
 			}
 			response, err := machineSvc.BootDevice(ctx, testCase.req)
 
@@ -167,14 +163,10 @@ func TestPower(t *testing.T) {
 				Ctx:   ctx,
 			}
 
-			taskRunner := &taskrunner.Runner{
-				Repository: repo,
-				Ctx:        ctx,
-				Dispatcher: taskrunner.NewDispatcher(),
-			}
-			go taskRunner.Start(ctx)
+			tr := taskrunner.NewRunner(repo)
+			go tr.Start(ctx)
 			machineSvc := MachineService{
-				TaskRunner: taskRunner,
+				TaskRunner: tr,
 			}
 			response, err := machineSvc.Power(ctx, testCase.req)
 

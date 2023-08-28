@@ -20,7 +20,7 @@ const tempIPMITool = "/tmp/ipmitool"
 
 var (
 	ctx        context.Context
-	taskRunner *taskrunner.Runner
+	tr         *taskrunner.Runner
 	bmcService BmcService
 )
 
@@ -40,14 +40,10 @@ func setup() {
 		Ctx:   ctx,
 	}
 
-	taskRunner = &taskrunner.Runner{
-		Repository: repo,
-		Ctx:        ctx,
-		Dispatcher: taskrunner.NewDispatcher(),
-	}
-	go taskRunner.Start(ctx)
+	tr = taskrunner.NewRunner(repo)
+	go tr.Start(ctx)
 	bmcService = BmcService{
-		TaskRunner:             taskRunner,
+		TaskRunner:             tr,
 		UnimplementedBMCServer: v1.UnimplementedBMCServer{},
 	}
 	_, err := exec.LookPath("ipmitool")
@@ -157,7 +153,6 @@ func TestReset(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-
 			response, err := bmcService.Reset(ctx, tc.in)
 			if err != nil {
 				diff := cmp.Diff(tc.expectedErr.Error(), err.Error())

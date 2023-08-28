@@ -29,7 +29,7 @@ func TestRoundTrip(t *testing.T) {
 	runner := Runner{
 		Repository: repo,
 		Ctx:        ctx,
-		Dispatcher: NewDispatcher(),
+		Dispatcher: newDispatcher(),
 	}
 	go runner.Start(ctx)
 
