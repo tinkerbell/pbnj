@@ -81,11 +81,11 @@ func (r *Runner) GetStatistics() *ewp.Statistics {
 	return r.Dispatcher.pool.GetStatistics()
 }
 
-func (r *Runner) Start(ctx context.Context) {
+func (r *Runner) old(ctx context.Context) {
 	if r.Dispatcher == nil {
 		r.Dispatcher = newDispatcher()
 	}
-	myPool := r.startWorkerPool(10, 1000)
+	myPool := r.startWorkerPool(10, 10)
 	r.Dispatcher.pool = myPool
 	for {
 		select {
@@ -115,23 +115,44 @@ func (r *Runner) Start(ctx context.Context) {
 	}
 }
 
+func (r *Runner) Start(ctx context.Context) {
+	o := &orchestrator{
+		workers:        sync.Map{},
+		fifoQueue:      NewHostQueue(),
+		ingestionQueue: NewIngestQueue(),
+		perIDQueue:     sync.Map{},
+	}
+	// 1. start the ingestor
+	// 2. start the orchestrator
+	go o.ingest(ctx)
+	go o.orchestrate(ctx)
+}
+
 // channelWorker is a worker that listens on a channel for jobs.
 // It will shutdown the worker after gc duration of no elements in the channel or the context is canceled.
 // worker is in charge of its own lifecycle.
 func (r *Runner) worker1(ctx context.Context, id string) {
-	elem, ok := r.Dispatcher.perID.Load(id)
-	if ok {
-		t, err := elem.(*IngestQueue).Dequeue()
-		if err != nil {
+	for {
+		select {
+		case <-ctx.Done():
 			return
+		default:
+			elem, ok := r.Dispatcher.perID.Load(id)
+			if ok {
+				t, err := elem.(*IngestQueue).Dequeue()
+				if err != nil {
+					return
+				}
+				r.process(ctx, t.Log, t.Description, t.ID, t.Action)
+			}
 		}
-		r.worker(ctx, t.Log, t.Description, t.ID, t.Action)
 	}
+
 }
 
 // Execute a task, update repository with status.
 func (r *Runner) Execute(_ context.Context, l logr.Logger, description, taskID, host string, action func(chan string) (string, error)) {
-	i := Ingest{
+	i := Task{
 		ID:          taskID,
 		Host:        host,
 		Description: description,
@@ -162,7 +183,7 @@ func (r *Runner) updateMessages(ctx context.Context, taskID string, ch chan stri
 
 // does the work, updates the repo record
 // TODO handle retrys, use a timeout.
-func (r *Runner) worker(ctx context.Context, logger logr.Logger, description, taskID string, action func(chan string) (string, error)) {
+func (r *Runner) process(ctx context.Context, logger logr.Logger, description, taskID string, action func(chan string) (string, error)) {
 	logger = logger.WithValues("taskID", taskID, "description", description)
 	r.active.Add(1)
 	r.total.Add(1)
