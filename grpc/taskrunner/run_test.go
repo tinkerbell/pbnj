@@ -2,9 +2,7 @@ package taskrunner
 
 import (
 	"context"
-	"runtime"
 	"testing"
-	"time"
 )
 
 func TestStart(t *testing.T) {
@@ -14,8 +12,5 @@ func TestStart(t *testing.T) {
 	o := Start(ctx)
 
 	o.manager.WaitAllDone()
-
-	
-	time.Sleep(3 * time.Second)
-	t.Log("=======", runtime.NumGoroutine())
+	cancel()
 }

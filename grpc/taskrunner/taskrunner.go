@@ -7,23 +7,22 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
-	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 
-	ewp "github.com/lnquy/elastic-worker-pool"
 	"github.com/tinkerbell/pbnj/pkg/metrics"
 	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
 // Runner for executing a task.
 type Runner struct {
-	Repository repository.Actions
-	Ctx        context.Context
-	active     atomic.Int32
-	total      atomic.Int32
-	Dispatcher *dispatcher
+	Repository   repository.Actions
+	Ctx          context.Context
+	active       atomic.Int32
+	total        atomic.Int32
+	Dispatcher   *dispatcher
+	orchestrator *orchestrator
 }
 
 type dispatcher struct {
@@ -36,7 +35,6 @@ type dispatcher struct {
 	perID          sync.Map
 	maxWorkers     int32
 	TotalProcessed atomic.Int32
-	pool           *ewp.ElasticWorkerPool
 }
 
 func NewRunner(repo repository.Actions) *Runner {
@@ -64,68 +62,20 @@ func (r *Runner) TotalWorkers() int {
 	return int(r.total.Load())
 }
 
-func (r *Runner) startWorkerPool(min, max int32) *ewp.ElasticWorkerPool {
-	ewpConfig := ewp.Config{
-		MinWorker:           min,
-		MaxWorker:           max,
-		PoolControlInterval: time.Second,
-		BufferLength:        1000,
-	}
-	myPool, _ := ewp.New(ewpConfig, nil, nil) // error is always nil
-	myPool.Start()
-
-	return myPool
-}
-
-func (r *Runner) GetStatistics() *ewp.Statistics {
-	return r.Dispatcher.pool.GetStatistics()
-}
-
-func (r *Runner) old(ctx context.Context) {
-	if r.Dispatcher == nil {
-		r.Dispatcher = newDispatcher()
-	}
-	myPool := r.startWorkerPool(10, 10)
-	r.Dispatcher.pool = myPool
-	for {
-		select {
-		case <-ctx.Done():
-			myPool.Close()
-			return
-		default:
-			elem, err := r.Dispatcher.IngestQueue.Dequeue()
-			if err != nil {
-				break
-			}
-
-			perIDQueue := NewIngestQueue()
-			perIDQueue.Enqueue(elem)
-			v, loaded := r.Dispatcher.perID.LoadOrStore(elem.Host, perIDQueue)
-			if loaded {
-				b, ok := v.(*IngestQueue)
-				if ok {
-					b.Enqueue(elem)
-				}
-			}
-			_ = myPool.Enqueue(func() {
-				r.worker1(ctx, elem.Host)
-				r.Dispatcher.TotalProcessed.Add(1)
-			})
-		}
-	}
-}
-
 func (r *Runner) Start(ctx context.Context) {
 	o := &orchestrator{
-		workers:        sync.Map{},
 		fifoQueue:      NewHostQueue(),
 		ingestionQueue: NewIngestQueue(),
-		perIDQueue:     sync.Map{},
+		// perIDQueue is a map of hostID to a channel of tasks.
+		perIDQueue: sync.Map{},
+		manager:    New(395),
 	}
+	r.orchestrator = o
 	// 1. start the ingestor
 	// 2. start the orchestrator
 	go o.ingest(ctx)
 	go o.orchestrate(ctx)
+	// go o.observe(ctx)
 }
 
 // channelWorker is a worker that listens on a channel for jobs.
@@ -160,7 +110,8 @@ func (r *Runner) Execute(_ context.Context, l logr.Logger, description, taskID, 
 		Log:         l,
 	}
 
-	r.Dispatcher.IngestQueue.Enqueue(i)
+	r.orchestrator.ingestionQueue.Enqueue(i)
+	//r.Dispatcher.IngestQueue.Enqueue(i)
 }
 
 func (r *Runner) updateMessages(ctx context.Context, taskID string, ch chan string) {

@@ -3,9 +3,7 @@ package taskrunner
 import (
 	"context"
 	"fmt"
-	"log"
 	"math/rand"
-	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -24,8 +22,6 @@ type orchestrator struct {
 	ingestionQueue *IngestQueue
 	// perIDQueue is a map of hostID to a channel of tasks.
 	perIDQueue sync.Map
-
-	writeMu sync.Mutex
 }
 
 func Start(ctx context.Context) *orchestrator {
@@ -34,7 +30,7 @@ func Start(ctx context.Context) *orchestrator {
 		ingestionQueue: NewIngestQueue(),
 		// perIDQueue is a map of hostID to a channel of tasks.
 		perIDQueue: sync.Map{},
-		manager:    New(12),
+		manager:    New(17),
 	}
 	// 1. start the ingestor
 	// 2. start the orchestrator
@@ -57,6 +53,7 @@ func lenSyncMap(m *sync.Map) int {
 
 func (o *orchestrator) observe(ctx context.Context) {
 	writer := uilive.New()
+	//writer.Out = fileWriter()
 
 	// start listening for updates and render
 	writer.Start()
@@ -74,7 +71,7 @@ func (o *orchestrator) observe(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			writer.Stop()
+			writer.Flush()
 			return
 		default:
 			one := fmt.Sprintf("running workers count: %v\n", o.manager.RunningCount())
@@ -106,7 +103,7 @@ func (o *orchestrator) load() {
 	}
 }
 
-// ingest take a task off the fcfs queue and put it on the perID queue
+// ingest take a task off the ingestion queue and puts it on the perID queue
 // and adds the host ID to the fcfs queue.
 func (o *orchestrator) ingest(ctx context.Context) {
 	// dequeue from ingestion queue
@@ -124,7 +121,7 @@ func (o *orchestrator) ingest(ctx context.Context) {
 			// 1. dequeue from ingestion queue
 			t, err := o.ingestionQueue.Dequeue()
 			if err != nil {
-				break
+				continue
 			}
 
 			// 2. enqueue to perID queue
@@ -160,7 +157,7 @@ func (o *orchestrator) orchestrate(ctx context.Context) {
 			}
 
 			// check queue length for perID queue, if 0, then continue
-			if elem, ok := o.perIDQueue.Load(string(h)); ok {
+			if elem, ok := o.perIDQueue.Load(h.String()); ok {
 				if elem.(*IngestQueue).Size() == 0 {
 					continue
 				}
@@ -175,8 +172,8 @@ func (o *orchestrator) orchestrate(ctx context.Context) {
 			// wait for a worker to become available
 			o.manager.Wait()
 
-			o.workers.Store(h, struct{}{})
-			go o.worker(ctx, string(h))
+			o.workers.Store(h, true)
+			go o.worker(ctx, h.String())
 		}
 	}
 }
@@ -192,6 +189,7 @@ func (o *orchestrator) worker(ctx context.Context, hostID string) {
 			return true
 		})
 	}()
+
 	elem, ok := o.perIDQueue.Load(hostID)
 	if !ok {
 		return
@@ -200,6 +198,7 @@ func (o *orchestrator) worker(ctx context.Context, hostID string) {
 	tChan := make(chan Task)
 	cctx, stop := context.WithCancel(ctx)
 	defer stop()
+	defer close(tChan)
 
 	go func() {
 		for {
@@ -226,23 +225,10 @@ func (o *orchestrator) worker(ctx context.Context, hostID string) {
 			t.Action(msgCh)
 		case <-time.After(2 * time.Second):
 			stop()
-			o.write(fmt.Sprintf("%v: worker stopped\n", hostID))
 			return
 		}
 	}
-}
 
-func (o *orchestrator) write(s string) {
-	o.writeMu.Lock()
-	defer o.writeMu.Unlock()
-	f, err := os.OpenFile("/home/tink/repos/tinkerbell/pbnj/text.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Println(err)
-	}
-	defer f.Close()
-	if _, err := f.WriteString(s); err != nil {
-		log.Println(err)
-	}
 }
 
 var hostList = []string{

@@ -30,7 +30,10 @@ func (i *IngestQueue) Enqueue(item Task) {
 
 // Dequeue removes the oldest element from the queue. FIFO.
 func (i *IngestQueue) Dequeue() (Task, error) {
-	item := i.q.GetWait()
+	item, err := i.q.Get()
+	if err != nil {
+		return Task{}, err
+	}
 
 	return *item, nil
 }
@@ -47,6 +50,10 @@ func NewHostQueue() *hostQueue {
 
 type host string
 
+func (h host) String() string {
+	return string(h)
+}
+
 type hostQueue struct {
 	q *queue.Blocking[host]
 }
@@ -58,7 +65,10 @@ func (i *hostQueue) Enqueue(item host) {
 
 // Dequeue removes the oldest element from the queue. FIFO.
 func (i *hostQueue) Dequeue() (host, error) {
-	item := i.q.GetWait()
+	item, err := i.q.Get()
+	if err != nil {
+		return "", err
+	}
 
 	return item, nil
 }
