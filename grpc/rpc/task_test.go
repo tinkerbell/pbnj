@@ -43,7 +43,7 @@ func TestTaskFound(t *testing.T) {
 		TaskRunner: tr,
 	}
 
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(150 * time.Millisecond)
 	taskResp, err := taskSvc.Status(ctx, taskReq)
 	if err != nil {
 		t.Fatal(err)
