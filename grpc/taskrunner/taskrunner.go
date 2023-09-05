@@ -29,8 +29,8 @@ func NewRunner(repo repository.Actions, maxWorkers int, workerIdleTimeout time.D
 		fifoQueue:      newHostQueue(),
 		ingestionQueue: NewIngestQueue(),
 		// perIDQueue is a map of hostID to a channel of tasks.
-		perIDQueue: sync.Map{},
-		manager:    newManager(maxWorkers),
+		perIDQueue:        sync.Map{},
+		manager:           newManager(maxWorkers),
 		workerIdleTimeout: workerIdleTimeout,
 	}
 
