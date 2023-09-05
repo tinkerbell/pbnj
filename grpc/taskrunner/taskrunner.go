@@ -17,8 +17,7 @@ import (
 
 // Runner for executing a task.
 type Runner struct {
-	Repository repository.Actions
-	//Ctx          context.Context
+	Repository   repository.Actions
 	active       atomic.Int32
 	total        atomic.Int32
 	orchestrator *orchestrator
