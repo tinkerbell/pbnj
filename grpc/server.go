@@ -79,7 +79,7 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 	}
 
 	tr := taskrunner.NewRunner(repo)
-	go tr.Start(ctx)
+	tr.Start(ctx)
 
 	ms := rpc.MachineService{
 		TaskRunner: tr,

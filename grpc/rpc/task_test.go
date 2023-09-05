@@ -5,50 +5,39 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-logr/logr"
 	"github.com/onsi/gomega"
-	"github.com/philippgille/gokv"
-	"github.com/philippgille/gokv/freecache"
-	"github.com/rs/xid"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
-	"github.com/tinkerbell/pbnj/grpc/persistence"
-	"github.com/tinkerbell/pbnj/grpc/taskrunner"
-	"github.com/tinkerbell/pbnj/pkg/repository"
 )
 
 func TestTaskFound(t *testing.T) {
-	// create a task
-	ctx := context.Background()
-	defaultError := &repository.Error{
-		Code:    0,
-		Message: "",
-		Details: nil,
+	pr := &v1.PowerRequest{
+		Authn: &v1.Authn{
+			Authn: &v1.Authn_DirectAuthn{
+				DirectAuthn: &v1.DirectAuthn{
+					Host: &v1.Host{
+						Host: "10.1.1.1",
+					},
+					Username: "admin",
+					Password: "admin",
+				},
+			},
+		},
+		Vendor: &v1.Vendor{
+			Name: "",
+		},
+		PowerAction: v1.PowerAction_POWER_ACTION_STATUS,
+		SoftTimeout: 0,
+		OffDuration: 0,
 	}
-	logger := logr.Discard()
-	f := freecache.NewStore(freecache.DefaultOptions)
-	s := gokv.Store(f)
-	repo := &persistence.GoKV{Store: s, Ctx: ctx}
-
-	tr := taskrunner.NewRunner(repo)
-	go tr.Start(ctx)
-	time.Sleep(200 * time.Millisecond)
-	taskID := xid.New().String()
-	tr.Execute(ctx, logger, "test", taskID, "123", func(s chan string) (string, error) {
-		return "doing cool stuff", defaultError
-	})
-
-	taskReq := &v1.StatusRequest{TaskId: taskID}
-
-	taskSvc := TaskService{
-		TaskRunner: tr,
-	}
-
-	time.Sleep(150 * time.Millisecond)
-	taskResp, err := taskSvc.Status(ctx, taskReq)
+	resp, err := machineService.Power(context.Background(), pr)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("expected no error, got: %v", err)
 	}
-	if taskResp.Id != taskID {
+
+	time.Sleep(time.Second)
+	taskReq := &v1.StatusRequest{TaskId: resp.TaskId}
+	taskResp, _ := taskService.Status(context.Background(), taskReq)
+	if taskResp.Id != resp.TaskId {
 		t.Fatalf("got: %+v", taskResp)
 	}
 }
@@ -75,17 +64,7 @@ func TestRecordNotFound(t *testing.T) {
 			g := gomega.NewGomegaWithT(t)
 
 			ctx := context.Background()
-
-			f := freecache.NewStore(freecache.DefaultOptions)
-			s := gokv.Store(f)
-			repo := &persistence.GoKV{Store: s, Ctx: ctx}
-
-			tr := taskrunner.NewRunner(repo)
-			go tr.Start(ctx)
-			taskSvc := TaskService{
-				TaskRunner: tr,
-			}
-			response, err := taskSvc.Status(ctx, testCase.req)
+			response, err := taskService.Status(ctx, testCase.req)
 
 			t.Log("Got response: ", response)
 			t.Log("Got err: ", err)
