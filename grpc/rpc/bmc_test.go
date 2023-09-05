@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/philippgille/gokv"
@@ -41,7 +42,7 @@ func setup() {
 		Ctx:   ctx,
 	}
 
-	tr = taskrunner.NewRunner(repo)
+	tr = taskrunner.NewRunner(repo, 100, time.Second)
 	tr.Start(ctx)
 	bmcService = BmcService{
 		TaskRunner:             tr,

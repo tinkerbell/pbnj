@@ -7,6 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -23,13 +24,14 @@ type Runner struct {
 	orchestrator *orchestrator
 }
 
-func NewRunner(repo repository.Actions) *Runner {
+func NewRunner(repo repository.Actions, maxWorkers int, workerIdleTimeout time.Duration) *Runner {
 	o := &orchestrator{
 		fifoQueue:      newHostQueue(),
 		ingestionQueue: NewIngestQueue(),
 		// perIDQueue is a map of hostID to a channel of tasks.
 		perIDQueue: sync.Map{},
-		manager:    newManager(395),
+		manager:    newManager(maxWorkers),
+		workerIdleTimeout: workerIdleTimeout,
 	}
 
 	return &Runner{

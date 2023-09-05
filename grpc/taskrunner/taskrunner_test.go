@@ -26,7 +26,7 @@ func TestRoundTrip(t *testing.T) {
 	defer s.Close()
 	repo := &persistence.GoKV{Store: s, Ctx: ctx}
 	logger := logr.Discard()
-	runner := NewRunner(repo)
+	runner := NewRunner(repo, 100, time.Second)
 	runner.Start(ctx)
 	time.Sleep(time.Millisecond * 100)
 

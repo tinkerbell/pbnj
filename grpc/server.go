@@ -36,6 +36,10 @@ type Server struct {
 	//
 	// for more information see https://github.com/bmc-toolbox/bmclib#bmc-connections
 	skipRedfishVersions []string
+	// maxWorkers is the maximum number of concurrent workers that will be allowed to handle bmc tasks.
+	maxWorkers int
+	// workerIdleTimeout is the idle timeout for workers. If no tasks are received within the timeout, the worker will exit.
+	workerIdleTimeout time.Duration
 }
 
 // ServerOption for setting optional values.
@@ -56,6 +60,18 @@ func WithSkipRedfishVersions(versions []string) ServerOption {
 	return func(args *Server) { args.skipRedfishVersions = versions }
 }
 
+// WithMaxWorkers sets the max number of of concurrent workers that handle bmc tasks..
+func WithMaxWorkers(max int) ServerOption {
+	return func(args *Server) { args.maxWorkers = max }
+}
+
+// WithWorkerIdleTimeout sets the idle timeout for workers.
+// If no tasks are received within the timeout, the worker will exit.
+// New tasks will spawn a new worker if there isn't a worker running.
+func WithWorkerIdleTimeout(t time.Duration) ServerOption {
+	return func(args *Server) { args.workerIdleTimeout = t }
+}
+
 // RunServer registers all services and runs the server.
 func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, port string, httpServer *http.Server, opts ...ServerOption) error {
 	ctx, cancel := context.WithCancel(ctx)
@@ -70,15 +86,17 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 	}
 
 	defaultServer := &Server{
-		Actions:    repo,
-		bmcTimeout: oob.DefaultBMCTimeout,
+		Actions:           repo,
+		bmcTimeout:        oob.DefaultBMCTimeout,
+		maxWorkers:        1000,
+		workerIdleTimeout: time.Second * 30,
 	}
 
 	for _, opt := range opts {
 		opt(defaultServer)
 	}
 
-	tr := taskrunner.NewRunner(repo)
+	tr := taskrunner.NewRunner(repo, defaultServer.maxWorkers, defaultServer.workerIdleTimeout)
 	tr.Start(ctx)
 
 	ms := rpc.MachineService{

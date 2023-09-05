@@ -48,6 +48,10 @@ var (
 	//
 	// for more information see https://github.com/bmc-toolbox/bmclib#bmc-connections
 	skipRedfishVersions string
+	// maxWorkers is the maximum number of concurrent workers that will be allowed to handle bmc tasks.
+	maxWorkers int
+	// workerIdleTimeout is the idle timeout for workers. If no tasks are received within the timeout, the worker will exit.
+	workerIdleTimeout time.Duration
 	// serverCmd represents the server command.
 	serverCmd = &cobra.Command{
 		Use:   "server",
@@ -98,6 +102,13 @@ var (
 				opts = append(opts, grpcsvr.WithSkipRedfishVersions(versions))
 			}
 
+			if maxWorkers > 0 {
+				opts = append(opts, grpcsvr.WithMaxWorkers(maxWorkers))
+			}
+			if workerIdleTimeout > 0 {
+				opts = append(opts, grpcsvr.WithWorkerIdleTimeout(workerIdleTimeout))
+			}
+
 			if err := grpcsvr.RunServer(ctx, logger, grpcServer, port, httpServer, opts...); err != nil {
 				logger.Error(err, "error running server")
 				os.Exit(1)
@@ -114,6 +125,8 @@ func init() {
 	serverCmd.PersistentFlags().StringVar(&rsPubKey, "rsPubKey", "", "RS public key")
 	serverCmd.PersistentFlags().DurationVar(&bmcTimeout, "bmcTimeout", oob.DefaultBMCTimeout, "Timeout for BMC calls")
 	serverCmd.PersistentFlags().StringVar(&skipRedfishVersions, "skipRedfishVersions", "", "Ignore the redfish endpoint on BMCs running the given version(s)")
+	serverCmd.PersistentFlags().IntVar(&maxWorkers, "maxWorkers", 1000, "Maximum number of concurrent workers that will be allowed to handle bmc tasks")
+	serverCmd.PersistentFlags().DurationVar(&workerIdleTimeout, "workerIdleTimeout", 30*time.Second, "Idle timeout for workers. If no tasks are received within the timeout, the worker will exit. New tasks will spawn a new worker if there isn't a worker running")
 	rootCmd.AddCommand(serverCmd)
 }
 

@@ -3,6 +3,7 @@ package taskrunner
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/freecache"
@@ -19,7 +20,7 @@ func TestStart(t *testing.T) {
 	s := gokv.Store(f)
 	repo := &persistence.GoKV{Store: s, Ctx: ctx}
 
-	r := NewRunner(repo)
+	r := NewRunner(repo, 100, time.Second)
 	r.Start(ctx)
 
 	r.orchestrator.manager.WaitAllDone()

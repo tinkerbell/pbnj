@@ -7,8 +7,9 @@ import (
 )
 
 type orchestrator struct {
-	workers sync.Map
-	manager *concurrencyManager
+	workers           sync.Map
+	manager           *concurrencyManager
+	workerIdleTimeout time.Duration
 
 	fifoQueue      *hostQueue
 	ingestionQueue *IngestQueue
@@ -119,9 +120,9 @@ func (r *Runner) worker(ctx context.Context, hostID string) {
 	tChan := make(chan Task)
 	cctx, stop := context.WithCancel(ctx)
 	defer stop()
-	defer close(tChan)
 
-	go func() {
+	go func(ch chan Task) {
+		defer close(ch)
 		for {
 			select {
 			case <-cctx.Done():
@@ -134,7 +135,7 @@ func (r *Runner) worker(ctx context.Context, hostID string) {
 				tChan <- task
 			}
 		}
-	}()
+	}(tChan)
 
 	for {
 		select {
@@ -143,7 +144,7 @@ func (r *Runner) worker(ctx context.Context, hostID string) {
 			return
 		case t := <-tChan:
 			r.process(ctx, t.Log, t.Description, t.ID, t.Action)
-		case <-time.After(2 * time.Second):
+		case <-time.After(r.orchestrator.workerIdleTimeout):
 			stop()
 			return
 		}
