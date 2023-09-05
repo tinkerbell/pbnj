@@ -42,7 +42,7 @@ func (i *IngestQueue) Size() int {
 	return i.q.Size()
 }
 
-func NewHostQueue() *hostQueue {
+func newHostQueue() *hostQueue {
 	return &hostQueue{
 		q: queue.NewBlocking[host]([]host{}, queue.WithCapacity(10000)),
 	}

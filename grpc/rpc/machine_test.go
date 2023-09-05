@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/onsi/gomega"
@@ -71,6 +72,7 @@ func TestDevice(t *testing.T) {
 			machineSvc := MachineService{
 				TaskRunner: tr,
 			}
+			time.Sleep(time.Millisecond * 100)
 			response, err := machineSvc.BootDevice(ctx, testCase.req)
 
 			t.Log("Got : ", response)
@@ -165,6 +167,7 @@ func TestPower(t *testing.T) {
 
 			tr := taskrunner.NewRunner(repo)
 			go tr.Start(ctx)
+			time.Sleep(time.Millisecond * 100)
 			machineSvc := MachineService{
 				TaskRunner: tr,
 			}

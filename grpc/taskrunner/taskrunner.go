@@ -21,34 +21,21 @@ type Runner struct {
 	Ctx          context.Context
 	active       atomic.Int32
 	total        atomic.Int32
-	Dispatcher   *dispatcher
 	orchestrator *orchestrator
 }
 
-type dispatcher struct {
-	// IngestQueue is a queue of jobs that is process synchronously.
-	// It's the entry point for all jobs.
-	IngestQueue *IngestQueue
-	// perID hold a queue per ID.
-	// jobs across different IDs are processed concurrently.
-	// jobs with the same ID are processed synchronously.
-	perID          sync.Map
-	maxWorkers     int32
-	TotalProcessed atomic.Int32
-}
-
 func NewRunner(repo repository.Actions) *Runner {
-	return &Runner{
-		Repository: repo,
-		Dispatcher: newDispatcher(),
+	o := &orchestrator{
+		fifoQueue:      newHostQueue(),
+		ingestionQueue: NewIngestQueue(),
+		// perIDQueue is a map of hostID to a channel of tasks.
+		perIDQueue: sync.Map{},
+		manager:    newManager(395),
 	}
-}
 
-func newDispatcher() *dispatcher {
-	return &dispatcher{
-		IngestQueue: NewIngestQueue(),
-		perID:       sync.Map{},
-		maxWorkers:  500,
+	return &Runner{
+		Repository:   repo,
+		orchestrator: o,
 	}
 }
 
@@ -63,41 +50,10 @@ func (r *Runner) TotalWorkers() int {
 }
 
 func (r *Runner) Start(ctx context.Context) {
-	o := &orchestrator{
-		fifoQueue:      NewHostQueue(),
-		ingestionQueue: NewIngestQueue(),
-		// perIDQueue is a map of hostID to a channel of tasks.
-		perIDQueue: sync.Map{},
-		manager:    New(395),
-	}
-	r.orchestrator = o
 	// 1. start the ingestor
 	// 2. start the orchestrator
-	go o.ingest(ctx)
-	go o.orchestrate(ctx)
-	// go o.observe(ctx)
-}
-
-// channelWorker is a worker that listens on a channel for jobs.
-// It will shutdown the worker after gc duration of no elements in the channel or the context is canceled.
-// worker is in charge of its own lifecycle.
-func (r *Runner) worker1(ctx context.Context, id string) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			elem, ok := r.Dispatcher.perID.Load(id)
-			if ok {
-				t, err := elem.(*IngestQueue).Dequeue()
-				if err != nil {
-					return
-				}
-				r.process(ctx, t.Log, t.Description, t.ID, t.Action)
-			}
-		}
-	}
-
+	go r.orchestrator.ingest(ctx)
+	go r.orchestrate(ctx)
 }
 
 // Execute a task, update repository with status.
@@ -111,7 +67,6 @@ func (r *Runner) Execute(_ context.Context, l logr.Logger, description, taskID, 
 	}
 
 	r.orchestrator.ingestionQueue.Enqueue(i)
-	//r.Dispatcher.IngestQueue.Enqueue(i)
 }
 
 func (r *Runner) updateMessages(ctx context.Context, taskID string, ch chan string) {

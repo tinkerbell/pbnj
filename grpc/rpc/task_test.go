@@ -31,6 +31,7 @@ func TestTaskFound(t *testing.T) {
 
 	tr := taskrunner.NewRunner(repo)
 	go tr.Start(ctx)
+	time.Sleep(200 * time.Millisecond)
 	taskID := xid.New().String()
 	tr.Execute(ctx, logger, "test", taskID, "123", func(s chan string) (string, error) {
 		return "doing cool stuff", defaultError
@@ -42,7 +43,7 @@ func TestTaskFound(t *testing.T) {
 		TaskRunner: tr,
 	}
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(50 * time.Millisecond)
 	taskResp, err := taskSvc.Status(ctx, taskReq)
 	if err != nil {
 		t.Fatal(err)

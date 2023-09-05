@@ -28,6 +28,7 @@ func TestRoundTrip(t *testing.T) {
 	logger := logr.Discard()
 	runner := NewRunner(repo)
 	go runner.Start(ctx)
+	time.Sleep(time.Millisecond * 100)
 
 	taskID := xid.New().String()
 	if len(taskID) != 20 {
