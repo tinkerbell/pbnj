@@ -59,7 +59,6 @@ func (o *orchestrator) ingest(ctx context.Context) {
 				// 3. enqueue to fcfs queue
 				o.fifoQueue.Enqueue(host(t.Host))
 			}()
-
 		}
 	}
 }
