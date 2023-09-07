@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	screenshotCmd = &cobra.Command{
-		Use:   "screenshot",
-		Short: "Take a screenshot",
-		Long:  `Take a screenshot of a target BMC`,
+	clearSELcommand = &cobra.Command{
+		Use:   "selclear",
+		Short: "Clear the SEL",
+		Long:  `Clear the SEL of the target BMC`,
 		Run: func(cmd *cobra.Command, args []string) {
 			var opts []grpc.DialOption
 			ctx := context.Background()
@@ -31,7 +31,9 @@ var (
 			defer conn.Close()
 			client := v1.NewDiagnosticClient(conn)
 
-			resp, err := v1Client.Screenshot(ctx, client, &v1.ScreenshotRequest{
+			taskClient := v1.NewTaskClient(conn)
+
+			resp, err := v1Client.ClearSEL(ctx, client, taskClient, &v1.ClearSELRequest{
 				Authn: &v1.Authn{
 					Authn: &v1.Authn_DirectAuthn{
 						DirectAuthn: &v1.DirectAuthn{
@@ -58,5 +60,5 @@ var (
 )
 
 func init() {
-	diagnosticCmd.AddCommand(screenshotCmd)
+	diagnosticCmd.AddCommand(clearSELcommand)
 }
