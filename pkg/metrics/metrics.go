@@ -9,6 +9,8 @@ var (
 	ActionDuration prometheus.ObserverVec
 	TasksTotal     prometheus.Counter
 	TasksActive    prometheus.Gauge
+	PerIDQueue     prometheus.GaugeVec
+	IngestionQueue prometheus.Gauge
 )
 
 func init() {
@@ -35,6 +37,14 @@ func init() {
 	TasksActive = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "pbnj_tasks_active",
 		Help: "Number of tasks currently active.",
+	})
+	PerIDQueue = *promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "pbnj_per_id_queue",
+		Help: "Number of tasks in perID queue.",
+	}, []string{"host"})
+	IngestionQueue = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "pbnj_ingestion_queue",
+		Help: "Number of tasks in ingestion queue.",
 	})
 }
 

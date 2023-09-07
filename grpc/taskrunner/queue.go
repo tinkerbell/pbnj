@@ -19,7 +19,7 @@ type Task struct {
 
 func NewIngestQueue() *IngestQueue {
 	return &IngestQueue{
-		q: queue.NewBlocking([]*Task{}, queue.WithCapacity(10000)),
+		q: queue.NewBlocking([]*Task{}),
 	}
 }
 

@@ -4,12 +4,16 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/tinkerbell/pbnj/pkg/metrics"
 )
 
 type orchestrator struct {
 	workers           sync.Map
 	manager           *concurrencyManager
 	workerIdleTimeout time.Duration
+
+	ingestManager *concurrencyManager
 
 	fifoQueue      *hostQueue
 	ingestionQueue *IngestQueue
@@ -28,28 +32,34 @@ func (o *orchestrator) ingest(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		default:
-			// 1. dequeue from ingestion queue
-			// 2. enqueue to perID queue
-			// 3. enqueue to fcfs queue
-			// ---
-			// 1. dequeue from ingestion queue
-			t, err := o.ingestionQueue.Dequeue()
-			if err != nil {
-				continue
-			}
+			o.ingestManager.Wait()
+			go func() {
+				defer o.ingestManager.Done()
+				// 1. dequeue from ingestion queue
+				// 2. enqueue to perID queue
+				// 3. enqueue to fcfs queue
+				// ---
+				// 1. dequeue from ingestion queue
+				t, err := o.ingestionQueue.Dequeue()
+				if err != nil {
+					return
+				}
+				metrics.IngestionQueue.Dec()
 
-			// 2. enqueue to perID queue
-			// hostCh := make(chan Task)
-			que := NewIngestQueue()
-			q, _ := o.perIDQueue.LoadOrStore(t.Host, que)
-			v, ok := q.(*IngestQueue)
-			if !ok {
-				continue
-			}
-			v.Enqueue(t)
+				// 2. enqueue to perID queue
+				que := NewIngestQueue()
+				q, _ := o.perIDQueue.LoadOrStore(t.Host, que)
+				v, ok := q.(*IngestQueue)
+				if !ok {
+					return
+				}
+				v.Enqueue(t)
+				metrics.PerIDQueue.WithLabelValues(t.Host).Inc()
 
-			// 3. enqueue to fcfs queue
-			o.fifoQueue.Enqueue(host(t.Host))
+				// 3. enqueue to fcfs queue
+				o.fifoQueue.Enqueue(host(t.Host))
+			}()
+
 		}
 	}
 }
@@ -133,6 +143,7 @@ func (r *Runner) worker(ctx context.Context, hostID string) {
 					continue
 				}
 				tChan <- task
+				metrics.PerIDQueue.WithLabelValues(hostID).Dec()
 			}
 		}
 	}(tChan)

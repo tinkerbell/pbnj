@@ -28,6 +28,7 @@ func NewRunner(repo repository.Actions, maxWorkers int, workerIdleTimeout time.D
 	o := &orchestrator{
 		fifoQueue:      newHostQueue(),
 		ingestionQueue: NewIngestQueue(),
+		ingestManager:  newManager(1000),
 		// perIDQueue is a map of hostID to a channel of tasks.
 		perIDQueue:        sync.Map{},
 		manager:           newManager(maxWorkers),
@@ -66,6 +67,7 @@ func (r *Runner) Execute(_ context.Context, l logr.Logger, description, taskID, 
 	}
 
 	r.orchestrator.ingestionQueue.Enqueue(i)
+	metrics.IngestionQueue.Inc()
 }
 
 func (r *Runner) updateMessages(ctx context.Context, taskID string, ch chan string) {
