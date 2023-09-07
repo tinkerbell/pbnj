@@ -9,6 +9,7 @@ import "api/v1/common.proto";
 
 service Diagnostic {
     rpc Screenshot (ScreenshotRequest) returns (ScreenshotResponse);
+    rpc ClearSEL (ClearSELRequest) returns (ClearSELResponse);
 }
 
 message ScreenshotRequest {
@@ -19,4 +20,13 @@ message ScreenshotRequest {
 message ScreenshotResponse {
     bytes image = 1;
     string filetype = 2;
+}
+
+message ClearSELRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+}
+
+message ClearSELResponse {
+    string task_id = 1;
 }
