@@ -42,7 +42,7 @@ func setup() {
 		Ctx:   ctx,
 	}
 
-	tr = taskrunner.NewRunner(repo, 100, time.Second)
+	tr = taskrunner.NewRunner(repo, 100, 100, time.Second)
 	tr.Start(ctx)
 	bmcService = BmcService{
 		TaskRunner:             tr,

@@ -24,11 +24,19 @@ type Runner struct {
 	orchestrator *orchestrator
 }
 
-func NewRunner(repo repository.Actions, maxWorkers int, workerIdleTimeout time.Duration) *Runner {
+// NewRunner returns a task runner that manages tasks, workers, queues, and persistence.
+//
+// maxIngestionWorkers is the maximum number of concurrent workers that will be allowed.
+// These are the workers that handle ingesting tasks from RPC endpoints and writing them to the map of per Host ID queues.
+//
+// maxWorkers is the maximum number of concurrent workers that will be allowed to handle bmc tasks.
+//
+// workerIdleTimeout is the idle timeout for workers. If no tasks are received within the timeout, the worker will exit.
+func NewRunner(repo repository.Actions, maxIngestionWorkers, maxWorkers int, workerIdleTimeout time.Duration) *Runner {
 	o := &orchestrator{
 		fifoQueue:      newHostQueue(),
 		ingestionQueue: NewIngestQueue(),
-		ingestManager:  newManager(1000),
+		ingestManager:  newManager(maxIngestionWorkers),
 		// perIDQueue is a map of hostID to a channel of tasks.
 		perIDQueue:        sync.Map{},
 		manager:           newManager(maxWorkers),
