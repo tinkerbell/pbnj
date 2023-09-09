@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/go-logr/logr"
@@ -33,8 +34,17 @@ func (h *Server) init() {
 	h.mux.HandleFunc("/_/live", h.handleLive)
 }
 
-func (h *Server) Run() error {
-	return http.ListenAndServe(h.address, h.mux) //nolint:gosec // TODO: add handle timeouts
+func (h *Server) Run(ctx context.Context) error {
+	svr := &http.Server{Addr: h.address, Handler: h.mux}
+	svr.ListenAndServe()
+
+	go func() {
+		<-ctx.Done()
+		svr.Shutdown(ctx)
+	}()
+
+	return svr.ListenAndServe()
+	// return http.ListenAndServe(h.address, h.mux) //nolint:gosec // TODO: add handle timeouts
 }
 
 func NewServer(addr string) *Server {

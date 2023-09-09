@@ -64,14 +64,14 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 	l := logging.ExtractLogr(ctx)
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID, "bmcIP", in.GetAuthn().GetDirectAuthn().GetHost().GetHost())
-	l.Info(
+	/*l.Info(
 		"start Power request",
 		"username", in.GetAuthn().GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),
 		"powerAction", in.GetPowerAction().String(),
 		"softTimeout", in.SoftTimeout,
 		"OffDuration", in.OffDuration,
-	)
+	)*/
 
 	execFunc := func(s chan string) (string, error) {
 		mp, err := machine.NewPowerSetter(

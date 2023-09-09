@@ -2,9 +2,11 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -105,6 +107,7 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 	for _, opt := range opts {
 		opt(defaultServer)
 	}
+	fmt.Printf("maxWorkers: %d\n", defaultServer.maxWorkers)
 
 	tr := taskrunner.NewRunner(repo, defaultServer.maxIngestionWorkers, defaultServer.maxWorkers, defaultServer.workerIdleTimeout)
 	tr.Start(ctx)
@@ -144,7 +147,7 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 	reflection.Register(grpcServer)
 
 	go func() {
-		err := httpServer.Run()
+		err := httpServer.Run(ctx)
 		if err != nil {
 			log.Error(err, "failed to serve http")
 			os.Exit(1) //nolint:revive // removing deep-exit requires a significant refactor
@@ -159,6 +162,16 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 			log.Info("sig received, shutting down PBnJ")
 			grpcServer.GracefulStop()
 			<-ctx.Done()
+		}
+	}()
+
+	msgChan := make(chan os.Signal)
+	signal.Notify(msgChan, syscall.SIGUSR1)
+	go func() {
+		for range msgChan {
+			fmt.Println("======")
+			tr.Print()
+			fmt.Println("======")
 		}
 	}()
 

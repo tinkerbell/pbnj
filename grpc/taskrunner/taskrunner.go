@@ -2,6 +2,7 @@ package taskrunner
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/url"
 	"sync"
@@ -33,14 +34,18 @@ type Runner struct {
 //
 // workerIdleTimeout is the idle timeout for workers. If no tasks are received within the timeout, the worker will exit.
 func NewRunner(repo repository.Actions, maxIngestionWorkers, maxWorkers int, workerIdleTimeout time.Duration) *Runner {
+	fmt.Println("NewRunner", maxIngestionWorkers, maxWorkers, workerIdleTimeout)
 	o := &orchestrator{
+		workers:        sync.Map{},
 		fifoQueue:      newHostQueue(),
+		fifoChan:       make(chan host, 5000),
 		ingestionQueue: NewIngestQueue(),
 		ingestManager:  newManager(maxIngestionWorkers),
 		// perIDQueue is a map of hostID to a channel of tasks.
 		perIDQueue:        sync.Map{},
 		manager:           newManager(maxWorkers),
 		workerIdleTimeout: workerIdleTimeout,
+		ingestChan:        make(chan Task, 5000),
 	}
 
 	return &Runner{
@@ -60,22 +65,41 @@ func (r *Runner) TotalWorkers() int {
 }
 
 func (r *Runner) Start(ctx context.Context) {
-	go r.orchestrator.ingest(ctx)
+	go func() {
+		ticker := time.NewTicker(3 * time.Second)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				metrics.NumWorkers.Set(float64(r.orchestrator.manager.RunningCount()))
+				var size int
+				r.orchestrator.workers.Range(func(key, value interface{}) bool {
+					size++
+					return true
+				})
+				metrics.WorkerMap.Set(float64(size))
+			}
+		}
+	}()
+	go r.ingest(ctx)
 	go r.orchestrate(ctx)
 }
 
 // Execute a task, update repository with status.
-func (r *Runner) Execute(_ context.Context, l logr.Logger, description, taskID, host string, action func(chan string) (string, error)) {
+func (r *Runner) Execute(_ context.Context, l logr.Logger, description, taskID, hostID string, action func(chan string) (string, error)) {
 	i := Task{
 		ID:          taskID,
-		Host:        host,
+		Host:        hostID,
 		Description: description,
 		Action:      action,
 		Log:         l,
 	}
 
-	r.orchestrator.ingestionQueue.Enqueue(i)
+	//r.orchestrator.ingestionQueue.Enqueue(i)
+	r.orchestrator.ingestChan <- i
 	metrics.IngestionQueue.Inc()
+	metrics.Ingested.Inc()
 }
 
 func (r *Runner) updateMessages(ctx context.Context, taskID string, ch chan string) {
@@ -106,7 +130,8 @@ func (r *Runner) process(ctx context.Context, logger logr.Logger, description, t
 		r.active.Add(-1)
 	}()
 
-	metrics.TasksTotal.Inc()
+	defer metrics.TasksTotal.Inc()
+	defer metrics.TotalGauge.Inc()
 	metrics.TasksActive.Inc()
 	defer metrics.TasksActive.Dec()
 
@@ -130,7 +155,7 @@ func (r *Runner) process(ctx context.Context, logger logr.Logger, description, t
 	cctx, done := context.WithCancel(ctx)
 	defer done()
 	go r.updateMessages(cctx, taskID, messagesChan)
-	logger.Info("worker start")
+	//logger.Info("worker start")
 
 	resultRecord := repository.Record{
 		State:    "complete",
@@ -154,7 +179,7 @@ func (r *Runner) process(ctx context.Context, logger logr.Logger, description, t
 		if errors.As(err, &foundErr) {
 			resultRecord.Error = foundErr.StructuredError()
 		}
-		logger.Error(err, "task completed with an error")
+		//logger.Error(err, "task completed with an error")
 	}
 	record, err := r.Repository.Get(taskID)
 	if err != nil {
@@ -167,10 +192,10 @@ func (r *Runner) process(ctx context.Context, logger logr.Logger, description, t
 	record.Error = resultRecord.Error
 
 	if err := r.Repository.Update(taskID, record); err != nil {
-		logger.Error(err, "failed to update record")
+		//logger.Error(err, "failed to update record")
 	}
 
-	logger.Info("worker complete", "complete", true)
+	//logger.Info("worker complete", "complete", true)
 }
 
 // Status returns the status record of a task.

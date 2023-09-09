@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -98,19 +99,18 @@ var (
 			httpServer := http.NewServer(metricsAddr)
 			httpServer.WithLogger(logger)
 
-			opts := []grpcsvr.ServerOption{grpcsvr.WithBmcTimeout(bmcTimeout)}
+			opts := []grpcsvr.ServerOption{
+				grpcsvr.WithBmcTimeout(bmcTimeout),
+				grpcsvr.WithMaxWorkers(maxWorkers),
+				grpcsvr.WithWorkerIdleTimeout(workerIdleTimeout),
+			}
 
 			if skipRedfishVersions != "" {
 				versions := strings.Split(skipRedfishVersions, ",")
 				opts = append(opts, grpcsvr.WithSkipRedfishVersions(versions))
 			}
 
-			if maxWorkers > 0 {
-				opts = append(opts, grpcsvr.WithMaxWorkers(maxWorkers))
-			}
-			if workerIdleTimeout > 0 {
-				opts = append(opts, grpcsvr.WithWorkerIdleTimeout(workerIdleTimeout))
-			}
+			fmt.Println("maxWorkers", maxWorkers)
 
 			if err := grpcsvr.RunServer(ctx, logger, grpcServer, port, httpServer, opts...); err != nil {
 				logger.Error(err, "error running server")
