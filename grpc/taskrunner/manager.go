@@ -1,5 +1,7 @@
 package taskrunner
 
+// copied and modified from https://github.com/zenthangplus/goccm
+
 import "sync/atomic"
 
 type concurrencyManager struct {

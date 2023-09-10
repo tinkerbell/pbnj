@@ -14,9 +14,9 @@ type orchestrator struct {
 	manager           *concurrencyManager
 	workerIdleTimeout time.Duration
 	fifoChan          chan string
-	// perIDQueue is a map of hostID to a channel of tasks.
-	perIDQueue sync.Map
-	ingestChan chan Task
+	// perHostChan is a map of hostID to a channel of tasks.
+	perHostChan sync.Map
+	ingestChan  chan Task
 }
 
 // ingest take a task off the ingestion queue and puts it on the perID queue
@@ -32,8 +32,8 @@ func (r *Runner) ingest(ctx context.Context) {
 		case t := <-r.orchestrator.ingestChan:
 
 			// 2. enqueue to perID queue
-			ch := make(chan Task, 5000)
-			q, exists := r.orchestrator.perIDQueue.LoadOrStore(t.Host, ch)
+			ch := make(chan Task, 10)
+			q, exists := r.orchestrator.perHostChan.LoadOrStore(t.Host, ch)
 			v, ok := q.(chan Task)
 			if !ok {
 				fmt.Println("bad type: IngestQueue")
@@ -59,22 +59,22 @@ func (r *Runner) orchestrate(ctx context.Context) {
 	// 1. dequeue from fcfs queue
 	// 2. start workers
 	for {
-		time.Sleep(time.Second * 2)
+		// time.Sleep(time.Second * 3) - this potential helps with ingestion
 		r.orchestrator.workers.Range(func(key, value interface{}) bool {
 			// if worker id exists in o.workers, then move on because the worker is already running.
-			if value.(bool) {
+			if value.(bool) { //nolint: forcetypeassert // values are always certain.
 				return true
 			}
 
 			// wait for a worker to become available
 			r.orchestrator.manager.Wait()
 
-			r.orchestrator.workers.Store(key.(string), true)
-			v, found := r.orchestrator.perIDQueue.Load(key.(string))
+			r.orchestrator.workers.Store(key.(string), true) //nolint: forcetypeassert // values are always certain.
+			v, found := r.orchestrator.perHostChan.Load(key.(string))
 			if !found {
 				return false
 			}
-			go r.worker(ctx, key.(string), v.(chan Task))
+			go r.worker(ctx, key.(string), v.(chan Task)) //nolint: forcetypeassert // values are always certain.
 			return true
 		})
 	}

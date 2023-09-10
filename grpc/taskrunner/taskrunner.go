@@ -44,8 +44,8 @@ func NewRunner(repo repository.Actions, maxWorkers int, workerIdleTimeout time.D
 	o := &orchestrator{
 		workers:  sync.Map{},
 		fifoChan: make(chan string, 10000),
-		// perIDQueue is a map of hostID to a channel of tasks.
-		perIDQueue:        sync.Map{},
+		// perHostChan is a map of hostID to a channel of tasks.
+		perHostChan:       sync.Map{},
 		manager:           newManager(maxWorkers),
 		workerIdleTimeout: workerIdleTimeout,
 		ingestChan:        make(chan Task, 10000),

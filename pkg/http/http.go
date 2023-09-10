@@ -50,7 +50,11 @@ func (h *Server) Run(ctx context.Context) error {
 		_ = svr.Shutdown(ctx)
 	}()
 
-	return svr.ListenAndServe()
+	if err := svr.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return err
+	}
+
+	return nil
 }
 
 func NewServer(addr string) *Server {
