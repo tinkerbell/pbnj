@@ -26,22 +26,20 @@ func TestRoundTrip(t *testing.T) {
 	defer s.Close()
 	repo := &persistence.GoKV{Store: s, Ctx: ctx}
 	logger := logr.Discard()
-	runner := Runner{
-		Repository: repo,
-		Ctx:        ctx,
-	}
+	runner := NewRunner(repo, 100, time.Second)
+	runner.Start(ctx)
+	time.Sleep(time.Millisecond * 100)
 
 	taskID := xid.New().String()
-	runner.Execute(ctx, logger, description, taskID, func(s chan string) (string, error) {
-		return "didnt do anything", defaultError
-	})
-
 	if len(taskID) != 20 {
 		t.Fatalf("expected id of length 20,  got: %v (%v)", len(taskID), taskID)
 	}
+	runner.Execute(ctx, logger, description, taskID, "123", func(s chan string) (string, error) {
+		return "didnt do anything", defaultError
+	})
 
 	// must be min of 3 because we sleep 2 seconds in worker function to allow final status messages to be written
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(time.Second * 2)
 	record, err := runner.Status(ctx, taskID)
 	if err != nil {
 		t.Fatal(err)

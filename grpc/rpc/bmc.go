@@ -45,7 +45,7 @@ func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetR
 
 	l.Info(
 		"start Reset request",
-		"username", in.Authn.GetDirectAuthn().GetUsername(),
+		"username", in.GetAuthn().GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),
 		"resetKind", in.GetResetKind().String(),
 	)
@@ -66,20 +66,20 @@ func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetR
 		defer cancel()
 		return "", t.BMCReset(taskCtx, in.ResetKind.String())
 	}
-	b.TaskRunner.Execute(ctx, l, "bmc reset", taskID, execFunc)
+	b.TaskRunner.Execute(ctx, l, "bmc reset", taskID, in.GetAuthn().GetDirectAuthn().GetHost().GetHost(), execFunc)
 
 	return &v1.ResetResponse{TaskId: taskID}, nil
 }
 
 // CreateUser sets the next boot device of a machine.
-func (b *BmcService) CreateUser(ctx context.Context, in *v1.CreateUserRequest) (*v1.CreateUserResponse, error) {
+func (b *BmcService) CreateUser(ctx context.Context, in *v1.CreateUserRequest) (*v1.CreateUserResponse, error) { //nolint:dupl // there is enough difference to not be a duplicate.
 	l := logging.ExtractLogr(ctx)
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID)
 
 	l.Info(
 		"start CreateUser request",
-		"username", in.Authn.GetDirectAuthn().GetUsername(),
+		"username", in.GetAuthn().GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),
 		"userCreds.Username", in.UserCreds.Username,
 		"userCreds.UserRole", in.UserCreds.UserRole,
@@ -101,20 +101,20 @@ func (b *BmcService) CreateUser(ctx context.Context, in *v1.CreateUserRequest) (
 		defer cancel()
 		return "", t.CreateUser(taskCtx)
 	}
-	b.TaskRunner.Execute(ctx, l, "creating user", taskID, execFunc)
+	b.TaskRunner.Execute(ctx, l, "creating user", taskID, in.GetAuthn().GetDirectAuthn().GetHost().GetHost(), execFunc)
 
 	return &v1.CreateUserResponse{TaskId: taskID}, nil
 }
 
 // UpdateUser updates a users credentials on a BMC.
-func (b *BmcService) UpdateUser(ctx context.Context, in *v1.UpdateUserRequest) (*v1.UpdateUserResponse, error) {
+func (b *BmcService) UpdateUser(ctx context.Context, in *v1.UpdateUserRequest) (*v1.UpdateUserResponse, error) { //nolint:dupl // there is enough difference to not be a duplicate.
 	l := logging.ExtractLogr(ctx)
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID)
 
 	l.Info(
 		"start UpdateUser request",
-		"username", in.Authn.GetDirectAuthn().GetUsername(),
+		"username", in.GetAuthn().GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),
 		"userCreds.Username", in.UserCreds.Username,
 		"userCreds.UserRole", in.UserCreds.UserRole,
@@ -136,7 +136,7 @@ func (b *BmcService) UpdateUser(ctx context.Context, in *v1.UpdateUserRequest) (
 		defer cancel()
 		return "", t.UpdateUser(taskCtx)
 	}
-	b.TaskRunner.Execute(ctx, l, "updating user", taskID, execFunc)
+	b.TaskRunner.Execute(ctx, l, "updating user", taskID, in.GetAuthn().GetDirectAuthn().GetHost().GetHost(), execFunc)
 
 	return &v1.UpdateUserResponse{TaskId: taskID}, nil
 }
@@ -148,7 +148,7 @@ func (b *BmcService) DeleteUser(ctx context.Context, in *v1.DeleteUserRequest) (
 	l = l.WithValues("taskID", taskID)
 	l.Info(
 		"start DeleteUser request",
-		"username", in.Authn.GetDirectAuthn().GetUsername(),
+		"username", in.GetAuthn().GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),
 		"userCreds.Username", in.Username,
 	)
@@ -169,7 +169,7 @@ func (b *BmcService) DeleteUser(ctx context.Context, in *v1.DeleteUserRequest) (
 		defer cancel()
 		return "", t.DeleteUser(taskCtx)
 	}
-	b.TaskRunner.Execute(ctx, l, "deleting user", taskID, execFunc)
+	b.TaskRunner.Execute(ctx, l, "deleting user", taskID, in.GetAuthn().GetDirectAuthn().GetHost().GetHost(), execFunc)
 
 	return &v1.DeleteUserResponse{TaskId: taskID}, nil
 }

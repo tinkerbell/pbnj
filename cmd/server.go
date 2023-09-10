@@ -48,6 +48,13 @@ var (
 	//
 	// for more information see https://github.com/bmc-toolbox/bmclib#bmc-connections
 	skipRedfishVersions string
+	// maxWorkers is the maximum number of concurrent workers that will be allowed to handle bmc tasks.
+	maxWorkers int
+	// workerIdleTimeout is the idle timeout for workers. If no tasks are received within the timeout, the worker will exit.
+	workerIdleTimeout time.Duration
+	// maxIngestionWorkers is the maximum number of concurrent workers that will be allowed.
+	// These are the workers that handle ingesting tasks from RPC endpoints and writing them to the map of per Host ID queues.
+	maxIngestionWorkers int
 	// serverCmd represents the server command.
 	serverCmd = &cobra.Command{
 		Use:   "server",
@@ -91,7 +98,11 @@ var (
 			httpServer := http.NewServer(metricsAddr)
 			httpServer.WithLogger(logger)
 
-			opts := []grpcsvr.ServerOption{grpcsvr.WithBmcTimeout(bmcTimeout)}
+			opts := []grpcsvr.ServerOption{
+				grpcsvr.WithBmcTimeout(bmcTimeout),
+				grpcsvr.WithMaxWorkers(maxWorkers),
+				grpcsvr.WithWorkerIdleTimeout(workerIdleTimeout),
+			}
 
 			if skipRedfishVersions != "" {
 				versions := strings.Split(skipRedfishVersions, ",")
@@ -114,6 +125,9 @@ func init() {
 	serverCmd.PersistentFlags().StringVar(&rsPubKey, "rsPubKey", "", "RS public key")
 	serverCmd.PersistentFlags().DurationVar(&bmcTimeout, "bmcTimeout", oob.DefaultBMCTimeout, "Timeout for BMC calls")
 	serverCmd.PersistentFlags().StringVar(&skipRedfishVersions, "skipRedfishVersions", "", "Ignore the redfish endpoint on BMCs running the given version(s)")
+	serverCmd.PersistentFlags().IntVar(&maxWorkers, "maxWorkers", 1000, "Maximum number of concurrent workers that will be allowed to handle bmc tasks")
+	serverCmd.PersistentFlags().DurationVar(&workerIdleTimeout, "workerIdleTimeout", 30*time.Second, "Idle timeout for workers. If no tasks are received within the timeout, the worker will exit. New tasks will spawn a new worker if there isn't a worker running")
+	serverCmd.PersistentFlags().IntVar(&maxIngestionWorkers, "maxIngestionWorkers", 1000, "Maximum number of concurrent workers that will be allowed. These are the workers that handle ingesting tasks from RPC endpoints and writing them to the map of per Host ID queues")
 	rootCmd.AddCommand(serverCmd)
 }
 

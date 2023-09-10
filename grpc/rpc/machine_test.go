@@ -7,11 +7,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/onsi/gomega"
-	"github.com/philippgille/gokv"
-	"github.com/philippgille/gokv/freecache"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
-	"github.com/tinkerbell/pbnj/grpc/persistence"
-	"github.com/tinkerbell/pbnj/grpc/taskrunner"
 )
 
 func TestDevice(t *testing.T) {
@@ -58,22 +54,7 @@ func TestDevice(t *testing.T) {
 			g := gomega.NewGomegaWithT(t)
 
 			ctx := context.Background()
-
-			f := freecache.NewStore(freecache.DefaultOptions)
-			s := gokv.Store(f)
-			repo := &persistence.GoKV{
-				Store: s,
-				Ctx:   ctx,
-			}
-
-			taskRunner := &taskrunner.Runner{
-				Repository: repo,
-				Ctx:        ctx,
-			}
-			machineSvc := MachineService{
-				TaskRunner: taskRunner,
-			}
-			response, err := machineSvc.BootDevice(ctx, testCase.req)
+			response, err := machineService.BootDevice(ctx, testCase.req)
 
 			t.Log("Got : ", response)
 			if err != nil {
@@ -157,22 +138,7 @@ func TestPower(t *testing.T) {
 			g := gomega.NewGomegaWithT(t)
 
 			ctx := context.Background()
-
-			f := freecache.NewStore(freecache.DefaultOptions)
-			s := gokv.Store(f)
-			repo := &persistence.GoKV{
-				Store: s,
-				Ctx:   ctx,
-			}
-
-			taskRunner := &taskrunner.Runner{
-				Repository: repo,
-				Ctx:        ctx,
-			}
-			machineSvc := MachineService{
-				TaskRunner: taskRunner,
-			}
-			response, err := machineSvc.Power(ctx, testCase.req)
+			response, err := machineService.Power(ctx, testCase.req)
 
 			t.Log("Got response: ", response)
 			t.Log("Got err: ", err)

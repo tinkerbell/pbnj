@@ -21,6 +21,7 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/repository"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
 )
 
 // Server options.
@@ -35,6 +36,10 @@ type Server struct {
 	//
 	// for more information see https://github.com/bmc-toolbox/bmclib#bmc-connections
 	skipRedfishVersions []string
+	// maxWorkers is the maximum number of concurrent workers that will be allowed to handle bmc tasks.
+	maxWorkers int
+	// workerIdleTimeout is the idle timeout for workers. If no tasks are received within the timeout, the worker will exit.
+	workerIdleTimeout time.Duration
 }
 
 // ServerOption for setting optional values.
@@ -55,6 +60,18 @@ func WithSkipRedfishVersions(versions []string) ServerOption {
 	return func(args *Server) { args.skipRedfishVersions = versions }
 }
 
+// WithMaxWorkers sets the max number of of concurrent workers that handle bmc tasks..
+func WithMaxWorkers(max int) ServerOption {
+	return func(args *Server) { args.maxWorkers = max }
+}
+
+// WithWorkerIdleTimeout sets the idle timeout for workers.
+// If no tasks are received within the timeout, the worker will exit.
+// New tasks will spawn a new worker if there isn't a worker running.
+func WithWorkerIdleTimeout(t time.Duration) ServerOption {
+	return func(args *Server) { args.workerIdleTimeout = t }
+}
+
 // RunServer registers all services and runs the server.
 func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, port string, httpServer *http.Server, opts ...ServerOption) error {
 	ctx, cancel := context.WithCancel(ctx)
@@ -69,27 +86,27 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 	}
 
 	defaultServer := &Server{
-		Actions:    repo,
-		bmcTimeout: oob.DefaultBMCTimeout,
+		Actions:           repo,
+		bmcTimeout:        oob.DefaultBMCTimeout,
+		maxWorkers:        1000,
+		workerIdleTimeout: time.Second * 30,
 	}
 
 	for _, opt := range opts {
 		opt(defaultServer)
 	}
 
-	taskRunner := &taskrunner.Runner{
-		Repository: defaultServer.Actions,
-		Ctx:        ctx,
-	}
+	tr := taskrunner.NewRunner(repo, defaultServer.maxWorkers, defaultServer.workerIdleTimeout)
+	tr.Start(ctx)
 
 	ms := rpc.MachineService{
-		TaskRunner: taskRunner,
+		TaskRunner: tr,
 		Timeout:    defaultServer.bmcTimeout,
 	}
 	v1.RegisterMachineServer(grpcServer, &ms)
 
 	bs := rpc.BmcService{
-		TaskRunner:          taskRunner,
+		TaskRunner:          tr,
 		Timeout:             defaultServer.bmcTimeout,
 		SkipRedfishVersions: defaultServer.skipRedfishVersions,
 	}
@@ -99,7 +116,7 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 	v1.RegisterDiagnosticServer(grpcServer, &ds)
 
 	ts := rpc.TaskService{
-		TaskRunner: taskRunner,
+		TaskRunner: tr,
 	}
 	v1.RegisterTaskServer(grpcServer, &ts)
 
@@ -113,10 +130,11 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 		return err
 	}
 
-	httpServer.WithTaskRunner(taskRunner)
+	httpServer.WithTaskRunner(tr)
+	reflection.Register(grpcServer)
 
 	go func() {
-		err := httpServer.Run()
+		err := httpServer.Run(ctx)
 		if err != nil {
 			log.Error(err, "failed to serve http")
 			os.Exit(1) //nolint:revive // removing deep-exit requires a significant refactor

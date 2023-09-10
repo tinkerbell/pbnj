@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/philippgille/gokv"
@@ -19,9 +20,10 @@ import (
 const tempIPMITool = "/tmp/ipmitool"
 
 var (
-	ctx        context.Context
-	taskRunner *taskrunner.Runner
-	bmcService BmcService
+	tr             *taskrunner.Runner
+	bmcService     BmcService
+	taskService    TaskService
+	machineService MachineService
 )
 
 func TestMain(m *testing.M) {
@@ -32,7 +34,7 @@ func TestMain(m *testing.M) {
 }
 
 func setup() {
-	ctx = context.Background()
+	ctx := context.Background()
 	f := freecache.NewStore(freecache.DefaultOptions)
 	s := gokv.Store(f)
 	repo := &persistence.GoKV{
@@ -40,13 +42,17 @@ func setup() {
 		Ctx:   ctx,
 	}
 
-	taskRunner = &taskrunner.Runner{
-		Repository: repo,
-		Ctx:        ctx,
-	}
+	tr = taskrunner.NewRunner(repo, 100, time.Second)
+	tr.Start(ctx)
 	bmcService = BmcService{
-		TaskRunner:             taskRunner,
+		TaskRunner:             tr,
 		UnimplementedBMCServer: v1.UnimplementedBMCServer{},
+	}
+	taskService = TaskService{
+		TaskRunner: tr,
+	}
+	machineService = MachineService{
+		TaskRunner: tr,
 	}
 	_, err := exec.LookPath("ipmitool")
 	if err != nil {
@@ -98,7 +104,7 @@ func TestConfigNetworkSource(t *testing.T) {
 	for _, tc := range testCases {
 		testCase := tc
 		t.Run(testCase.name, func(t *testing.T) {
-			response, err := bmcService.NetworkSource(ctx, testCase.req)
+			response, err := bmcService.NetworkSource(context.Background(), testCase.req)
 			if response != nil {
 				t.Fatalf("response should be nil, got: %v", response)
 			}
@@ -155,7 +161,7 @@ func TestReset(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			response, err := bmcService.Reset(ctx, tc.in)
+			response, err := bmcService.Reset(context.Background(), tc.in)
 			if err != nil {
 				diff := cmp.Diff(tc.expectedErr.Error(), err.Error())
 				if diff != "" {
@@ -218,7 +224,7 @@ func TestCreateUser(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			response, err := bmcService.CreateUser(ctx, tc.in)
+			response, err := bmcService.CreateUser(context.Background(), tc.in)
 			if err != nil {
 				diff := cmp.Diff(tc.expectedErr.Error(), err.Error())
 				if diff != "" {
@@ -281,7 +287,7 @@ func TestUpdateUser(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			response, err := bmcService.UpdateUser(ctx, tc.in)
+			response, err := bmcService.UpdateUser(context.Background(), tc.in)
 			if err != nil {
 				diff := cmp.Diff(tc.expectedErr.Error(), err.Error())
 				if diff != "" {
@@ -340,7 +346,7 @@ func TestDeleteUser(t *testing.T) {
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			response, err := bmcService.DeleteUser(ctx, tc.in)
+			response, err := bmcService.DeleteUser(context.Background(), tc.in)
 			if err != nil {
 				diff := cmp.Diff(tc.expectedErr.Error(), err.Error())
 				if diff != "" {

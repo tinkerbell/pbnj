@@ -90,7 +90,7 @@ require (
 	golang.org/x/crypto v0.6.0 // indirect
 	golang.org/x/exp v0.0.0-20230212135524-a684f29349b6 // indirect
 	golang.org/x/net v0.8.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
 	google.golang.org/genproto v0.0.0-20230209215440-0dfe4f8abfcc // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0 // indirect
