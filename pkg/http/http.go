@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -35,16 +36,21 @@ func (h *Server) init() {
 }
 
 func (h *Server) Run(ctx context.Context) error {
-	svr := &http.Server{Addr: h.address, Handler: h.mux}
-	svr.ListenAndServe()
+	svr := &http.Server{
+		Addr:    h.address,
+		Handler: h.mux,
+		// Mitigate Slowloris attacks. 20 seconds is based on Apache's recommended 20-40
+		// recommendation. Hegel doesn't really have many headers so 20s should be plenty of time.
+		// https://en.wikipedia.org/wiki/Slowloris_(computer_security)
+		ReadHeaderTimeout: 20 * time.Second,
+	}
 
 	go func() {
 		<-ctx.Done()
-		svr.Shutdown(ctx)
+		_ = svr.Shutdown(ctx)
 	}()
 
 	return svr.ListenAndServe()
-	// return http.ListenAndServe(h.address, h.mux) //nolint:gosec // TODO: add handle timeouts
 }
 
 func NewServer(addr string) *Server {

@@ -34,9 +34,10 @@ func TestTaskFound(t *testing.T) {
 		t.Fatalf("expected no error, got: %v", err)
 	}
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 3)
 	taskReq := &v1.StatusRequest{TaskId: resp.TaskId}
 	taskResp, _ := taskService.Status(context.Background(), taskReq)
+	t.Logf("Got response: %+v", taskResp)
 	if taskResp.Id != resp.TaskId {
 		t.Fatalf("got: %+v", taskResp)
 	}

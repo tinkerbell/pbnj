@@ -54,7 +54,7 @@ func (m *MachineService) BootDevice(ctx context.Context, in *v1.DeviceRequest) (
 		defer cancel()
 		return mbd.BootDeviceSet(taskCtx, in.BootDevice.String(), in.Persistent, in.EfiBoot)
 	}
-	go m.TaskRunner.Execute(ctx, l, "setting boot device", taskID, in.GetAuthn().GetDirectAuthn().GetHost().GetHost(), execFunc)
+	m.TaskRunner.Execute(ctx, l, "setting boot device", taskID, in.GetAuthn().GetDirectAuthn().GetHost().GetHost(), execFunc)
 
 	return &v1.DeviceResponse{TaskId: taskID}, nil
 }
@@ -64,14 +64,14 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 	l := logging.ExtractLogr(ctx)
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID, "bmcIP", in.GetAuthn().GetDirectAuthn().GetHost().GetHost())
-	/*l.Info(
+	l.Info(
 		"start Power request",
 		"username", in.GetAuthn().GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),
 		"powerAction", in.GetPowerAction().String(),
 		"softTimeout", in.SoftTimeout,
 		"OffDuration", in.OffDuration,
-	)*/
+	)
 
 	execFunc := func(s chan string) (string, error) {
 		mp, err := machine.NewPowerSetter(
@@ -89,7 +89,7 @@ func (m *MachineService) Power(ctx context.Context, in *v1.PowerRequest) (*v1.Po
 		defer cancel()
 		return mp.PowerSet(taskCtx, in.PowerAction.String())
 	}
-	go m.TaskRunner.Execute(ctx, l, "power action: "+in.GetPowerAction().String(), taskID, in.GetAuthn().GetDirectAuthn().GetHost().GetHost(), execFunc)
+	m.TaskRunner.Execute(ctx, l, "power action: "+in.GetPowerAction().String(), taskID, in.GetAuthn().GetDirectAuthn().GetHost().GetHost(), execFunc)
 
 	return &v1.PowerResponse{TaskId: taskID}, nil
 }

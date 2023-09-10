@@ -3,7 +3,6 @@ module github.com/tinkerbell/pbnj
 go 1.20
 
 require (
-	github.com/adrianbrad/queue v1.2.1
 	github.com/bmc-toolbox/bmclib v0.5.7
 	github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230515164712-2714c7479477
 	github.com/cristalhq/jwt/v3 v3.1.0

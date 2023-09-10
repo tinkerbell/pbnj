@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -109,8 +108,6 @@ var (
 				versions := strings.Split(skipRedfishVersions, ",")
 				opts = append(opts, grpcsvr.WithSkipRedfishVersions(versions))
 			}
-
-			fmt.Println("maxWorkers", maxWorkers)
 
 			if err := grpcsvr.RunServer(ctx, logger, grpcServer, port, httpServer, opts...); err != nil {
 				logger.Error(err, "error running server")

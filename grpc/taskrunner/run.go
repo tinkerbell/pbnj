@@ -13,36 +13,15 @@ type orchestrator struct {
 	workers           sync.Map
 	manager           *concurrencyManager
 	workerIdleTimeout time.Duration
-
-	ingestManager *concurrencyManager
-
-	fifoQueue      *hostQueue
-	fifoChan       chan host
-	ingestionQueue *IngestQueue
+	fifoChan          chan string
 	// perIDQueue is a map of hostID to a channel of tasks.
 	perIDQueue sync.Map
-
-	//testing new stuff
 	ingestChan chan Task
-}
-
-func (r *Runner) Print() {
-	one := r.orchestrator.ingestionQueue.Size()
-	two := r.orchestrator.fifoQueue.Size()
-	var three int
-	r.orchestrator.perIDQueue.Range(func(key, value interface{}) bool {
-		three++
-		return true
-	})
-	fmt.Printf("ingestion queue size: %d\n", one)
-	fmt.Printf("fcfs queue size: %d\n", two)
-	fmt.Printf("perID queue size: %d\n", three)
 }
 
 // ingest take a task off the ingestion queue and puts it on the perID queue
 // and adds the host ID to the fcfs queue.
 func (r *Runner) ingest(ctx context.Context) {
-	//func (o *orchestrator) ingest(ctx context.Context) {
 	// dequeue from ingestion queue
 	// enqueue to perID queue
 	// enqueue to fcfs queue
@@ -81,7 +60,6 @@ func (r *Runner) orchestrate(ctx context.Context) {
 	// 2. start workers
 	for {
 		time.Sleep(time.Second * 2)
-		// r.orchestrator.perIDQueue.Range(func(key, value interface{}) bool {
 		r.orchestrator.workers.Range(func(key, value interface{}) bool {
 			// if worker id exists in o.workers, then move on because the worker is already running.
 			if value.(bool) {
@@ -92,7 +70,10 @@ func (r *Runner) orchestrate(ctx context.Context) {
 			r.orchestrator.manager.Wait()
 
 			r.orchestrator.workers.Store(key.(string), true)
-			v, _ := r.orchestrator.perIDQueue.Load(key.(string))
+			v, found := r.orchestrator.perIDQueue.Load(key.(string))
+			if !found {
+				return false
+			}
 			go r.worker(ctx, key.(string), v.(chan Task))
 			return true
 		})
@@ -101,25 +82,20 @@ func (r *Runner) orchestrate(ctx context.Context) {
 
 func (r *Runner) worker(ctx context.Context, hostID string, q chan Task) {
 	defer r.orchestrator.manager.Done()
-	defer func() {
-		r.orchestrator.workers.Range(func(key, value interface{}) bool {
-			if key.(string) == hostID { //nolint:forcetypeassert // good
-				r.orchestrator.workers.Delete(key.(string))
-				return true //nolint:revive // this is needed to satisfy the func parameter
-			}
-			return true //nolint:revive // this is needed to satisfy the func parameter
-		})
-
-	}()
+	defer r.orchestrator.workers.Delete(hostID)
 
 	for {
 		select {
 		case <-ctx.Done():
+			// TODO: check queue length before returning maybe?
+			// For 175000 tasks, i found there would occasionally be 1 or 2 that didnt get processed.
+			// still seemed to be in the queue/chan.
 			return
 		case t := <-q:
 			r.process(ctx, t.Log, t.Description, t.ID, t.Action)
 			metrics.PerIDQueue.WithLabelValues(hostID).Dec()
 		case <-time.After(r.orchestrator.workerIdleTimeout):
+			// TODO: check queue length returning maybe?
 			return
 		}
 	}

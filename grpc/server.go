@@ -2,11 +2,9 @@ package grpc
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"os"
 	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -42,9 +40,6 @@ type Server struct {
 	maxWorkers int
 	// workerIdleTimeout is the idle timeout for workers. If no tasks are received within the timeout, the worker will exit.
 	workerIdleTimeout time.Duration
-	// maxIngestionWorkers is the maximum number of concurrent workers that will be allowed.
-	// These are the workers that handle ingesting tasks from RPC endpoints and writing them to the map of per Host ID queues.
-	maxIngestionWorkers int
 }
 
 // ServerOption for setting optional values.
@@ -77,12 +72,6 @@ func WithWorkerIdleTimeout(t time.Duration) ServerOption {
 	return func(args *Server) { args.workerIdleTimeout = t }
 }
 
-// WithMaxIngestionWorkers sets the max number of concurrent workers that will be allowed.
-// These are the workers that handle ingesting tasks from RPC endpoints and writing them to the map of per Host ID queues.
-func WithMaxIngestionWorkers(max int) ServerOption {
-	return func(args *Server) { args.maxIngestionWorkers = max }
-}
-
 // RunServer registers all services and runs the server.
 func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, port string, httpServer *http.Server, opts ...ServerOption) error {
 	ctx, cancel := context.WithCancel(ctx)
@@ -97,19 +86,17 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 	}
 
 	defaultServer := &Server{
-		Actions:             repo,
-		bmcTimeout:          oob.DefaultBMCTimeout,
-		maxWorkers:          1000,
-		workerIdleTimeout:   time.Second * 30,
-		maxIngestionWorkers: 1000,
+		Actions:           repo,
+		bmcTimeout:        oob.DefaultBMCTimeout,
+		maxWorkers:        1000,
+		workerIdleTimeout: time.Second * 30,
 	}
 
 	for _, opt := range opts {
 		opt(defaultServer)
 	}
-	fmt.Printf("maxWorkers: %d\n", defaultServer.maxWorkers)
 
-	tr := taskrunner.NewRunner(repo, defaultServer.maxIngestionWorkers, defaultServer.maxWorkers, defaultServer.workerIdleTimeout)
+	tr := taskrunner.NewRunner(repo, defaultServer.maxWorkers, defaultServer.workerIdleTimeout)
 	tr.Start(ctx)
 
 	ms := rpc.MachineService{
@@ -162,16 +149,6 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 			log.Info("sig received, shutting down PBnJ")
 			grpcServer.GracefulStop()
 			<-ctx.Done()
-		}
-	}()
-
-	msgChan := make(chan os.Signal)
-	signal.Notify(msgChan, syscall.SIGUSR1)
-	go func() {
-		for range msgChan {
-			fmt.Println("======")
-			tr.Print()
-			fmt.Println("======")
 		}
 	}()
 
