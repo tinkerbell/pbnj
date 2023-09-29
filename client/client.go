@@ -125,10 +125,10 @@ func Screenshot(ctx context.Context, client v1.DiagnosticClient, request *v1.Scr
 	return filename, nil
 }
 
-// ClearSEL clears the SEL log of the server.
-func ClearSEL(ctx context.Context, client v1.DiagnosticClient, taskClient v1.TaskClient, request *v1.ClearSELRequest) (*v1.StatusResponse, error) {
+// ClearSystemEventLog clears the System Event Log of the server.
+func ClearSystemEventLog(ctx context.Context, client v1.DiagnosticClient, taskClient v1.TaskClient, request *v1.ClearSystemEventLogRequest) (*v1.StatusResponse, error) {
 	var statusResp *v1.StatusResponse
-	response, err := client.ClearSEL(ctx, request)
+	response, err := client.ClearSystemEventLog(ctx, request)
 	if err != nil {
 		return nil, err
 	}

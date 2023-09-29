@@ -32,7 +32,7 @@ func (this *ScreenshotRequest) Validate() error {
 func (this *ScreenshotResponse) Validate() error {
 	return nil
 }
-func (this *ClearSELRequest) Validate() error {
+func (this *ClearSystemEventLogRequest) Validate() error {
 	if this.Authn != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Authn); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Authn", err)
@@ -45,6 +45,6 @@ func (this *ClearSELRequest) Validate() error {
 	}
 	return nil
 }
-func (this *ClearSELResponse) Validate() error {
+func (this *ClearSystemEventLogResponse) Validate() error {
 	return nil
 }

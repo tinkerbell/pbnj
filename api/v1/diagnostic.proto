@@ -9,7 +9,7 @@ import "api/v1/common.proto";
 
 service Diagnostic {
     rpc Screenshot (ScreenshotRequest) returns (ScreenshotResponse);
-    rpc ClearSEL (ClearSELRequest) returns (ClearSELResponse);
+    rpc ClearSystemEventLog (ClearSystemEventLogRequest) returns (ClearSystemEventLogResponse);
 }
 
 message ScreenshotRequest {
@@ -22,11 +22,11 @@ message ScreenshotResponse {
     string filetype = 2;
 }
 
-message ClearSELRequest {
+message ClearSystemEventLogRequest {
     v1.Authn authn = 1;
     v1.Vendor vendor = 2;
 }
 
-message ClearSELResponse {
+message ClearSystemEventLogResponse {
     string task_id = 1;
 }

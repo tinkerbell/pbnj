@@ -17,9 +17,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func NewSELClearer(req *v1.ClearSELRequest, opts ...Option) (*Action, error) {
+func NewSystemEventLogClearer(req *v1.ClearSystemEventLogRequest, opts ...Option) (*Action, error) {
 	a := &Action{}
-	a.ClearSELRequest = req
+	a.ClearSystemEventLogRequest = req
 	for _, opt := range opts {
 		err := opt(a)
 		if err != nil {
@@ -29,26 +29,26 @@ func NewSELClearer(req *v1.ClearSELRequest, opts ...Option) (*Action, error) {
 	return a, nil
 }
 
-func (m Action) ClearSEL(ctx context.Context) (result string, err error) {
+func (m Action) ClearSystemEventLog(ctx context.Context) (result string, err error) {
 	labels := prometheus.Labels{
 		"service": "diagnostic",
-		"action":  "clearsel",
+		"action":  "clear_system_event_log",
 	}
 
 	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	tracer := otel.Tracer("pbnj")
-	ctx, span := tracer.Start(ctx, "diagnostic.ClearSEL", trace.WithAttributes(
-		attribute.String("bmc.device", m.ClearSELRequest.GetAuthn().GetDirectAuthn().GetHost().GetHost()),
+	ctx, span := tracer.Start(ctx, "diagnostic.ClearSystemEventLog", trace.WithAttributes(
+		attribute.String("bmc.device", m.ClearSystemEventLogRequest.GetAuthn().GetDirectAuthn().GetHost().GetHost()),
 	))
 	defer span.End()
 
-	if v := m.ClearSELRequest.GetVendor(); v != nil {
+	if v := m.ClearSystemEventLogRequest.GetVendor(); v != nil {
 		span.SetAttributes(attribute.String("bmc.vendor", v.GetName()))
 	}
 
-	host, user, password, parseErr := m.ParseAuth(m.ClearSELRequest.GetAuthn())
+	host, user, password, parseErr := m.ParseAuth(m.ClearSystemEventLogRequest.GetAuthn())
 	if parseErr != nil {
 		span.SetStatus(codes.Error, "error parsing credentials: "+parseErr.Error())
 		return result, parseErr
@@ -61,7 +61,7 @@ func (m Action) ClearSEL(ctx context.Context) (result string, err error) {
 	}
 
 	client := bmclib.NewClient(host, user, password, opts...)
-	client.Registry.Drivers = client.Registry.Supports(providers.FeatureSELClear)
+	client.Registry.Drivers = client.Registry.Supports(providers.FeatureClearSystemEventLog)
 
 	m.SendStatusMessage("connecting to BMC")
 	err = client.Open(ctx)
@@ -83,15 +83,15 @@ func (m Action) ClearSEL(ctx context.Context) (result string, err error) {
 	log.Info("connected to BMC", logMetadata(client.GetMetadata())...)
 	m.SendStatusMessage("connected to BMC")
 
-	err = client.ClearSEL(ctx)
+	err = client.ClearSystemEventLog(ctx)
 	log = m.Log.WithValues(logMetadata(client.GetMetadata())...)
 	meta = client.GetMetadata()
-	span.SetAttributes(attribute.String("bmc.clearsel.successfulProvider", meta.SuccessfulProvider),
-		attribute.StringSlice("bmc.clearsel.ProvidersAttempted", meta.ProvidersAttempted))
+	span.SetAttributes(attribute.String("bmc.clearsystemeventlog.successfulProvider", meta.SuccessfulProvider),
+		attribute.StringSlice("bmc.clearsystemeventlog.ProvidersAttempted", meta.ProvidersAttempted))
 	if err != nil {
-		log.Error(err, "error clearing SEL")
-		span.SetStatus(codes.Error, "error clearing SEL: "+err.Error())
-		m.SendStatusMessage(fmt.Sprintf("failed to clear SEL %v", host))
+		log.Error(err, "error clearing SystemEventLog")
+		span.SetStatus(codes.Error, "error clearing System Event Log: "+err.Error())
+		m.SendStatusMessage(fmt.Sprintf("failed to clear System Event Log %v", host))
 
 		return "", &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
@@ -100,8 +100,8 @@ func (m Action) ClearSEL(ctx context.Context) (result string, err error) {
 	}
 
 	span.SetStatus(codes.Ok, "")
-	log.Info("cleared SEL", logMetadata(client.GetMetadata())...)
-	m.SendStatusMessage(fmt.Sprintf("cleared SEL on %v", host))
+	log.Info("cleared System Event Log", logMetadata(client.GetMetadata())...)
+	m.SendStatusMessage(fmt.Sprintf("cleared SystemEvent Log on %v", host))
 
 	return result, nil
 }

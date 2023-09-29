@@ -47,19 +47,19 @@ func (d *DiagnosticService) Screenshot(ctx context.Context, in *v1.ScreenshotReq
 	}, nil
 }
 
-func (d *DiagnosticService) ClearSEL(ctx context.Context, in *v1.ClearSELRequest) (*v1.ClearSELResponse, error) {
+func (d *DiagnosticService) ClearSystemEventLog(ctx context.Context, in *v1.ClearSystemEventLogRequest) (*v1.ClearSystemEventLogResponse, error) {
 	l := logging.ExtractLogr(ctx)
 	taskID := xid.New().String()
 	l = l.WithValues("taskID", taskID)
 
 	l.Info(
-		"start ClearSEL request",
+		"start Clear System Event Log request",
 		"username", in.Authn.GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),
 	)
 
 	execFunc := func(s chan string) (string, error) {
-		csl, err := diagnostic.NewSELClearer(
+		csl, err := diagnostic.NewSystemEventLogClearer(
 			in,
 			diagnostic.WithLogger(l),
 			diagnostic.WithStatusMessage(s),
@@ -72,11 +72,11 @@ func (d *DiagnosticService) ClearSEL(ctx context.Context, in *v1.ClearSELRequest
 		c := trace.ContextWithSpanContext(context.Background(), trace.SpanContextFromContext(ctx))
 		taskCtx, cancel := context.WithTimeout(c, d.Timeout)
 		defer cancel()
-		return csl.ClearSEL(taskCtx)
+		return csl.ClearSystemEventLog(taskCtx)
 	}
 
-	d.TaskRunner.Execute(ctx, l, "clearing sel", taskID, execFunc)
+	d.TaskRunner.Execute(ctx, l, "clearing system event log", taskID, execFunc)
 
-	return &v1.ClearSELResponse{TaskId: taskID}, nil
+	return &v1.ClearSystemEventLogResponse{TaskId: taskID}, nil
 
 }

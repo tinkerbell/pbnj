@@ -8,8 +8,8 @@ import (
 
 type Action struct {
 	common.Accessory
-	ScreenshotRequest *v1.ScreenshotRequest
-	ClearSELRequest   *v1.ClearSELRequest
+	ScreenshotRequest          *v1.ScreenshotRequest
+	ClearSystemEventLogRequest *v1.ClearSystemEventLogRequest
 }
 
 // WithLogger adds a logr to an Action struct.
