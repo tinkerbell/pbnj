@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	clearSELcommand = &cobra.Command{
+	clearSystemEventLogcommand = &cobra.Command{
 		Use:   "selclear",
-		Short: "Clear the SEL",
-		Long:  `Clear the SEL of the target BMC`,
+		Short: "Clear the System Event Log",
+		Long:  `Clear the System Event Log of the target BMC`,
 		Run: func(cmd *cobra.Command, args []string) {
 			var opts []grpc.DialOption
 			ctx := context.Background()
@@ -33,7 +33,7 @@ var (
 
 			taskClient := v1.NewTaskClient(conn)
 
-			resp, err := v1Client.ClearSEL(ctx, client, taskClient, &v1.ClearSELRequest{
+			resp, err := v1Client.ClearSystemEventLog(ctx, client, taskClient, &v1.ClearSystemEventLogRequest{
 				Authn: &v1.Authn{
 					Authn: &v1.Authn_DirectAuthn{
 						DirectAuthn: &v1.DirectAuthn{
@@ -60,5 +60,5 @@ var (
 )
 
 func init() {
-	diagnosticCmd.AddCommand(clearSELcommand)
+	diagnosticCmd.AddCommand(clearSystemEventLogcommand)
 }

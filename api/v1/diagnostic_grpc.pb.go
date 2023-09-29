@@ -19,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type DiagnosticClient interface {
 	Screenshot(ctx context.Context, in *ScreenshotRequest, opts ...grpc.CallOption) (*ScreenshotResponse, error)
-	ClearSEL(ctx context.Context, in *ClearSELRequest, opts ...grpc.CallOption) (*ClearSELResponse, error)
+	ClearSystemEventLog(ctx context.Context, in *ClearSystemEventLogRequest, opts ...grpc.CallOption) (*ClearSystemEventLogResponse, error)
 }
 
 type diagnosticClient struct {
@@ -39,9 +39,9 @@ func (c *diagnosticClient) Screenshot(ctx context.Context, in *ScreenshotRequest
 	return out, nil
 }
 
-func (c *diagnosticClient) ClearSEL(ctx context.Context, in *ClearSELRequest, opts ...grpc.CallOption) (*ClearSELResponse, error) {
-	out := new(ClearSELResponse)
-	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.Diagnostic/ClearSEL", in, out, opts...)
+func (c *diagnosticClient) ClearSystemEventLog(ctx context.Context, in *ClearSystemEventLogRequest, opts ...grpc.CallOption) (*ClearSystemEventLogResponse, error) {
+	out := new(ClearSystemEventLogResponse)
+	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.Diagnostic/ClearSystemEventLog", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (c *diagnosticClient) ClearSEL(ctx context.Context, in *ClearSELRequest, op
 // for forward compatibility
 type DiagnosticServer interface {
 	Screenshot(context.Context, *ScreenshotRequest) (*ScreenshotResponse, error)
-	ClearSEL(context.Context, *ClearSELRequest) (*ClearSELResponse, error)
+	ClearSystemEventLog(context.Context, *ClearSystemEventLogRequest) (*ClearSystemEventLogResponse, error)
 	mustEmbedUnimplementedDiagnosticServer()
 }
 
@@ -64,8 +64,8 @@ type UnimplementedDiagnosticServer struct {
 func (UnimplementedDiagnosticServer) Screenshot(context.Context, *ScreenshotRequest) (*ScreenshotResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Screenshot not implemented")
 }
-func (UnimplementedDiagnosticServer) ClearSEL(context.Context, *ClearSELRequest) (*ClearSELResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ClearSEL not implemented")
+func (UnimplementedDiagnosticServer) ClearSystemEventLog(context.Context, *ClearSystemEventLogRequest) (*ClearSystemEventLogResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClearSystemEventLog not implemented")
 }
 func (UnimplementedDiagnosticServer) mustEmbedUnimplementedDiagnosticServer() {}
 
@@ -98,20 +98,20 @@ func _Diagnostic_Screenshot_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Diagnostic_ClearSEL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClearSELRequest)
+func _Diagnostic_ClearSystemEventLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClearSystemEventLogRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(DiagnosticServer).ClearSEL(ctx, in)
+		return srv.(DiagnosticServer).ClearSystemEventLog(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.Diagnostic/ClearSEL",
+		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.Diagnostic/ClearSystemEventLog",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(DiagnosticServer).ClearSEL(ctx, req.(*ClearSELRequest))
+		return srv.(DiagnosticServer).ClearSystemEventLog(ctx, req.(*ClearSystemEventLogRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -125,8 +125,8 @@ var _Diagnostic_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Diagnostic_Screenshot_Handler,
 		},
 		{
-			MethodName: "ClearSEL",
-			Handler:    _Diagnostic_ClearSEL_Handler,
+			MethodName: "ClearSystemEventLog",
+			Handler:    _Diagnostic_ClearSystemEventLog_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

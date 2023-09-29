@@ -2,11 +2,9 @@ module github.com/tinkerbell/pbnj
 
 go 1.20
 
-replace github.com/bmc-toolbox/bmclib/v2 => ../bmclib
-
 require (
 	github.com/bmc-toolbox/bmclib v0.5.7
-	github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230515164712-2714c7479477
+	github.com/bmc-toolbox/bmclib/v2 v2.0.1-0.20230925132953-d2aac70a0c5e
 	github.com/cristalhq/jwt/v3 v3.1.0
 	github.com/equinix-labs/otel-init-go v0.0.7
 	github.com/fatih/color v1.15.0
@@ -84,7 +82,7 @@ require (
 	github.com/spf13/afero v1.9.3 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/stmcginnis/gofish v0.14.0 // indirect
+	github.com/stmcginnis/gofish v0.14.1-0.20230920133920-77490fd98fa2 // indirect
 	github.com/subosito/gotenv v1.4.2 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.13.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.13.0 // indirect
