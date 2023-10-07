@@ -78,5 +78,4 @@ func (d *DiagnosticService) ClearSystemEventLog(ctx context.Context, in *v1.Clea
 	d.TaskRunner.Execute(ctx, l, "clearing system event log", taskID, execFunc)
 
 	return &v1.ClearSystemEventLogResponse{TaskId: taskID}, nil
-
 }
