@@ -95,7 +95,10 @@ func RunServer(ctx context.Context, log logr.Logger, grpcServer *grpc.Server, po
 	}
 	v1.RegisterBMCServer(grpcServer, &bs)
 
-	ds := rpc.DiagnosticService{}
+	ds := rpc.DiagnosticService{
+		TaskRunner: taskRunner,
+		Timeout:    defaultServer.bmcTimeout,
+	}
 	v1.RegisterDiagnosticServer(grpcServer, &ds)
 
 	ts := rpc.TaskService{

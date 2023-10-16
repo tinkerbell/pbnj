@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/bmc-toolbox/bmclib/v2"
-	"github.com/bmc-toolbox/bmclib/v2/bmc"
 	"github.com/bmc-toolbox/bmclib/v2/providers"
 	"github.com/prometheus/client_golang/prometheus"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
@@ -18,9 +17,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func NewScreenshotter(req *v1.ScreenshotRequest, opts ...Option) (*Action, error) {
+func NewSystemEventLogClearer(req *v1.ClearSystemEventLogRequest, opts ...Option) (*Action, error) {
 	a := &Action{}
-	a.ScreenshotRequest = req
+	a.ClearSystemEventLogRequest = req
 	for _, opt := range opts {
 		err := opt(a)
 		if err != nil {
@@ -30,29 +29,29 @@ func NewScreenshotter(req *v1.ScreenshotRequest, opts ...Option) (*Action, error
 	return a, nil
 }
 
-func (m Action) GetScreenshot(ctx context.Context) (image []byte, filetype string, err error) {
+func (m Action) ClearSystemEventLog(ctx context.Context) (result string, err error) {
 	labels := prometheus.Labels{
 		"service": "diagnostic",
-		"action":  "screenshot",
+		"action":  "clear_system_event_log",
 	}
 
 	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	tracer := otel.Tracer("pbnj")
-	ctx, span := tracer.Start(ctx, "diagnostic.GetScreenshot", trace.WithAttributes(
-		attribute.String("bmc.device", m.ScreenshotRequest.GetAuthn().GetDirectAuthn().GetHost().GetHost()),
+	ctx, span := tracer.Start(ctx, "diagnostic.ClearSystemEventLog", trace.WithAttributes(
+		attribute.String("bmc.device", m.ClearSystemEventLogRequest.GetAuthn().GetDirectAuthn().GetHost().GetHost()),
 	))
 	defer span.End()
 
-	if v := m.ScreenshotRequest.GetVendor(); v != nil {
+	if v := m.ClearSystemEventLogRequest.GetVendor(); v != nil {
 		span.SetAttributes(attribute.String("bmc.vendor", v.GetName()))
 	}
 
-	host, user, password, parseErr := m.ParseAuth(m.ScreenshotRequest.GetAuthn())
+	host, user, password, parseErr := m.ParseAuth(m.ClearSystemEventLogRequest.GetAuthn())
 	if parseErr != nil {
 		span.SetStatus(codes.Error, "error parsing credentials: "+parseErr.Error())
-		return nil, "", parseErr
+		return result, parseErr
 	}
 	span.SetAttributes(attribute.String("bmc.host", host), attribute.String("bmc.username", user))
 
@@ -62,7 +61,7 @@ func (m Action) GetScreenshot(ctx context.Context) (image []byte, filetype strin
 	}
 
 	client := bmclib.NewClient(host, user, password, opts...)
-	client.Registry.Drivers = client.Registry.Supports(providers.FeatureScreenshot)
+	client.Registry.Drivers = client.Registry.Supports(providers.FeatureClearSystemEventLog)
 
 	m.SendStatusMessage("connecting to BMC")
 	err = client.Open(ctx)
@@ -71,7 +70,7 @@ func (m Action) GetScreenshot(ctx context.Context) (image []byte, filetype strin
 		attribute.StringSlice("bmc.open.successfulOpenConns", meta.SuccessfulOpenConns))
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return nil, "", &repository.Error{
+		return "", &repository.Error{
 			Code:    v1.Code_value["PERMISSION_DENIED"],
 			Message: err.Error(),
 		}
@@ -84,35 +83,25 @@ func (m Action) GetScreenshot(ctx context.Context) (image []byte, filetype strin
 	log.Info("connected to BMC", logMetadata(client.GetMetadata())...)
 	m.SendStatusMessage("connected to BMC")
 
-	image, filetype, err = client.Screenshot(ctx)
+	err = client.ClearSystemEventLog(ctx)
 	log = m.Log.WithValues(logMetadata(client.GetMetadata())...)
 	meta = client.GetMetadata()
-	span.SetAttributes(attribute.String("bmc.screenshot.successfulProvider", meta.SuccessfulProvider),
-		attribute.StringSlice("bmc.screenshot.ProvidersAttempted", meta.ProvidersAttempted))
+	span.SetAttributes(attribute.String("bmc.clearsystemeventlog.successfulProvider", meta.SuccessfulProvider),
+		attribute.StringSlice("bmc.clearsystemeventlog.ProvidersAttempted", meta.ProvidersAttempted))
 	if err != nil {
-		log.Error(err, "error getting screenshot")
-		span.SetStatus(codes.Error, "error getting screenshot: "+err.Error())
-		m.SendStatusMessage(fmt.Sprintf("failed to screenshot %v", host))
+		log.Error(err, "error clearing SystemEventLog")
+		span.SetStatus(codes.Error, "error clearing System Event Log: "+err.Error())
+		m.SendStatusMessage(fmt.Sprintf("failed to clear System Event Log %v", host))
 
-		return nil, "", &repository.Error{
+		return "", &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
 			Message: err.Error(),
 		}
 	}
+
 	span.SetStatus(codes.Ok, "")
-	log.Info("got screenshot", logMetadata(client.GetMetadata())...)
-	m.SendStatusMessage(fmt.Sprintf("got screenshot from %v", host))
+	log.Info("cleared System Event Log", logMetadata(client.GetMetadata())...)
+	m.SendStatusMessage(fmt.Sprintf("cleared SystemEvent Log on %v", host))
 
-	return image, filetype, nil
-}
-
-func logMetadata(md bmc.Metadata) []interface{} {
-	kvs := []interface{}{
-		"ProvidersAttempted", md.ProvidersAttempted,
-		"SuccessfulOpenConns", md.SuccessfulOpenConns,
-		"SuccessfulCloseConns", md.SuccessfulCloseConns,
-		"SuccessfulProvider", md.SuccessfulProvider,
-	}
-
-	return kvs
+	return result, nil
 }

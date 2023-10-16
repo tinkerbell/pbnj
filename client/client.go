@@ -124,3 +124,24 @@ func Screenshot(ctx context.Context, client v1.DiagnosticClient, request *v1.Scr
 
 	return filename, nil
 }
+
+// ClearSystemEventLog clears the System Event Log of the server.
+func ClearSystemEventLog(ctx context.Context, client v1.DiagnosticClient, taskClient v1.TaskClient, request *v1.ClearSystemEventLogRequest) (*v1.StatusResponse, error) {
+	var statusResp *v1.StatusResponse
+	response, err := client.ClearSystemEventLog(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+
+	for to := 1; to <= 120; to++ {
+		statusResp, err := taskClient.Status(ctx, &v1.StatusRequest{TaskId: response.TaskId})
+		if err != nil {
+			return nil, err
+		}
+		if statusResp.Complete {
+			return statusResp, nil
+		}
+		time.Sleep(1 * time.Second)
+	}
+	return statusResp, nil
+}

@@ -32,3 +32,19 @@ func (this *ScreenshotRequest) Validate() error {
 func (this *ScreenshotResponse) Validate() error {
 	return nil
 }
+func (this *ClearSystemEventLogRequest) Validate() error {
+	if this.Authn != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Authn); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Authn", err)
+		}
+	}
+	if this.Vendor != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Vendor); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Vendor", err)
+		}
+	}
+	return nil
+}
+func (this *ClearSystemEventLogResponse) Validate() error {
+	return nil
+}
