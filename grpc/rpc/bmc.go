@@ -71,6 +71,38 @@ func (b *BmcService) Reset(ctx context.Context, in *v1.ResetRequest) (*v1.ResetR
 	return &v1.ResetResponse{TaskId: taskID}, nil
 }
 
+// DeactivateSOL deactivates any active SOL session on the BMC.
+func (b *BmcService) DeactivateSOL(ctx context.Context, in *v1.DeactivateSOLRequest) (*v1.DeactivateSOLResponse, error) {
+	l := logging.ExtractLogr(ctx)
+	taskID := xid.New().String()
+	l = l.WithValues("taskID", taskID)
+	l.Info(
+		"start DeactivateSOL request",
+		"username", in.Authn.GetDirectAuthn().GetUsername(),
+		"vendor", in.Vendor.GetName(),
+	)
+
+	execFunc := func(s chan string) (string, error) {
+		t, err := bmc.NewBMCResetter(
+			bmc.WithDeactivateSOLRequest(in),
+			bmc.WithLogger(l),
+			bmc.WithStatusMessage(s),
+		)
+		if err != nil {
+			return "", err
+		}
+		// Because this is a background task, we want to pass through the span context, but not be
+		// a child context. This allows us to correctly plumb otel into the background task.
+		c := trace.ContextWithSpanContext(context.Background(), trace.SpanContextFromContext(ctx))
+		taskCtx, cancel := context.WithTimeout(c, b.Timeout)
+		defer cancel()
+		return "", t.DeactivateSOL(taskCtx)
+	}
+	b.TaskRunner.Execute(ctx, l, "deactivating SOL session", taskID, execFunc)
+
+	return &v1.DeactivateSOLResponse{TaskId: taskID}, nil
+}
+
 // CreateUser sets the next boot device of a machine.
 func (b *BmcService) CreateUser(ctx context.Context, in *v1.CreateUserRequest) (*v1.CreateUserResponse, error) {
 	l := logging.ExtractLogr(ctx)
