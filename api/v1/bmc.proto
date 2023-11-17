@@ -14,6 +14,7 @@ service BMC {
     rpc CreateUser (CreateUserRequest) returns (CreateUserResponse);
     rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
     rpc UpdateUser (UpdateUserRequest) returns (UpdateUserResponse);
+    rpc DeactivateSOL (DeactivateSOLRequest) returns (DeactivateSOLResponse);
 }
 
 message NetworkSourceRequest {
@@ -69,6 +70,15 @@ message UpdateUserRequest {
 }
 
 message UpdateUserResponse {
+    string task_id = 1;
+}
+
+message DeactivateSOLRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+}
+
+message DeactivateSOLResponse {
     string task_id = 1;
 }
 
