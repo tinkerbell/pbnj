@@ -4,7 +4,6 @@ package v1
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -23,6 +22,7 @@ type BMCClient interface {
 	CreateUser(ctx context.Context, in *CreateUserRequest, opts ...grpc.CallOption) (*CreateUserResponse, error)
 	DeleteUser(ctx context.Context, in *DeleteUserRequest, opts ...grpc.CallOption) (*DeleteUserResponse, error)
 	UpdateUser(ctx context.Context, in *UpdateUserRequest, opts ...grpc.CallOption) (*UpdateUserResponse, error)
+	DeactivateSOL(ctx context.Context, in *DeactivateSOLRequest, opts ...grpc.CallOption) (*DeactivateSOLResponse, error)
 }
 
 type bMCClient struct {
@@ -78,6 +78,15 @@ func (c *bMCClient) UpdateUser(ctx context.Context, in *UpdateUserRequest, opts 
 	return out, nil
 }
 
+func (c *bMCClient) DeactivateSOL(ctx context.Context, in *DeactivateSOLRequest, opts ...grpc.CallOption) (*DeactivateSOLResponse, error) {
+	out := new(DeactivateSOLResponse)
+	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.BMC/DeactivateSOL", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BMCServer is the server API for BMC service.
 // All implementations must embed UnimplementedBMCServer
 // for forward compatibility
@@ -87,6 +96,7 @@ type BMCServer interface {
 	CreateUser(context.Context, *CreateUserRequest) (*CreateUserResponse, error)
 	DeleteUser(context.Context, *DeleteUserRequest) (*DeleteUserResponse, error)
 	UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error)
+	DeactivateSOL(context.Context, *DeactivateSOLRequest) (*DeactivateSOLResponse, error)
 	mustEmbedUnimplementedBMCServer()
 }
 
@@ -108,6 +118,9 @@ func (UnimplementedBMCServer) DeleteUser(context.Context, *DeleteUserRequest) (*
 }
 func (UnimplementedBMCServer) UpdateUser(context.Context, *UpdateUserRequest) (*UpdateUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateUser not implemented")
+}
+func (UnimplementedBMCServer) DeactivateSOL(context.Context, *DeactivateSOLRequest) (*DeactivateSOLResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeactivateSOL not implemented")
 }
 func (UnimplementedBMCServer) mustEmbedUnimplementedBMCServer() {}
 
@@ -212,6 +225,24 @@ func _BMC_UpdateUser_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BMC_DeactivateSOL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeactivateSOLRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BMCServer).DeactivateSOL(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.BMC/DeactivateSOL",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BMCServer).DeactivateSOL(ctx, req.(*DeactivateSOLRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _BMC_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "github.com.tinkerbell.pbnj.api.v1.BMC",
 	HandlerType: (*BMCServer)(nil),
@@ -235,6 +266,10 @@ var _BMC_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateUser",
 			Handler:    _BMC_UpdateUser_Handler,
+		},
+		{
+			MethodName: "DeactivateSOL",
+			Handler:    _BMC_DeactivateSOL_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
