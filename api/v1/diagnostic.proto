@@ -10,6 +10,8 @@ import "api/v1/common.proto";
 service Diagnostic {
     rpc Screenshot (ScreenshotRequest) returns (ScreenshotResponse);
     rpc ClearSystemEventLog (ClearSystemEventLogRequest) returns (ClearSystemEventLogResponse);
+    rpc GetSystemEventLog (GetSystemEventLogRequest) returns (GetSystemEventLogResponse);
+    rpc GetSystemEventLogRaw (GetSystemEventLogRawRequest) returns (GetSystemEventLogRawResponse);
 }
 
 message ScreenshotRequest {
@@ -29,4 +31,29 @@ message ClearSystemEventLogRequest {
 
 message ClearSystemEventLogResponse {
     string task_id = 1;
+}
+
+message GetSystemEventLogRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+}
+
+message SystemEventLogEntry {
+    string id = 1;
+    string timestamp = 2;
+    string description = 3;
+    string message = 4;
+}
+
+message GetSystemEventLogResponse {
+    repeated SystemEventLogEntry events = 1;
+}
+
+message GetSystemEventLogRawRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+}
+
+message GetSystemEventLogRawResponse {
+    string log = 1;
 }

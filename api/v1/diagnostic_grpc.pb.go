@@ -20,6 +20,8 @@ const _ = grpc.SupportPackageIsVersion7
 type DiagnosticClient interface {
 	Screenshot(ctx context.Context, in *ScreenshotRequest, opts ...grpc.CallOption) (*ScreenshotResponse, error)
 	ClearSystemEventLog(ctx context.Context, in *ClearSystemEventLogRequest, opts ...grpc.CallOption) (*ClearSystemEventLogResponse, error)
+	GetSystemEventLog(ctx context.Context, in *GetSystemEventLogRequest, opts ...grpc.CallOption) (*GetSystemEventLogResponse, error)
+	GetSystemEventLogRaw(ctx context.Context, in *GetSystemEventLogRawRequest, opts ...grpc.CallOption) (*GetSystemEventLogRawResponse, error)
 }
 
 type diagnosticClient struct {
@@ -48,12 +50,32 @@ func (c *diagnosticClient) ClearSystemEventLog(ctx context.Context, in *ClearSys
 	return out, nil
 }
 
+func (c *diagnosticClient) GetSystemEventLog(ctx context.Context, in *GetSystemEventLogRequest, opts ...grpc.CallOption) (*GetSystemEventLogResponse, error) {
+	out := new(GetSystemEventLogResponse)
+	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.Diagnostic/GetSystemEventLog", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *diagnosticClient) GetSystemEventLogRaw(ctx context.Context, in *GetSystemEventLogRawRequest, opts ...grpc.CallOption) (*GetSystemEventLogRawResponse, error) {
+	out := new(GetSystemEventLogRawResponse)
+	err := c.cc.Invoke(ctx, "/github.com.tinkerbell.pbnj.api.v1.Diagnostic/GetSystemEventLogRaw", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DiagnosticServer is the server API for Diagnostic service.
 // All implementations must embed UnimplementedDiagnosticServer
 // for forward compatibility
 type DiagnosticServer interface {
 	Screenshot(context.Context, *ScreenshotRequest) (*ScreenshotResponse, error)
 	ClearSystemEventLog(context.Context, *ClearSystemEventLogRequest) (*ClearSystemEventLogResponse, error)
+	GetSystemEventLog(context.Context, *GetSystemEventLogRequest) (*GetSystemEventLogResponse, error)
+	GetSystemEventLogRaw(context.Context, *GetSystemEventLogRawRequest) (*GetSystemEventLogRawResponse, error)
 	mustEmbedUnimplementedDiagnosticServer()
 }
 
@@ -66,6 +88,12 @@ func (UnimplementedDiagnosticServer) Screenshot(context.Context, *ScreenshotRequ
 }
 func (UnimplementedDiagnosticServer) ClearSystemEventLog(context.Context, *ClearSystemEventLogRequest) (*ClearSystemEventLogResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ClearSystemEventLog not implemented")
+}
+func (UnimplementedDiagnosticServer) GetSystemEventLog(context.Context, *GetSystemEventLogRequest) (*GetSystemEventLogResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSystemEventLog not implemented")
+}
+func (UnimplementedDiagnosticServer) GetSystemEventLogRaw(context.Context, *GetSystemEventLogRawRequest) (*GetSystemEventLogRawResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSystemEventLogRaw not implemented")
 }
 func (UnimplementedDiagnosticServer) mustEmbedUnimplementedDiagnosticServer() {}
 
@@ -116,6 +144,42 @@ func _Diagnostic_ClearSystemEventLog_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Diagnostic_GetSystemEventLog_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSystemEventLogRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DiagnosticServer).GetSystemEventLog(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.Diagnostic/GetSystemEventLog",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DiagnosticServer).GetSystemEventLog(ctx, req.(*GetSystemEventLogRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Diagnostic_GetSystemEventLogRaw_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSystemEventLogRawRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DiagnosticServer).GetSystemEventLogRaw(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/github.com.tinkerbell.pbnj.api.v1.Diagnostic/GetSystemEventLogRaw",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DiagnosticServer).GetSystemEventLogRaw(ctx, req.(*GetSystemEventLogRawRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Diagnostic_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "github.com.tinkerbell.pbnj.api.v1.Diagnostic",
 	HandlerType: (*DiagnosticServer)(nil),
@@ -127,6 +191,14 @@ var _Diagnostic_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ClearSystemEventLog",
 			Handler:    _Diagnostic_ClearSystemEventLog_Handler,
+		},
+		{
+			MethodName: "GetSystemEventLog",
+			Handler:    _Diagnostic_GetSystemEventLog_Handler,
+		},
+		{
+			MethodName: "GetSystemEventLogRaw",
+			Handler:    _Diagnostic_GetSystemEventLogRaw_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
