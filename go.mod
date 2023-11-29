@@ -6,7 +6,7 @@ require (
 	github.com/bmc-toolbox/bmclib v0.5.7
 	github.com/bmc-toolbox/bmclib/v2 v2.2.3
 	github.com/cristalhq/jwt/v3 v3.1.0
-	github.com/equinix-labs/otel-init-go v0.0.7
+	github.com/equinix-labs/otel-init-go v0.0.9
 	github.com/fatih/color v1.15.0
 	github.com/go-logr/logr v1.4.1
 	github.com/go-logr/zerologr v1.2.3

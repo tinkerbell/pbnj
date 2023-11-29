@@ -106,4 +106,64 @@ func (d *DiagnosticService) SendNMI(ctx context.Context, in *v1.SendNMIRequest) 
 	}
 
 	return empty, nil
+
+func (d *DiagnosticService) GetSystemEventLog(ctx context.Context, in *v1.GetSystemEventLogRequest) (*v1.GetSystemEventLogResponse, error) {
+	l := logging.ExtractLogr(ctx)
+
+	l.Info("start Get System Event Log request",
+		"username", in.Authn.GetDirectAuthn().GetUsername(),
+		"vendor", in.Vendor.GetName(),
+	)
+
+	selgetter, err := diagnostic.NewSystemEventLogGetter(in, diagnostic.WithLogger(l))
+	if err != nil {
+		l.Error(err, "error creating system event log getter")
+		return nil, err
+	}
+
+	entries, err := selgetter.GetSystemEventLog(ctx)
+	if err != nil {
+		l.Error(err, "error getting system event log")
+		return nil, err
+	}
+
+	var events []*v1.SystemEventLogEntry
+
+	for _, entry := range entries {
+		events = append(events, &v1.SystemEventLogEntry{
+			Id:          entry[0],
+			Timestamp:   entry[1],
+			Description: entry[2],
+			Message:     entry[3],
+		})
+	}
+
+	return &v1.GetSystemEventLogResponse{
+		Events: events,
+	}, nil
+}
+
+func (d *DiagnosticService) GetSystemEventLogRaw(ctx context.Context, in *v1.GetSystemEventLogRawRequest) (*v1.GetSystemEventLogRawResponse, error) {
+	l := logging.ExtractLogr(ctx)
+
+	l.Info("start Get System Event Log request",
+		"username", in.Authn.GetDirectAuthn().GetUsername(),
+		"vendor", in.Vendor.GetName(),
+	)
+
+	rawselgetter, err := diagnostic.NewSystemEventLogRawGetter(in, diagnostic.WithLogger(l))
+	if err != nil {
+		l.Error(err, "error creating raw system event log getter")
+		return nil, err
+	}
+
+	eventlog, err := rawselgetter.GetSystemEventLogRaw(ctx)
+	if err != nil {
+		l.Error(err, "error getting raw system event log")
+		return nil, err
+	}
+
+	return &v1.GetSystemEventLogRawResponse{
+		Log: eventlog,
+	}, nil
 }
