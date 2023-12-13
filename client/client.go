@@ -146,12 +146,12 @@ func ClearSystemEventLog(ctx context.Context, client v1.DiagnosticClient, taskCl
 	return statusResp, nil
 }
 
-// GetSystemEventLog retrieves the System Event Log of the server.
-func GetSystemEventLog(ctx context.Context, client v1.DiagnosticClient, request *v1.GetSystemEventLogRequest) (*v1.GetSystemEventLogResponse, error) {
-	return client.GetSystemEventLog(ctx, request)
+// SystemEventLog retrieves the System Event Log of the server.
+func SystemEventLog(ctx context.Context, client v1.DiagnosticClient, request *v1.SystemEventLogRequest) (*v1.SystemEventLogResponse, error) {
+	return client.SystemEventLog(ctx, request)
 }
 
-// GetSystemEventLogRaw retrieves the System Event Log of the server.
-func GetSystemEventLogRaw(ctx context.Context, client v1.DiagnosticClient, request *v1.GetSystemEventLogRawRequest) (*v1.GetSystemEventLogRawResponse, error) {
-	return client.GetSystemEventLogRaw(ctx, request)
+// SystemEventLogRaw retrieves the System Event Log of the server.
+func SystemEventLogRaw(ctx context.Context, client v1.DiagnosticClient, request *v1.SystemEventLogRawRequest) (*v1.SystemEventLogRawResponse, error) {
+	return client.SystemEventLogRaw(ctx, request)
 }

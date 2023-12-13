@@ -18,50 +18,47 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func NewSystemEventLogGetter(req *v1.GetSystemEventLogRequest, opts ...Option) (*Action, error) {
+func NewSystemEventLogAction(req interface{}, opts ...Option) (*Action, error) {
 	a := &Action{}
-	a.GetSystemEventLogRequest = req
+	switch r := req.(type) {
+	case *v1.SystemEventLogRequest:
+		a.SystemEventLogRequest = r
+	case *v1.SystemEventLogRawRequest:
+		a.SystemEventLogRawRequest = r
+	default:
+		return nil, fmt.Errorf("unsupported request type")
+	}
+
 	for _, opt := range opts {
 		err := opt(a)
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	return a, nil
 }
 
-func NewSystemEventLogRawGetter(req *v1.GetSystemEventLogRawRequest, opts ...Option) (*Action, error) {
-	a := &Action{}
-	a.GetSystemEventLogRawRequest = req
-	for _, opt := range opts {
-		err := opt(a)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return a, nil
-}
-
-func (m Action) GetSystemEventLog(ctx context.Context) (result bmc.SystemEventLogEntries, err error) {
+func (m Action) SystemEventLog(ctx context.Context) (result bmc.SystemEventLogEntries, err error) {
 	labels := prometheus.Labels{
 		"service": "diagnostic",
-		"action":  "get_system_event_log",
+		"action":  "system_event_log",
 	}
 
 	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	tracer := otel.Tracer("pbnj")
-	ctx, span := tracer.Start(ctx, "diagnostic.GetSystemEventLog", trace.WithAttributes(
-		attribute.String("bmc.device", m.GetSystemEventLogRequest.GetAuthn().GetDirectAuthn().GetHost().GetHost()),
+	ctx, span := tracer.Start(ctx, "diagnostic.SystemEventLog", trace.WithAttributes(
+		attribute.String("bmc.device", m.SystemEventLogRequest.GetAuthn().GetDirectAuthn().GetHost().GetHost()),
 	))
 	defer span.End()
 
-	if v := m.GetSystemEventLogRequest.GetVendor(); v != nil {
+	if v := m.SystemEventLogRequest.GetVendor(); v != nil {
 		span.SetAttributes(attribute.String("bmc.vendor", v.GetName()))
 	}
 
-	host, user, password, parseErr := m.ParseAuth(m.GetSystemEventLogRequest.GetAuthn())
+	host, user, password, parseErr := m.ParseAuth(m.SystemEventLogRequest.GetAuthn())
 	if parseErr != nil {
 		span.SetStatus(codes.Error, "error parsing credentials: "+parseErr.Error())
 		return result, parseErr
@@ -102,8 +99,8 @@ func (m Action) GetSystemEventLog(ctx context.Context) (result bmc.SystemEventLo
 	sel, err := client.GetSystemEventLog(ctx)
 	log = m.Log.WithValues(logMetadata(client.GetMetadata())...)
 	meta = client.GetMetadata()
-	span.SetAttributes(attribute.StringSlice("bmc.get_system_event_log.providersAttempted", meta.ProvidersAttempted),
-		attribute.StringSlice("bmc.get_system_event_log.successfulOpenConns", meta.SuccessfulOpenConns))
+	span.SetAttributes(attribute.StringSlice("bmc.system_event_log.providersAttempted", meta.ProvidersAttempted),
+		attribute.StringSlice("bmc.system_event_log.successfulOpenConns", meta.SuccessfulOpenConns))
 	if err != nil {
 		log.Error(err, "error getting system event log")
 		span.SetStatus(codes.Error, "error getting system event log: "+err.Error())
@@ -122,26 +119,26 @@ func (m Action) GetSystemEventLog(ctx context.Context) (result bmc.SystemEventLo
 	return sel, nil
 }
 
-func (m Action) GetSystemEventLogRaw(ctx context.Context) (result string, err error) {
+func (m Action) SystemEventLogRaw(ctx context.Context) (result string, err error) {
 	labels := prometheus.Labels{
 		"service": "diagnostic",
-		"action":  "get_system_event_log_raw",
+		"action":  "system_event_log_raw",
 	}
 
 	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	tracer := otel.Tracer("pbnj")
-	ctx, span := tracer.Start(ctx, "diagnostic.GetSystemEventLogRaw", trace.WithAttributes(
-		attribute.String("bmc.device", m.GetSystemEventLogRawRequest.GetAuthn().GetDirectAuthn().GetHost().GetHost()),
+	ctx, span := tracer.Start(ctx, "diagnostic.SystemEventLogRaw", trace.WithAttributes(
+		attribute.String("bmc.device", m.SystemEventLogRawRequest.GetAuthn().GetDirectAuthn().GetHost().GetHost()),
 	))
 	defer span.End()
 
-	if v := m.GetSystemEventLogRawRequest.GetVendor(); v != nil {
+	if v := m.SystemEventLogRawRequest.GetVendor(); v != nil {
 		span.SetAttributes(attribute.String("bmc.vendor", v.GetName()))
 	}
 
-	host, user, password, parseErr := m.ParseAuth(m.GetSystemEventLogRawRequest.GetAuthn())
+	host, user, password, parseErr := m.ParseAuth(m.SystemEventLogRawRequest.GetAuthn())
 	if parseErr != nil {
 		span.SetStatus(codes.Error, "error parsing credentials: "+parseErr.Error())
 		return result, parseErr
