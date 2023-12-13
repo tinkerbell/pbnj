@@ -8,13 +8,13 @@ import (
 
 type Action struct {
 	common.Accessory
-	ScreenshotRequest           *v1.ScreenshotRequest
-	ClearSystemEventLogRequest  *v1.ClearSystemEventLogRequest
-	SendNMIRequest              *v1.SendNMIRequest
-	ScreenshotRequest           *v1.ScreenshotRequest
-	ClearSystemEventLogRequest  *v1.ClearSystemEventLogRequest
-	GetSystemEventLogRequest    *v1.GetSystemEventLogRequest
-	GetSystemEventLogRawRequest *v1.GetSystemEventLogRawRequest
+	ScreenshotRequest          *v1.ScreenshotRequest
+	ClearSystemEventLogRequest *v1.ClearSystemEventLogRequest
+	SendNMIRequest             *v1.SendNMIRequest
+	SystemEventLogRequest      *v1.SystemEventLogRequest
+	SystemEventLogRawRequest   *v1.SystemEventLogRawRequest
+	ActionName                 string
+	RPCName                    string
 }
 
 // WithLogger adds a logr to an Action struct.
@@ -29,6 +29,15 @@ func WithLogger(l logr.Logger) Option {
 func WithStatusMessage(s chan string) Option {
 	return func(a *Action) error {
 		a.StatusMessages = s
+		return nil
+	}
+}
+
+// WithLabels adds the custom tracing and logging labels to an Action struct.
+func WithLabels(actionName string, rpcName string) Option {
+	return func(a *Action) error {
+		a.ActionName = actionName
+		a.RPCName = rpcName
 		return nil
 	}
 }
