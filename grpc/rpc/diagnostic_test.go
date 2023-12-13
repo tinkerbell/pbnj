@@ -329,14 +329,21 @@ func TestDiagnosticService_SystemEventLog(t *testing.T) {
 	}
 }
 
-// MockDiagnosticService is a mock implementation of the DiagnosticService interface.
 type MockDiagnosticService struct {
 	mock.Mock
 }
 
-// NewMockDiagnosticService creates a new instance of MockDiagnosticService.
 func NewMockDiagnosticService() *MockDiagnosticService {
 	return &MockDiagnosticService{}
+}
+
+func (m *MockDiagnosticService) Screenshot(ctx context.Context, in *v1.ScreenshotRequest) (*v1.ScreenshotResponse, error) {
+	args := m.Called(ctx, in)
+	resp, ok := args.Get(0).(*v1.ScreenshotResponse)
+	if !ok {
+		return nil, fmt.Errorf("unexpected type for ScreenshotResponse")
+	}
+	return resp, args.Error(1)
 }
 
 func (m *MockDiagnosticService) SystemEventLog(ctx context.Context, in *v1.SystemEventLogRequest) (*v1.SystemEventLogResponse, error) {
