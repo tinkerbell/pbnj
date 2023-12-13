@@ -79,7 +79,7 @@ var (
 			defer conn.Close()
 			client := v1.NewDiagnosticClient(conn)
 
-			resp, err := v1Client.GetSystemEventLog(ctx, client, &v1.GetSystemEventLogRequest{
+			resp, err := v1Client.SystemEventLog(ctx, client, &v1.SystemEventLogRequest{
 				Authn: &v1.Authn{
 					Authn: &v1.Authn_DirectAuthn{
 						DirectAuthn: &v1.DirectAuthn{
@@ -123,7 +123,7 @@ var (
 			defer conn.Close()
 			client := v1.NewDiagnosticClient(conn)
 
-			resp, err := v1Client.GetSystemEventLogRaw(ctx, client, &v1.GetSystemEventLogRawRequest{
+			resp, err := v1Client.SystemEventLogRaw(ctx, client, &v1.SystemEventLogRawRequest{
 				Authn: &v1.Authn{
 					Authn: &v1.Authn_DirectAuthn{
 						DirectAuthn: &v1.DirectAuthn{

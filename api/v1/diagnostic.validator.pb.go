@@ -48,7 +48,7 @@ func (this *ClearSystemEventLogRequest) Validate() error {
 func (this *ClearSystemEventLogResponse) Validate() error {
 	return nil
 }
-func (this *GetSystemEventLogRequest) Validate() error {
+func (this *SystemEventLogRequest) Validate() error {
 	if this.Authn != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Authn); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Authn", err)
@@ -64,7 +64,7 @@ func (this *GetSystemEventLogRequest) Validate() error {
 func (this *SystemEventLogEntry) Validate() error {
 	return nil
 }
-func (this *GetSystemEventLogResponse) Validate() error {
+func (this *SystemEventLogResponse) Validate() error {
 	for _, item := range this.Events {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
@@ -74,7 +74,7 @@ func (this *GetSystemEventLogResponse) Validate() error {
 	}
 	return nil
 }
-func (this *GetSystemEventLogRawRequest) Validate() error {
+func (this *SystemEventLogRawRequest) Validate() error {
 	if this.Authn != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Authn); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Authn", err)
@@ -87,6 +87,6 @@ func (this *GetSystemEventLogRawRequest) Validate() error {
 	}
 	return nil
 }
-func (this *GetSystemEventLogRawResponse) Validate() error {
+func (this *SystemEventLogRawResponse) Validate() error {
 	return nil
 }
