@@ -39,17 +39,17 @@ func NewSystemEventLogAction(req interface{}, opts ...Option) (*Action, error) {
 	return a, nil
 }
 
-func (m Action) SystemEventLog(ctx context.Context) (result bmc.SystemEventLogEntries, err error) {
+func (m Action) SystemEventLog(ctx context.Context) (entries bmc.SystemEventLogEntries, raw string, err error) {
 	labels := prometheus.Labels{
 		"service": "diagnostic",
-		"action":  "system_event_log",
+		"action":  m.ActionName,
 	}
 
 	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
 	defer timer.ObserveDuration()
 
 	tracer := otel.Tracer("pbnj")
-	ctx, span := tracer.Start(ctx, "diagnostic.SystemEventLog", trace.WithAttributes(
+	ctx, span := tracer.Start(ctx, "diagnostic."+m.RPCName, trace.WithAttributes(
 		attribute.String("bmc.device", m.SystemEventLogRequest.GetAuthn().GetDirectAuthn().GetHost().GetHost()),
 	))
 	defer span.End()
@@ -61,7 +61,7 @@ func (m Action) SystemEventLog(ctx context.Context) (result bmc.SystemEventLogEn
 	host, user, password, parseErr := m.ParseAuth(m.SystemEventLogRequest.GetAuthn())
 	if parseErr != nil {
 		span.SetStatus(codes.Error, "error parsing credentials: "+parseErr.Error())
-		return result, parseErr
+		return entries, raw, parseErr
 	}
 
 	span.SetAttributes(attribute.String("bmc.host", host), attribute.String("bmc.username", user))
@@ -72,7 +72,16 @@ func (m Action) SystemEventLog(ctx context.Context) (result bmc.SystemEventLogEn
 	}
 
 	client := bmclib.NewClient(host, user, password, opts...)
-	client.Registry.Drivers = client.Registry.Supports(providers.FeatureGetSystemEventLog)
+
+	// Set the driver(s) to use based on the request type
+	switch {
+	case m.SystemEventLogRequest != nil:
+		client.Registry.Drivers = client.Registry.Supports(providers.FeatureGetSystemEventLog)
+	case m.SystemEventLogRawRequest != nil:
+		client.Registry.Drivers = client.Registry.Supports(providers.FeatureGetSystemEventLogRaw)
+	default:
+		return entries, raw, fmt.Errorf("unsupported request type")
+	}
 
 	m.SendStatusMessage("connecting to BMC")
 	err = client.Open(ctx)
@@ -81,7 +90,7 @@ func (m Action) SystemEventLog(ctx context.Context) (result bmc.SystemEventLogEn
 		attribute.StringSlice("bmc.open.successfulOpenConns", meta.SuccessfulOpenConns))
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return nil, &repository.Error{
+		return entries, raw, &repository.Error{
 			Code:    v1.Code_value["PERMISSION_DENIED"],
 			Message: err.Error(),
 		}
@@ -94,107 +103,37 @@ func (m Action) SystemEventLog(ctx context.Context) (result bmc.SystemEventLogEn
 	log.Info("connected to BMC", logMetadata(client.GetMetadata())...)
 	m.SendStatusMessage("connected to BMC")
 
-	// Get the system event log
-	m.SendStatusMessage("getting system event log")
-	sel, err := client.GetSystemEventLog(ctx)
+	m.SendStatusMessage("getting " + m.ActionName + " on " + host)
+
+	switch {
+	case m.SystemEventLogRequest != nil:
+		// Get the system event log
+		entries, err = client.GetSystemEventLog(ctx)
+	case m.SystemEventLogRawRequest != nil:
+		// Get the system event log
+		raw, err = client.GetSystemEventLogRaw(ctx)
+	default:
+		return entries, raw, fmt.Errorf("unsupported request type")
+	}
+
 	log = m.Log.WithValues(logMetadata(client.GetMetadata())...)
 	meta = client.GetMetadata()
-	span.SetAttributes(attribute.StringSlice("bmc.system_event_log.providersAttempted", meta.ProvidersAttempted),
-		attribute.StringSlice("bmc.system_event_log.successfulOpenConns", meta.SuccessfulOpenConns))
+	span.SetAttributes(attribute.StringSlice("bmc."+m.ActionName+".providersAttempted", meta.ProvidersAttempted),
+		attribute.StringSlice("bmc."+m.ActionName+".successfulOpenConns", meta.SuccessfulOpenConns))
 	if err != nil {
-		log.Error(err, "error getting system event log")
-		span.SetStatus(codes.Error, "error getting system event log: "+err.Error())
-		m.SendStatusMessage(fmt.Sprintf("failed to get system event log %v", host))
+		log.Error(err, "error getting "+m.ActionName)
+		span.SetStatus(codes.Error, "error getting "+m.ActionName+": "+err.Error())
+		m.SendStatusMessage(fmt.Sprintf("failed to get "+m.ActionName+" %v", host))
 
-		return nil, &repository.Error{
+		return entries, raw, &repository.Error{
 			Code:    v1.Code_value["UNKNOWN"],
 			Message: err.Error(),
 		}
 	}
 
 	span.SetStatus(codes.Ok, "")
-	log.Info("got system event log", logMetadata(client.GetMetadata())...)
-	m.SendStatusMessage(fmt.Sprintf("got system event log on %v", host))
+	log.Info("got "+m.ActionName, logMetadata(client.GetMetadata())...)
+	m.SendStatusMessage(fmt.Sprintf("got "+m.ActionName+" on %v", host))
 
-	return sel, nil
-}
-
-func (m Action) SystemEventLogRaw(ctx context.Context) (result string, err error) {
-	labels := prometheus.Labels{
-		"service": "diagnostic",
-		"action":  "system_event_log_raw",
-	}
-
-	timer := prometheus.NewTimer(metrics.ActionDuration.With(labels))
-	defer timer.ObserveDuration()
-
-	tracer := otel.Tracer("pbnj")
-	ctx, span := tracer.Start(ctx, "diagnostic.SystemEventLogRaw", trace.WithAttributes(
-		attribute.String("bmc.device", m.SystemEventLogRawRequest.GetAuthn().GetDirectAuthn().GetHost().GetHost()),
-	))
-	defer span.End()
-
-	if v := m.SystemEventLogRawRequest.GetVendor(); v != nil {
-		span.SetAttributes(attribute.String("bmc.vendor", v.GetName()))
-	}
-
-	host, user, password, parseErr := m.ParseAuth(m.SystemEventLogRawRequest.GetAuthn())
-	if parseErr != nil {
-		span.SetStatus(codes.Error, "error parsing credentials: "+parseErr.Error())
-		return result, parseErr
-	}
-
-	span.SetAttributes(attribute.String("bmc.host", host), attribute.String("bmc.username", user))
-
-	opts := []bmclib.Option{
-		bmclib.WithLogger(m.Log),
-		bmclib.WithPerProviderTimeout(common.BMCTimeoutFromCtx(ctx)),
-	}
-
-	client := bmclib.NewClient(host, user, password, opts...)
-	client.Registry.Drivers = client.Registry.Supports(providers.FeatureGetSystemEventLogRaw)
-
-	m.SendStatusMessage("connecting to BMC")
-	err = client.Open(ctx)
-	meta := client.GetMetadata()
-	span.SetAttributes(attribute.StringSlice("bmc.open.providersAttempted", meta.ProvidersAttempted),
-		attribute.StringSlice("bmc.open.successfulOpenConns", meta.SuccessfulOpenConns))
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return "", &repository.Error{
-			Code:    v1.Code_value["PERMISSION_DENIED"],
-			Message: err.Error(),
-		}
-	}
-	log := m.Log.WithValues("host", host, "user", user)
-	defer func() {
-		client.Close(ctx)
-		log.Info("closed connections", logMetadata(client.GetMetadata())...)
-	}()
-	log.Info("connected to BMC", logMetadata(client.GetMetadata())...)
-	m.SendStatusMessage("connected to BMC")
-
-	// Get the system event log
-	m.SendStatusMessage("getting system event log")
-	sel, err := client.GetSystemEventLogRaw(ctx)
-	log = m.Log.WithValues(logMetadata(client.GetMetadata())...)
-	meta = client.GetMetadata()
-	span.SetAttributes(attribute.StringSlice("bmc.get_system_event_log_raw.providersAttempted", meta.ProvidersAttempted),
-		attribute.StringSlice("bmc.get_system_event_log_raw.successfulOpenConns", meta.SuccessfulOpenConns))
-	if err != nil {
-		log.Error(err, "error getting raw system event log")
-		span.SetStatus(codes.Error, "error getting raw system event log: "+err.Error())
-		m.SendStatusMessage(fmt.Sprintf("failed to get raw system event log %v", host))
-
-		return "", &repository.Error{
-			Code:    v1.Code_value["UNKNOWN"],
-			Message: err.Error(),
-		}
-	}
-
-	span.SetStatus(codes.Ok, "")
-	log.Info("got raw system event log", logMetadata(client.GetMetadata())...)
-	m.SendStatusMessage(fmt.Sprintf("got raw system event log on %v", host))
-
-	return sel, nil
+	return entries, raw, nil
 }

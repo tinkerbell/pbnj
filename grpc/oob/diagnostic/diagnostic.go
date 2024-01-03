@@ -8,6 +8,8 @@ import (
 
 type Action struct {
 	common.Accessory
+	ActionName                 string
+	RPCName                    string
 	ScreenshotRequest          *v1.ScreenshotRequest
 	ClearSystemEventLogRequest *v1.ClearSystemEventLogRequest
 	SystemEventLogRequest      *v1.SystemEventLogRequest
@@ -26,6 +28,15 @@ func WithLogger(l logr.Logger) Option {
 func WithStatusMessage(s chan string) Option {
 	return func(a *Action) error {
 		a.StatusMessages = s
+		return nil
+	}
+}
+
+// WithLabels adds the custom tracing and logging labels to an Action struct.
+func WithLabels(actionName string, rpcName string) Option {
+	return func(a *Action) error {
+		a.ActionName = actionName
+		a.RPCName = rpcName
 		return nil
 	}
 }

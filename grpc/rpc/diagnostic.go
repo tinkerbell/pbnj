@@ -89,13 +89,14 @@ func (d *DiagnosticService) SystemEventLog(ctx context.Context, in *v1.SystemEve
 		"vendor", in.Vendor.GetName(),
 	)
 
-	selaction, err := diagnostic.NewSystemEventLogAction(in, diagnostic.WithLogger(l))
+	selaction, err := diagnostic.NewSystemEventLogAction(in, diagnostic.WithLogger(l),
+		diagnostic.WithLabels("system_event_log", "SystemEventLog"))
 	if err != nil {
 		l.Error(err, "error creating system event log action")
 		return nil, err
 	}
 
-	entries, err := selaction.SystemEventLog(ctx)
+	entries, _, err := selaction.SystemEventLog(ctx)
 	if err != nil {
 		l.Error(err, "error getting system event log")
 		return nil, err
@@ -111,18 +112,19 @@ func (d *DiagnosticService) SystemEventLog(ctx context.Context, in *v1.SystemEve
 func (d *DiagnosticService) SystemEventLogRaw(ctx context.Context, in *v1.SystemEventLogRawRequest) (*v1.SystemEventLogRawResponse, error) {
 	l := logging.ExtractLogr(ctx)
 
-	l.Info("start Get System Event Log request",
+	l.Info("start Get System Event Log Raw request",
 		"username", in.Authn.GetDirectAuthn().GetUsername(),
 		"vendor", in.Vendor.GetName(),
 	)
 
-	rawselaction, err := diagnostic.NewSystemEventLogAction(in, diagnostic.WithLogger(l))
+	rawselaction, err := diagnostic.NewSystemEventLogAction(in, diagnostic.WithLogger(l),
+		diagnostic.WithLabels("system_event_log_raw", "SystemEventLogRaw"))
 	if err != nil {
 		l.Error(err, "error creating raw system event log action")
 		return nil, err
 	}
 
-	eventlog, err := rawselaction.SystemEventLogRaw(ctx)
+	_, eventlog, err := rawselaction.SystemEventLog(ctx)
 	if err != nil {
 		l.Error(err, "error getting raw system event log")
 		return nil, err
