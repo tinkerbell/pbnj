@@ -16,6 +16,17 @@ import (
 	"github.com/tinkerbell/pbnj/grpc/taskrunner"
 )
 
+type MockDiagnosticAction struct {
+	SystemEventLogFunc func(ctx context.Context) (entries []*v1.SystemEventLogEntry, raw string, err error)
+}
+
+func (m *MockDiagnosticAction) SystemEventLog(ctx context.Context) (entries []*v1.SystemEventLogEntry, raw string, err error) {
+	if m.SystemEventLogFunc != nil {
+		return m.SystemEventLogFunc(ctx)
+	}
+	return nil, "", nil
+}
+
 func TestClearSystemEventLog(t *testing.T) {
 	testCases := []struct {
 		name        string
@@ -144,6 +155,117 @@ func TestConvertEntriesToEvents(t *testing.T) {
 
 			if diff := cmp.Diff(testCase.expectedEvents, events, cmpopts.IgnoreUnexported(v1.SystemEventLogEntry{})); diff != "" {
 				t.Errorf("Mismatch (-expected, +actual):\n%s", diff)
+			}
+		})
+	}
+}
+func TestSystemEventLog(t *testing.T) {
+	testCases := []struct {
+		name           string
+		req            *v1.SystemEventLogRequest
+		expectedEvents []*v1.SystemEventLogEntry
+		expectedErr    error
+	}{
+		{
+			name: "success",
+			req: &v1.SystemEventLogRequest{
+				Authn: &v1.Authn{
+					Authn: &v1.Authn_DirectAuthn{
+						DirectAuthn: &v1.DirectAuthn{
+							Username: "testuser",
+						},
+					},
+				},
+				Vendor: &v1.Vendor{
+					Name: "testvendor",
+				},
+			},
+			expectedEvents: []*v1.SystemEventLogEntry{
+				{
+					Id:          "1",
+					Timestamp:   "2022-01-01",
+					Description: "Event 1",
+					Message:     "Message 1",
+				},
+				{
+					Id:          "2",
+					Timestamp:   "2022-01-02",
+					Description: "Event 2",
+					Message:     "Message 2",
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "error creating system event log action",
+			req: &v1.SystemEventLogRequest{
+				Authn: &v1.Authn{
+					Authn: &v1.Authn_DirectAuthn{
+						DirectAuthn: &v1.DirectAuthn{
+							Username: "testuser",
+						},
+					},
+				},
+				Vendor: &v1.Vendor{
+					Name: "testvendor",
+				},
+			},
+			expectedEvents: nil,
+			expectedErr:    errors.New("error creating system event log action"),
+		},
+		{
+			name: "error getting system event log",
+			req: &v1.SystemEventLogRequest{
+				Authn: &v1.Authn{
+					Authn: &v1.Authn_DirectAuthn{
+						DirectAuthn: &v1.DirectAuthn{
+							Username: "testuser",
+						},
+					},
+				},
+				Vendor: &v1.Vendor{
+					Name: "testvendor",
+				},
+			},
+			expectedEvents: nil,
+			expectedErr:    errors.New("error getting system event log"),
+		},
+	}
+
+	for _, tc := range testCases {
+		testCase := tc
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+
+			diagnosticService := &MockDiagnosticAction{
+				SystemEventLogFunc: func(ctx context.Context) (entries []*v1.SystemEventLogEntry, raw string, err error) {
+					if testCase.expectedErr != nil {
+						return nil, "", testCase.expectedErr
+					}
+					return []*v1.SystemEventLogEntry{
+						{Id: "1", Timestamp: "2022-01-01", Description: "Event 1", Message: "Message 1"},
+						{Id: "2", Timestamp: "2022-01-02", Description: "Event 2", Message: "Message 2"},
+					}, "", nil
+				},
+			}
+
+			response, _, err := diagnosticService.SystemEventLog(ctx)
+
+			t.Log("Got : ", response)
+			if err != nil {
+				if testCase.expectedErr == nil {
+					t.Fatalf("Unexpected error: %v", err)
+				} else {
+					if diff := cmp.Diff(testCase.expectedErr.Error(), err.Error()); diff != "" {
+						t.Fatalf("Error mismatch (-expected, +actual):\n%s", diff)
+					}
+				}
+			} else {
+				if diff := cmp.Diff(testCase.expectedEvents, response, cmpopts.IgnoreUnexported(v1.SystemEventLogEntry{})); diff != "" {
+					t.Fatalf("Events mismatch (-expected, +actual):\n%s", diff)
+				}
 			}
 		})
 	}
