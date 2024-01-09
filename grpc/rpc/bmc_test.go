@@ -168,6 +168,62 @@ func TestReset(t *testing.T) {
 	}
 }
 
+func newDeactivateSOLRequest(authErr bool) *v1.DeactivateSOLRequest {
+	var auth *v1.DirectAuthn
+	if authErr {
+		auth = &v1.DirectAuthn{
+			Host: &v1.Host{
+				Host: "",
+			},
+			Username: "ADMIN",
+			Password: "ADMIN",
+		}
+	} else {
+		auth = &v1.DirectAuthn{
+			Host: &v1.Host{
+				Host: "127.0.0.1",
+			},
+			Username: "ADMIN",
+			Password: "ADMIN",
+		}
+	}
+	return &v1.DeactivateSOLRequest{
+		Authn: &v1.Authn{
+			Authn: &v1.Authn_DirectAuthn{
+				DirectAuthn: auth,
+			},
+		},
+		Vendor: &v1.Vendor{
+			Name: "local",
+		},
+	}
+}
+
+func TestDeactivateSOL(t *testing.T) {
+	testCases := []struct {
+		name        string
+		expectedErr error
+		in          *v1.DeactivateSOLRequest
+	}{
+		{"success", nil, newDeactivateSOLRequest(false)},
+		{"missing auth err", errors.New("input arguments are invalid: invalid field Authn.DirectAuthn.Host.Host: value '' must not be an empty string"), newDeactivateSOLRequest(true)},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			response, err := bmcService.DeactivateSOL(ctx, tc.in)
+			if err != nil {
+				diff := cmp.Diff(tc.expectedErr.Error(), err.Error())
+				if diff != "" {
+					t.Fatal(diff)
+				}
+			} else if response.TaskId == "" {
+				t.Fatal("expected taskId, got:", response.TaskId)
+			}
+		})
+	}
+}
+
 func newCreateUserRequest(authErr bool) *v1.CreateUserRequest {
 	var auth *v1.DirectAuthn
 	if authErr {
