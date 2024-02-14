@@ -32,7 +32,14 @@ RUN apk add --update --upgrade --no-cache --virtual build-deps \
     && git clone -b master ${IPMITOOL_REPO}
 
 WORKDIR /tmp/ipmitool
+
+#
+# cherry-pick'ed 1edb0e27e44196d1ebe449aba0b9be22d376bcb6
+# to fix https://github.com/ipmitool/ipmitool/issues/377
+#
 RUN git checkout ${IPMITOOL_COMMIT} \
+    && git config --global user.email "github.ci@doesnot.existorg" \
+    && git cherry-pick 1edb0e27e44196d1ebe449aba0b9be22d376bcb6 \
     && ./bootstrap \
     && ./configure \
         --prefix=/usr/local \
