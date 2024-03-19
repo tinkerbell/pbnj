@@ -10,6 +10,7 @@ import (
 	"github.com/tinkerbell/pbnj/pkg/logging"
 	"github.com/tinkerbell/pbnj/pkg/task"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type DiagnosticService struct {
@@ -78,4 +79,31 @@ func (d *DiagnosticService) ClearSystemEventLog(ctx context.Context, in *v1.Clea
 	d.TaskRunner.Execute(ctx, l, "clearing system event log", taskID, execFunc)
 
 	return &v1.ClearSystemEventLogResponse{TaskId: taskID}, nil
+}
+
+func (d *DiagnosticService) SendNMI(ctx context.Context, in *v1.SendNMIRequest) (*emptypb.Empty, error) {
+	empty := &emptypb.Empty{}
+	l := logging.ExtractLogr(ctx)
+	taskID := xid.New().String()
+	l = l.WithValues("taskID", taskID)
+
+	l.Info(
+		"start Send NMI request",
+		"username", in.Authn.GetDirectAuthn().GetUsername(),
+		"host", in.Authn.GetDirectAuthn().GetHost(),
+	)
+
+	action, err := diagnostic.NewNMISender(in, diagnostic.WithLogger(l))
+	if err != nil {
+		l.Error(err, "error creating NMI sender")
+		return empty, err
+	}
+
+	err = action.SendNMI(ctx)
+	if err != nil {
+		l.Error(err, "error sending NMI")
+		return empty, err
+	}
+
+	return empty, nil
 }
