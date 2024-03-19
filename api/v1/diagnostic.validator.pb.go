@@ -9,6 +9,7 @@ import (
 
 	proto "github.com/golang/protobuf/proto"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
+	_ "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -46,5 +47,13 @@ func (this *ClearSystemEventLogRequest) Validate() error {
 	return nil
 }
 func (this *ClearSystemEventLogResponse) Validate() error {
+	return nil
+}
+func (this *SendNMIRequest) Validate() error {
+	if this.Authn != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Authn); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Authn", err)
+		}
+	}
 	return nil
 }

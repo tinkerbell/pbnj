@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/bmc-toolbox/bmclib v0.5.7
-	github.com/bmc-toolbox/bmclib/v2 v2.2.1
+	github.com/bmc-toolbox/bmclib/v2 v2.2.3
 	github.com/cristalhq/jwt/v3 v3.1.0
 	github.com/equinix-labs/otel-init-go v0.0.7
 	github.com/fatih/color v1.15.0

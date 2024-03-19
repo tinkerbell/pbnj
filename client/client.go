@@ -145,3 +145,9 @@ func ClearSystemEventLog(ctx context.Context, client v1.DiagnosticClient, taskCl
 	}
 	return statusResp, nil
 }
+
+// SendNMI will tell the BMC to send an NMI to the server.
+func SendNMI(ctx context.Context, client v1.DiagnosticClient, request *v1.SendNMIRequest) error {
+	_, err := client.SendNMI(ctx, request)
+	return err
+}

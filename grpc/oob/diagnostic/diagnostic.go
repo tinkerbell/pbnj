@@ -10,6 +10,7 @@ type Action struct {
 	common.Accessory
 	ScreenshotRequest          *v1.ScreenshotRequest
 	ClearSystemEventLogRequest *v1.ClearSystemEventLogRequest
+	SendNMIRequest             *v1.SendNMIRequest
 }
 
 // WithLogger adds a logr to an Action struct.

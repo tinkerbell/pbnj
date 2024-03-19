@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 option go_package = "github.com/tinkerbell/pbnj/api/v1";
 option ruby_package = "Pbnj::Api::V1";
 
@@ -10,6 +12,7 @@ import "api/v1/common.proto";
 service Diagnostic {
     rpc Screenshot (ScreenshotRequest) returns (ScreenshotResponse);
     rpc ClearSystemEventLog (ClearSystemEventLogRequest) returns (ClearSystemEventLogResponse);
+    rpc SendNMI (SendNMIRequest) returns (google.protobuf.Empty);
 }
 
 message ScreenshotRequest {
@@ -29,4 +32,8 @@ message ClearSystemEventLogRequest {
 
 message ClearSystemEventLogResponse {
     string task_id = 1;
+}
+
+message SendNMIRequest {
+    v1.Authn authn = 1;
 }
