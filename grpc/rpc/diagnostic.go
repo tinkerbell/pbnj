@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/bmc-toolbox/bmclib/v2/bmc"
 	"github.com/rs/xid"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	"github.com/tinkerbell/pbnj/grpc/oob/diagnostic"
@@ -106,4 +107,80 @@ func (d *DiagnosticService) SendNMI(ctx context.Context, in *v1.SendNMIRequest) 
 	}
 
 	return empty, nil
+}
+
+func (d *DiagnosticService) SystemEventLog(ctx context.Context, in *v1.SystemEventLogRequest) (*v1.SystemEventLogResponse, error) {
+	l := logging.ExtractLogr(ctx)
+
+	l.Info("start Get System Event Log request",
+		"username", in.Authn.GetDirectAuthn().GetUsername(),
+		"vendor", in.Vendor.GetName(),
+	)
+
+	selaction, err := diagnostic.NewSystemEventLogAction(in, diagnostic.WithLogger(l),
+		diagnostic.WithLabels("system_event_log", "SystemEventLog"))
+	if err != nil {
+		l.Error(err, "error creating system event log action")
+		return nil, err
+	}
+
+	entries, _, err := selaction.SystemEventLog(ctx)
+	if err != nil {
+		l.Error(err, "error getting system event log")
+		return nil, err
+	}
+
+	events := convertEntriesToEvents(entries)
+
+	return &v1.SystemEventLogResponse{
+		Events: events,
+	}, nil
+}
+
+func (d *DiagnosticService) SystemEventLogRaw(ctx context.Context, in *v1.SystemEventLogRawRequest) (*v1.SystemEventLogRawResponse, error) {
+	l := logging.ExtractLogr(ctx)
+
+	l.Info("start Get System Event Log Raw request",
+		"username", in.Authn.GetDirectAuthn().GetUsername(),
+		"vendor", in.Vendor.GetName(),
+	)
+
+	rawselaction, err := diagnostic.NewSystemEventLogAction(in, diagnostic.WithLogger(l),
+		diagnostic.WithLabels("system_event_log_raw", "SystemEventLogRaw"))
+	if err != nil {
+		l.Error(err, "error creating raw system event log action")
+		return nil, err
+	}
+
+	_, eventlog, err := rawselaction.SystemEventLog(ctx)
+	if err != nil {
+		l.Error(err, "error getting raw system event log")
+		return nil, err
+	}
+
+	return &v1.SystemEventLogRawResponse{
+		Log: eventlog,
+	}, nil
+}
+
+func convertEntriesToEvents(entries bmc.SystemEventLogEntries) []*v1.SystemEventLogEntry {
+	var events []*v1.SystemEventLogEntry
+
+	if len(entries) == 0 {
+		return events
+	}
+
+	for _, entry := range entries {
+		if len(entry) < 4 {
+			continue
+		}
+		events = append(events, &v1.SystemEventLogEntry{
+			Id:          entry[0],
+			Timestamp:   entry[1],
+			Description: entry[2],
+			Message:     entry[3],
+		})
+	}
+
+	return events
 }
