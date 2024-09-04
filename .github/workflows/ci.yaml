@@ -45,7 +45,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Download pbnj binary
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4.1.7
       with:
         name: pbnj
         path: ./pbnj
