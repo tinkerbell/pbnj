@@ -13,6 +13,8 @@ service Diagnostic {
     rpc Screenshot (ScreenshotRequest) returns (ScreenshotResponse);
     rpc ClearSystemEventLog (ClearSystemEventLogRequest) returns (ClearSystemEventLogResponse);
     rpc SendNMI (SendNMIRequest) returns (google.protobuf.Empty);
+    rpc SystemEventLog (SystemEventLogRequest) returns (SystemEventLogResponse);
+    rpc SystemEventLogRaw (SystemEventLogRawRequest) returns (SystemEventLogRawResponse);
 }
 
 message ScreenshotRequest {
@@ -36,4 +38,29 @@ message ClearSystemEventLogResponse {
 
 message SendNMIRequest {
     v1.Authn authn = 1;
+}
+
+message SystemEventLogRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+}
+
+message SystemEventLogEntry {
+    string id = 1;
+    string timestamp = 2;
+    string description = 3;
+    string message = 4;
+}
+
+message SystemEventLogResponse {
+    repeated SystemEventLogEntry events = 1;
+}
+
+message SystemEventLogRawRequest {
+    v1.Authn authn = 1;
+    v1.Vendor vendor = 2;
+}
+
+message SystemEventLogRawResponse {
+    string log = 1;
 }

@@ -151,3 +151,13 @@ func SendNMI(ctx context.Context, client v1.DiagnosticClient, request *v1.SendNM
 	_, err := client.SendNMI(ctx, request)
 	return err
 }
+
+// SystemEventLog retrieves the System Event Log of the server.
+func SystemEventLog(ctx context.Context, client v1.DiagnosticClient, request *v1.SystemEventLogRequest) (*v1.SystemEventLogResponse, error) {
+	return client.SystemEventLog(ctx, request)
+}
+
+// SystemEventLogRaw retrieves the System Event Log of the server.
+func SystemEventLogRaw(ctx context.Context, client v1.DiagnosticClient, request *v1.SystemEventLogRawRequest) (*v1.SystemEventLogRawResponse, error) {
+	return client.SystemEventLogRaw(ctx, request)
+}
