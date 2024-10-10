@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/bmc-toolbox/bmclib/v2"
 	"github.com/bmc-toolbox/bmclib/v2/bmc"
@@ -148,6 +149,9 @@ func (m Action) BootDeviceSet(ctx context.Context, device string, persistent, ef
 	base := "setting boot device: " + m.BootDeviceRequest.GetBootDevice().String()
 	msg := "working on " + base
 	m.SendStatusMessage(msg)
+
+	ctx, cancel := context.WithTimeout(ctx, 120*time.Second)
+	defer cancel()
 
 	opts := []bmclib.Option{
 		bmclib.WithLogger(m.Log),

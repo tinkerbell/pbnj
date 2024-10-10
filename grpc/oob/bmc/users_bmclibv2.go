@@ -3,6 +3,7 @@ package bmc
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/bmc-toolbox/bmclib/v2"
 	"github.com/go-logr/logr"
@@ -32,6 +33,9 @@ type bmclibv2UserManagement struct {
 // Connect sets up the BMC client connection.
 func (b *bmclibv2UserManagement) Connect(ctx context.Context) error {
 	var errMsg repository.Error
+
+	ctx, cancel := context.WithTimeout(ctx, 120*time.Second)
+	defer cancel()
 
 	opts := []bmclib.Option{
 		bmclib.WithLogger(b.log),

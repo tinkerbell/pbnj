@@ -3,6 +3,7 @@ package diagnostic
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/bmc-toolbox/bmclib/v2"
 	"github.com/bmc-toolbox/bmclib/v2/providers"
@@ -54,6 +55,9 @@ func (m Action) ClearSystemEventLog(ctx context.Context) (result string, err err
 		return result, parseErr
 	}
 	span.SetAttributes(attribute.String("bmc.host", host), attribute.String("bmc.username", user))
+
+	ctx, cancel := context.WithTimeout(ctx, 120*time.Second)
+	defer cancel()
 
 	opts := []bmclib.Option{
 		bmclib.WithLogger(m.Log),

@@ -3,6 +3,7 @@ package bmc
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/bmc-toolbox/bmclib/v2"
 	"github.com/bmc-toolbox/bmclib/v2/bmc"
@@ -310,6 +311,9 @@ func (m Action) BMCReset(ctx context.Context, rType string) (err error) {
 	span.SetAttributes(attribute.String("bmc.host", host), attribute.String("bmc.username", user))
 	m.SendStatusMessage("working on bmc reset")
 
+	ctx, cancel := context.WithTimeout(ctx, 120*time.Second)
+	defer cancel()
+
 	opts := []bmclib.Option{
 		bmclib.WithLogger(m.Log),
 		bmclib.WithPerProviderTimeout(common.BMCTimeoutFromCtx(ctx)),
@@ -380,6 +384,9 @@ func (m Action) DeactivateSOL(ctx context.Context) error {
 	}
 	span.SetAttributes(attribute.String("bmc.host", host), attribute.String("bmc.username", user))
 	m.SendStatusMessage("working on SOL session deactivation")
+
+	ctx, cancel := context.WithTimeout(ctx, 120*time.Second)
+	defer cancel()
 
 	opts := []bmclib.Option{
 		bmclib.WithLogger(m.Log),
