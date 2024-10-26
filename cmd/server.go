@@ -83,9 +83,9 @@ var (
 					logging.UnaryServerInterceptor(logger),                   // this puts the logger in the context. Allows per-request logging and other middleware to be used.
 					logging.UnaryLogRequestID(requestIDKey, requestIDLogKey), // must be after logging.UnaryServerInterceptor because the logger must be in the context.
 					logging.UnaryLogBMCIP(),                                  // must be after logging.UnaryServerInterceptor because the logger must be in the context.
-					otelgrpc.UnaryServerInterceptor(),
 					grpc_validator.UnaryServerInterceptor(),
 				),
+				grpc.StatsHandler(otelgrpc.NewServerHandler()),
 			)
 
 			httpServer := http.NewServer(metricsAddr)
