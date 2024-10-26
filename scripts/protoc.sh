@@ -32,12 +32,9 @@ function installDeps {
     else
         echo 'Protoc already installed!' >&2
     fi
-    go get google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.0.1
-    go get google.golang.org/grpc@v1.35.0
-    go get google.golang.org/protobuf/cmd/protoc-gen-go@v1.25.0
-    go get github.com/mwitkow/go-proto-validators/protoc-gen-govalidators@v0.3.2
-    go get golang.org/x/tools/cmd/goimports
-    go mod tidy || true
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.0.1
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.25.0
+    go install github.com/mwitkow/go-proto-validators/protoc-gen-govalidators@v0.3.2
 }
 
 if [[ "$1" == "deps" ]]; then
@@ -51,5 +48,4 @@ protoc -I . -I "$(go env GOMODCACHE)" --go_out=. --go_opt=module=${REPO} ${PROTO
 protoc -I . -I "$(go env GOMODCACHE)" --govalidators_out=. --go-grpc_out=. --go-grpc_opt=module=${REPO} ${PROTOS_LOC}/*.proto
 mv ${REPO}/${PROTOS_LOC}/*.go ${PROTOS_LOC}/
 rm -rf github.com
-"$(go env GOPATH)/bin/goimports" -w . || true
 echo "done"
