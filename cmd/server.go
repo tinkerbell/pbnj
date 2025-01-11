@@ -53,7 +53,7 @@ var (
 		Use:   "server",
 		Short: "Run PBnJ server",
 		Long:  `Run PBnJ server for interacting with BMCs.`,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			ctx := context.Background()
 			ctx, cancel := context.WithCancel(ctx)
 			defer cancel()
@@ -63,7 +63,7 @@ var (
 
 			logger := defaultLogger(logLevel).WithName("github.com/tinkerbell/pbnj").WithValues("service", "github.com/tinkerbell/pbnj")
 
-			authzInterceptor := func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+			authzInterceptor := func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 				return handler(ctx, req)
 			}
 			if enableAuthz {

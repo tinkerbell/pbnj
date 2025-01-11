@@ -16,7 +16,7 @@ var machineCmd = &cobra.Command{
 	Use:   "machine",
 	Short: "Run PBnJ client machine actions",
 	Long:  `Run PBnJ client for machine actions.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	Run: func(_ *cobra.Command, _ []string) {
 		var opts []grpc.DialOption
 		ctx := context.Background()
 		ctx, cancel := context.WithCancel(ctx)

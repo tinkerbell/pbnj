@@ -35,7 +35,7 @@ func TestParseAuth(t *testing.T) {
 				diff := cmp.Diff(tc.want.Error(), errMsg.Error())
 				if diff != "" {
 					t.Logf("%+v", errMsg)
-					t.Fatalf(diff)
+					t.Fatal(diff)
 				}
 			}
 
@@ -96,7 +96,7 @@ func TestSendStatusMessage(t *testing.T) {
 
 			diff := cmp.Diff(msgs, tc.want)
 			if diff != "" {
-				t.Fatalf(diff)
+				t.Fatal(diff)
 			}
 		})
 	}

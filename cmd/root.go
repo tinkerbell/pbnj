@@ -22,7 +22,7 @@ var rootCmd = &cobra.Command{
 	Use:   "pbnj",
 	Short: "PBnJ does all your power, boot and jelly goodness for your BMCs",
 	Long:  `PBnJ is a CLI that provides a gRPC interfaces for interacting with Out-of-Band controllers/BMCs.`,
-	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 		return initConfig(cmd)
 	},
 }

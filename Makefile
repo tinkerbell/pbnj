@@ -104,9 +104,9 @@ run-image: ## run PBnJ container image
 # BEGIN: lint-install .
 # http://github.com/tinkerbell/lint-install
 
-GOLINT_VERSION ?= v1.52.2
-HADOLINT_VERSION ?= v2.7.0
-SHELLCHECK_VERSION ?= v0.7.2
+GOLINT_VERSION ?= v1.63.4
+HADOLINT_VERSION ?= v2.12.0
+SHELLCHECK_VERSION ?= v0.10.0
 LINT_OS := $(shell uname)
 LINT_ARCH := $(shell uname -m)
 
@@ -132,7 +132,7 @@ out/linters/shellcheck-$(SHELLCHECK_VERSION)-$(LINT_ARCH)/shellcheck:
 
 out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH):
 	mkdir -p out/linters
-	curl -sfL https://github.com/hadolint/hadolint/releases/download/v2.6.1/hadolint-$(LINT_OS)-$(LINT_ARCH) > out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)
+	curl -sfL https://github.com/hadolint/hadolint/releases/download/$(HADOLINT_VERSION)/hadolint-$(LINT_OS)-$(LINT_ARCH) > out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)
 	chmod u+x out/linters/hadolint-$(HADOLINT_VERSION)-$(LINT_ARCH)
 
 out/linters/golangci-lint-$(GOLINT_VERSION)-$(LINT_ARCH):
