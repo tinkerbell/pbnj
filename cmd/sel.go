@@ -16,7 +16,7 @@ var (
 		Use:   "selclear",
 		Short: "Clear the System Event Log",
 		Long:  `Clear the System Event Log of the target BMC`,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			var opts []grpc.DialOption
 			ctx := context.Background()
 

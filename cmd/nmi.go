@@ -16,7 +16,7 @@ var (
 		Use:   "nmi",
 		Short: "Send NMI",
 		Long:  `Tell the target BMC to send an NMI to the system`,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			var opts []grpc.DialOption
 			ctx := context.Background()
 

@@ -24,9 +24,9 @@ func TestRunServer(t *testing.T) {
 	ctx, cancel := context.WithTimeout(ctx, 9*time.Second)
 	log := logr.Discard()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	min := 40041
-	max := 40042
-	port := r.Intn(max-min+1) + min
+	minimum := 40041
+	maximum := 40042
+	port := r.Intn(maximum-minimum+1) + minimum
 
 	f := freecache.NewStore(freecache.DefaultOptions)
 	s := gokv.Store(f)
@@ -56,9 +56,9 @@ func TestRunServerSignals(t *testing.T) {
 	log := logr.Discard()
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	min := 40044
-	max := 40045
-	port := r.Intn(max-min+1) + min
+	minimum := 40044
+	maximum := 40045
+	port := r.Intn(maximum-minimum+1) + minimum
 	grpcServer := grpc.NewServer()
 	httpServer := http.NewServer(fmt.Sprintf(":%d", port+1))
 	httpServer.WithLogger(log)

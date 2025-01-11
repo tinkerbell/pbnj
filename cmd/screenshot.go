@@ -16,7 +16,7 @@ var (
 		Use:   "screenshot",
 		Short: "Take a screenshot",
 		Long:  `Take a screenshot of a target BMC`,
-		Run: func(cmd *cobra.Command, args []string) {
+		Run: func(_ *cobra.Command, _ []string) {
 			var opts []grpc.DialOption
 			ctx := context.Background()
 

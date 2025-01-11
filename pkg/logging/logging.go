@@ -30,7 +30,7 @@ func UnaryServerInterceptor(logger logr.Logger) grpc.UnaryServerInterceptor {
 
 // UnaryLogRequestID returns a new unary server interceptors that adds logr.Logger with requestID to the context if a requestID doesnt exist.
 func UnaryLogRequestID(requestIDKey, requestIDLogKey string) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		var requestID string
 		data, ok := metadata.FromIncomingContext(ctx)
 		if ok {
@@ -54,7 +54,7 @@ func UnaryLogRequestID(requestIDKey, requestIDLogKey string) grpc.UnaryServerInt
 
 // UnaryLogBMCIP returns a new unary server interceptors that adds the BMC IP to the logger.
 func UnaryLogBMCIP() grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (h interface{}, err error) {
+	return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (h interface{}, err error) {
 		// handle panics from reflect by just moving on. Calls to the task endpoint will always panic,
 		// as they don't contain Authn.
 		defer func() {

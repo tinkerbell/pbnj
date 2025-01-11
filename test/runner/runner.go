@@ -127,7 +127,7 @@ func RunTests(t logr.Logger, cfgData ConfigFile) {
 				goto COMPLETE
 			}
 			got.Result = strings.ToLower(got.Result)
-			diff = cmp.Diff(stepName.Want, got, cmpopts.IgnoreMapEntries(func(key, i interface{}) bool { return key == "id" }), protocmp.Transform())
+			diff = cmp.Diff(stepName.Want, got, cmpopts.IgnoreMapEntries(func(key, _ interface{}) bool { return key == "id" }), protocmp.Transform())
 			if diff != "" {
 				log.Println(diff)
 				successful = color.RedString("FAIL")
