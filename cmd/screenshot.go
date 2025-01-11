@@ -23,7 +23,7 @@ var (
 			logger := defaultLogger(logLevel)
 
 			opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-			conn, err := grpc.Dial("localhost:"+port, opts...)
+			conn, err := grpc.NewClient("localhost:"+port, opts...)
 			if err != nil {
 				logger.Error(err, "fail to dial server")
 				os.Exit(1)
