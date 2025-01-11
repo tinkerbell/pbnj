@@ -147,7 +147,7 @@ func runMachinePowerClient(in testResource, action v1.PowerAction, s Server) (*v
 	defer cancel()
 
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	conn, err := grpc.Dial(s.URL+":"+s.Port, opts...)
+	conn, err := grpc.NewClient(s.URL+":"+s.Port, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func runMachineBootDevClient(in testResource, action v1.BootDevice, s Server) (*
 	defer cancel()
 
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	conn, err := grpc.Dial(s.URL+":"+s.Port, opts...)
+	conn, err := grpc.NewClient(s.URL+":"+s.Port, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +228,7 @@ func runBMCCreateUserClient(in testResource, action *v1.CreateUserRequest, s Ser
 	defer cancel()
 
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	conn, err := grpc.Dial(s.URL+":"+s.Port, opts...)
+	conn, err := grpc.NewClient(s.URL+":"+s.Port, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +272,7 @@ func runBMCDeleteUserClient(in testResource, action *v1.DeleteUserRequest, s Ser
 	defer cancel()
 
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	conn, err := grpc.Dial(s.URL+":"+s.Port, opts...)
+	conn, err := grpc.NewClient(s.URL+":"+s.Port, opts...)
 	if err != nil {
 		return nil, err
 	}
